@@ -3,9 +3,6 @@
  */
 component extends="Base" {
 
-	property name="ql" inject="coldbox:setting:queryLimit";
-	property name="accessTokenExpiration" inject="coldbox:setting:accessTokenExpiration";
-
 	// OPTIONAL HANDLER PROPERTIES
 	this.prehandler_only 	  = "";
 	this.prehandler_except 	  = "";

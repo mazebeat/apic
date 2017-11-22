@@ -10,8 +10,10 @@
 component extends="coldbox.system.EventHandler"{
 
 	// Inject AuthenticationService
-	property name="authService" type="any" inject="model:security.AuthenticationService";
-	property name="emaillogger" inject="logBox:logger:emaillogger";  
+	property name="authService" type="any" 			inject="model:security.AuthenticationService";
+	property name="emaillogger" type="any" 			inject="logBox:logger:emaillogger"; 
+	property name="maxRequest"	type="numeric" 		inject="coldbox:setting:maxUserRequest";
+	property name="waitTimeRequest"	type="numeric" 	inject="coldbox:setting:waitTimeRequest";
 
 	// Pseudo "constants" used in API Response/Method parsing
 	property name="METHODS";
@@ -44,7 +46,7 @@ component extends="coldbox.system.EventHandler"{
 		"NOT_AUTHORIZED"         = 403,
 		"NOT_AUTHENTICATED"      = 401,
 		"NOT_FOUND"              = 404,
-		"NOT_ALLOWED"            = 405,
+		"NOT_ALLOWED"            = 405,	
 		"NOT_ACCEPTABLE"         = 406,
 		"GONE"                   = 410,
 		"CONFLICT"               = 409,
@@ -118,12 +120,12 @@ component extends="coldbox.system.EventHandler"{
 		try{
 			// start a resource timer
 			var stime    = getTickCount();
-			
+
 			// prepare our response object
 			prc.response = getModel("Response");
 			
 			// Limiter
-			limiterByTime(countRequest=1, duration=10, prc= prc, event= event);
+			limiterByTime(maxRequest=maxRequest, waitTimeRequest=waitTimeRequest, prc= prc, event= event);
 			
 			// prepare argument execution
 			var args = { event = event, rc = rc, prc = prc };
@@ -147,7 +149,6 @@ component extends="coldbox.system.EventHandler"{
 		} catch(Any e){
 			// Log Locally
 			log.error("Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
-			// emaillogger.error("Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);
 
 			// Setup General Error Response
 			prc.response
