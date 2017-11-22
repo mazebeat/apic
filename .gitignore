@@ -1,0 +1,8 @@
+# Dependencies Ignored
+coldbox/*
+config/*
+testbox/*
+modules/*
+WEB-INF/*
+.jsbeautifyrc
+.cflintrc

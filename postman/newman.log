@@ -1,0 +1,156 @@
+newman
+
+APIc
+
+□ v1 / participantes
+└ All
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/participantes?fwreinit=1&debug= [200 OK, 698B, 288ms]
+  √  Get Token
+  √  StatusCode is 200
+  √  Should have no error
+  √  Response time is acceptable
+  √  Customer is valid
+
+└ ByType
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/participantes/Expositores-(comunicador)/page/1/rows/2?fwreinit=1&debug= [200 OK, 550B, 173ms]
+  √  Status code is 200
+  √  Response time is acceptable
+
+└ Get
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/participantes/40087?fwreinit=1&debug= [200 OK, 516B, 157ms]
+  √  Status code is 200
+  √  Response time is acceptable
+
+└ All By ID Fields
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/participantes/page/1/rows/20?fwreinit=1&debug=&ids=9,133,134,252,255,40106,40117,40102,40174,40144 [200 OK, 525B, 164ms]
+  √  Get Token
+  √  StatusCode is 200
+  √  Should have no error
+  √  Response time is acceptable
+
+□ v1 / auth
+└ Generate Password
+  POST http://apic.oficina.tufabricadeventos.com/index.cfm/authenticate/new?fwreinit=1&debug= [200 OK, 543B, 157ms]
+  √  Get password
+  √  Status code is 200
+  √  Content-Type is present
+  √  Response time is acceptable
+
+└ Obtain Token
+  POST http://apic.oficina.tufabricadeventos.com/index.cfm/authenticate?fwreinit=1&debug= [500 Error Interno del Servidor, 8.95KB, 233ms]
+  √  Get Token
+  1. Status code is 200
+  2. Should have no error
+  √  Content-Type is present
+  √  Response time is acceptable
+
+□ v1 / evento
+└ All
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/eventos?fwreinit=1&debug= [200 OK, 505B, 158ms]
+  √  Status code is 200
+  √  Response time is acceptable
+
+□ v1 / tiposparticipantes
+└ All
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/tiposparticipantes?fwreinit=1&debug= [200 OK, 515B, 149ms]
+  √  Get Token
+  √  StatusCode is 200
+  √  Should have no error
+  √  Response time is acceptable
+
+└ Get
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/tiposparticipantes/2978?fwreinit=1&debug= [200 OK, 520B, 164ms]
+  √  Status code is 200
+  √  Response time is acceptable
+
+□ v1 / formularios
+└ All
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/formularios?fwreinit=1&debug= [200 OK, 509B, 264ms]
+  √  Status code is 200
+  √  Response time is acceptable
+
+└ Fields
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/formularios/6837?fwreinit=1&debug= [200 OK, 16.56KB, 718ms]
+  √  Status code is 200
+  3. Response time is acceptable
+  √  Content-Type is present
+
+└ FieldsByGroup
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/formularios/6837/group/1177/fields?fwreinit=1&debug= [200 OK, 16.58KB, 889ms]
+  √  Status code is 200
+  4. Response time is acceptable
+
+└ Groups
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/formularios/6837/groups?fwreinit=1&debug= [200 OK, 16.57KB, 1111ms]
+  √  Status code is 200
+  5. Response time is acceptable
+
+└ Meta
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/formularios/meta?fwreinit=1&debug=1&debug= [200 OK, 515B, 272ms]
+  √  Get Token
+  √  StatusCode is 200
+  √  Should have no error
+  √  Response time is acceptable
+  √  Customer is valid
+
+└ ByIDFormulario
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/formularios/6879?fwreinit=1&debug= [200 OK, 16.56KB, 714ms]
+  √  Status code is 200
+  6. Response time is acceptable
+
+□ v1
+└ APIc Home
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/Token?fwreinit=1&debug= [200 OK, 497B, 253ms]
+  √  Status code is 200
+  √  Response time is acceptable
+
+→ Home
+  GET http://apic.oficina.tufabricadeventos.com/index.cfm/token?fwreinit=1&debug= [200 OK, 225.3KB, 211ms]
+  √  Status code is 200
+  √  Response time is acceptable
+
+┌─────────────────────────┬──────────┬──────────┐
+│                         │ executed │   failed │
+├─────────────────────────┼──────────┼──────────┤
+│              iterations │        1 │        0 │
+├─────────────────────────┼──────────┼──────────┤
+│                requests │       17 │        0 │
+├─────────────────────────┼──────────┼──────────┤
+│            test-scripts │       17 │        0 │
+├─────────────────────────┼──────────┼──────────┤
+│      prerequest-scripts │        0 │        0 │
+├─────────────────────────┼──────────┼──────────┤
+│              assertions │       50 │        6 │
+├─────────────────────────┴──────────┴──────────┤
+│ total run duration: 8.2s                      │
+├───────────────────────────────────────────────┤
+│ total data received: 298.88KB (approx)        │
+├───────────────────────────────────────────────┤
+│ average response time: 357ms                  │
+└───────────────────────────────────────────────┘
+
+  #  failure           detail                                     
+                                                                  
+ 1.  AssertionFailure  Status code is 200                         
+                       at assertion:2 in test-script              
+                       inside "v1 / auth / Obtain Token"          
+                                                                  
+ 2.  AssertionFailure  Should have no error                       
+                       at assertion:3 in test-script              
+                       inside "v1 / auth / Obtain Token"          
+                                                                  
+ 3.  AssertionFailure  Response time is acceptable                
+                       at assertion:2 in test-script              
+                       inside "v1 / formularios / Fields"         
+                                                                  
+ 4.  AssertionFailure  Response time is acceptable                
+                       at assertion:2 in test-script              
+                       inside "v1 / formularios / FieldsByGroup"  
+                                                                  
+ 5.  AssertionFailure  Response time is acceptable                
+                       at assertion:2 in test-script              
+                       inside "v1 / formularios / Groups"         
+                                                                  
+ 6.  AssertionFailure  Response time is acceptable                
+                       at assertion:2 in test-script              
+                       inside "v1 / formularios / ByIDFormulario" 

@@ -1,0 +1,16 @@
+{
+	"name": "API v1",
+	"version": "1.0.0",
+	"author": "Tufabricadeventos.com",
+	"homepage": "http://www.tufabricadeventos.com/",
+	"slug": "apic-v1",
+	"shortDescription": "APIc V1 Tufabricadeventos.com",
+	"type": "modules",
+	"keywords": "ColdBox,REST,module,API,Tufabricadeventos,",
+	"private": false,
+	"ignore": [
+		"**/.*",
+		"test",
+		"tests"
+	]
+}

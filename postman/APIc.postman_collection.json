@@ -1,0 +1,1019 @@
+{
+	"info": {
+		"name": "APIc",
+		"_postman_id": "116cf886-567d-1c3f-a672-cb0e24551a4f",
+		"description": "APIc Tufabricadeventos.com",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "v1",
+			"description": "",
+			"item": [
+				{
+					"name": "participantes",
+					"description": "",
+					"item": [
+						{
+							"name": "All",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"",
+											"tests[\"Get Token\"]                   = jsonData.data.token != '';",
+											"tests[\"StatusCode is 200\"]           = jsonData.statusCode === 200;",
+											"tests[\"Should have no error\"]        = jsonData.error === false;",
+											"tests[\"Response time is acceptable\"] = responseTime < 500;",
+											"",
+											"var schema = {",
+											"  \"data\": {",
+											"    \"count\": \"integer\",",
+											"    \"pages\": \"string\",",
+											"    \"records\": \"array\",",
+											"    \"total\": \"number\"",
+											"  },",
+											"  \"error\": \"\"",
+											"};",
+											"tests[\"Customer is valid\"] = tv4.validate(jsonData, schema, true);"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/participantes?fwreinit=1&debug=",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"apic",
+										"v1",
+										"es",
+										"token",
+										"participantes"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										}
+									]
+								},
+								"description": ""
+							},
+							"response": []
+						},
+						{
+							"name": "ByType",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"tests[\"Status code is 200\"]          = responseCode.code === 200;",
+											"tests[\"Response time is acceptable\"] = responseTime < 500;",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/participantes/Expositores-(comunicador)/page/1/rows/2?fwreinit=1&debug=",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"apic",
+										"v1",
+										"es",
+										"token",
+										"participantes",
+										"Expositores-(comunicador)",
+										"page",
+										"1",
+										"rows",
+										"2"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										}
+									]
+								},
+								"description": ""
+							},
+							"response": []
+						},
+						{
+							"name": "Get",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"tests[\"Status code is 200\"]          = responseCode.code === 200;",
+											"tests[\"Response time is acceptable\"] = responseTime < 500;",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/participantes/40087?fwreinit=1&debug=",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"apic",
+										"v1",
+										"es",
+										"token",
+										"participantes",
+										"40087"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										}
+									]
+								},
+								"description": ""
+							},
+							"response": []
+						},
+						{
+							"name": "All By ID Fields",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"tests[\"Get Token\"]                   = jsonData.data.token != '';",
+											"tests[\"StatusCode is 200\"]           = jsonData.statusCode === 200;",
+											"tests[\"Should have no error\"]        = jsonData.error === false;",
+											"tests[\"Response time is acceptable\"] = responseTime < 500;"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/participantes/page/1/rows/20?fwreinit=1&debug=&ids=9,133,134,252,255,40106,40117,40102,40174,40144",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"apic",
+										"v1",
+										"es",
+										"token",
+										"participantes",
+										"page",
+										"1",
+										"rows",
+										"20"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										},
+										{
+											"key": "ids",
+											"value": "9,133,134,252,255,40106,40117,40102,40174,40144",
+											"equals": true
+										}
+									]
+								},
+								"description": ""
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "auth",
+					"description": "",
+					"item": [
+						{
+							"name": "Generate Password",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"tests[\"Get password\"]                = jsonData.data.password === \"7Uw6zO65fPFrAkgYLayUAtxTM5OnVgCmeZHQlNI6MBM=\";",
+											"tests[\"Status code is 200\"]          = responseCode.code === 200;",
+											"tests[\"Content-Type is present\"]     = postman.getResponseHeader(\"Content-Type\");",
+											"tests[\"Response time is acceptable\"] = responseTime < 500;",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"id\": 1,\n\t\"password\": \"tufabricadeventos\",\n\t\"isevent\": true\n}"
+								},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/authenticate/new?fwreinit=1&debug=",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"authenticate",
+										"new"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										}
+									]
+								},
+								"description": ""
+							},
+							"response": []
+						},
+						{
+							"name": "Obtain Token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"tests[\"Get Token\"]                   = jsonData.data.token != '';",
+											"tests[\"Status code is 200\"]          = jsonData.statusCode === 200;",
+											"tests[\"Should have no error\"]        = jsonData.error === false;",
+											"tests[\"Content-Type is present\"]     = postman.getResponseHeader(\"Content-Type\");",
+											"tests[\"Response time is acceptable\"] = responseTime < 500;",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"password\": \"7Uw6zO65fPFrAkgYLayUAtxTM5OnVgCmeZHQlNI6MBM=\"\n}"
+								},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/authenticate?fwreinit=1&debug=",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"authenticate"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										}
+									]
+								},
+								"description": "Obtain access token and validate username/password"
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "evento",
+					"description": "",
+					"item": [
+						{
+							"name": "All",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"tests[\"Status code is 200\"] = responseCode.code === 200;",
+											"tests[\"Response time is acceptable\"] = responseTime < 500;"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/eventos?fwreinit=1&debug=",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"apic",
+										"v1",
+										"es",
+										"token",
+										"eventos"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										}
+									]
+								},
+								"description": ""
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "tiposparticipantes",
+					"description": "",
+					"item": [
+						{
+							"name": "All",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"tests[\"Get Token\"]                   = jsonData.data.token != '';",
+											"tests[\"StatusCode is 200\"]           = jsonData.statusCode === 200;",
+											"tests[\"Should have no error\"]        = jsonData.error === false;",
+											"tests[\"Response time is acceptable\"] = responseTime < 500;",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/tiposparticipantes?fwreinit=1&debug=",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"apic",
+										"v1",
+										"es",
+										"token",
+										"tiposparticipantes"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										}
+									]
+								},
+								"description": ""
+							},
+							"response": []
+						},
+						{
+							"name": "Get",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"tests[\"Status code is 200\"]          = responseCode.code === 200;",
+											"tests[\"Response time is acceptable\"] = responseTime < 500;"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/tiposparticipantes/2978?fwreinit=1&debug=",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"apic",
+										"v1",
+										"es",
+										"token",
+										"tiposparticipantes",
+										"2978"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										}
+									]
+								},
+								"description": ""
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "formularios",
+					"description": "",
+					"item": [
+						{
+							"name": "All",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"tests[\"Status code is 200\"]          = responseCode.code === 200;",
+											"tests[\"Response time is acceptable\"] = responseTime < 500;"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/formularios?fwreinit=1&debug=",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"apic",
+										"v1",
+										"es",
+										"token",
+										"formularios"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										}
+									]
+								},
+								"description": ""
+							},
+							"response": []
+						},
+						{
+							"name": "Fields",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"tests[\"Status code is 200\"]          = responseCode.code === 200;",
+											"tests[\"Response time is acceptable\"] = responseTime < 500;",
+											"tests[\"Content-Type is present\"]     = postman.getResponseHeader(\"Content-Type\");"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/formularios/6837?fwreinit=1&debug=",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"apic",
+										"v1",
+										"es",
+										"token",
+										"formularios",
+										"6837"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										}
+									]
+								},
+								"description": ""
+							},
+							"response": []
+						},
+						{
+							"name": "FieldsByGroup",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"tests[\"Status code is 200\"]          = responseCode.code === 200;",
+											"tests[\"Response time is acceptable\"] = responseTime < 500;"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/formularios/6837/group/1177/fields?fwreinit=1&debug=",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"apic",
+										"v1",
+										"es",
+										"token",
+										"formularios",
+										"6837",
+										"group",
+										"1177",
+										"fields"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										}
+									]
+								},
+								"description": ""
+							},
+							"response": []
+						},
+						{
+							"name": "Groups",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"tests[\"Status code is 200\"]          = responseCode.code === 200;",
+											"tests[\"Response time is acceptable\"] = responseTime < 500;"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/formularios/6837/groups?fwreinit=1&debug=",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"apic",
+										"v1",
+										"es",
+										"token",
+										"formularios",
+										"6837",
+										"groups"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										}
+									]
+								},
+								"description": ""
+							},
+							"response": []
+						},
+						{
+							"name": "Meta",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"var jsonData= JSON.parse(responseBody);",
+											"",
+											"tests[\"Get Token\"]                  = jsonData.data.token != '';",
+											"tests[\"StatusCode is 200\"]          = jsonData.statusCode === 200;",
+											"tests[\"Should have no error\"]       = jsonData.error === false;",
+											"tests[\"Response time is acceptable\"]= responseTime < 500;",
+											"",
+											"var schema= {",
+											"\"data\": {",
+											"\"count\": \"integer\",",
+											"\"pages\": \"string\",",
+											"\"records\": \"array\",",
+											"\"total\": \"number\"",
+											"  },",
+											"\"error\": \"\"",
+											"};",
+											"tests[\"Customer is valid\"]= tv4.validate(jsonData, schema, true);",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/formularios/meta?fwreinit=1&debug=1&debug=",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"apic",
+										"v1",
+										"es",
+										"token",
+										"formularios",
+										"meta"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										}
+									]
+								},
+								"description": ""
+							},
+							"response": []
+						},
+						{
+							"name": "ByIDFormulario",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"tests[\"Status code is 200\"]          = responseCode.code === 200;",
+											"tests[\"Response time is acceptable\"] = responseTime < 500;"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/token/formularios/6879?fwreinit=1&debug=",
+									"protocol": "http",
+									"host": [
+										"apic",
+										"oficina",
+										"tufabricadeventos",
+										"com"
+									],
+									"path": [
+										"index.cfm",
+										"apic",
+										"v1",
+										"es",
+										"token",
+										"formularios",
+										"6879"
+									],
+									"query": [
+										{
+											"key": "fwreinit",
+											"value": "1",
+											"equals": true
+										},
+										{
+											"key": "debug",
+											"value": "",
+											"equals": true
+										}
+									]
+								},
+								"description": ""
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "APIc Home",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"]          = responseCode.code === 200;",
+									"tests[\"Response time is acceptable\"] = responseTime < 500;"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"url": {
+							"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/apic/v1/es/Token?fwreinit=1&debug=",
+							"protocol": "http",
+							"host": [
+								"apic",
+								"oficina",
+								"tufabricadeventos",
+								"com"
+							],
+							"path": [
+								"index.cfm",
+								"apic",
+								"v1",
+								"es",
+								"Token"
+							],
+							"query": [
+								{
+									"key": "fwreinit",
+									"value": "1",
+									"equals": true
+								},
+								{
+									"key": "debug",
+									"value": "",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Home",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"]          = responseCode.code === 200;",
+							"tests[\"Response time is acceptable\"] = responseTime < 500;"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "http://apic.oficina.tufabricadeventos.com/index.cfm/token?fwreinit=1&debug=",
+					"protocol": "http",
+					"host": [
+						"apic",
+						"oficina",
+						"tufabricadeventos",
+						"com"
+					],
+					"path": [
+						"index.cfm",
+						"token"
+					],
+					"query": [
+						{
+							"key": "fwreinit",
+							"value": "1",
+							"equals": true
+						},
+						{
+							"key": "debug",
+							"value": "",
+							"equals": true
+						}
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}

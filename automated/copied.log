@@ -1,0 +1,473 @@
+Finding modified or new files...
+BACKUP 2017-11-14 09:32:40 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/Authenticate.cfc
+copying /tests/specs/unit/QueryServiceTest.cfc
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/Response.cfc
+copying /config/WireBox.cfc
+copying /config/Coldbox.cfc
+copying /config/Application.cfc
+copying /config/CacheBox.cfc
+copying /modules_app/apic-v1/handlers/Participantes.cfc
+copying /modules_app/apic-v1/handlers/Home.cfc
+copying /modules_app/apic-v1/handlers/Formularios.cfc
+copying /modules_app/apic-v1/ModuleConfig.cfc
+copying /box.json
+End finding
+.
+BACKUP 2017-11-14 10:12:03 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/Authenticate.cfc
+copying /tests/specs/unit/QueryServiceTest.cfc
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/Response.cfc
+copying /config/WireBox.cfc
+copying /config/Coldbox.cfc
+copying /config/Application.cfc
+copying /config/CacheBox.cfc
+copying /modules_app/apic-v1/handlers/Participantes.cfc
+copying /modules_app/apic-v1/handlers/Home.cfc
+copying /modules_app/apic-v1/handlers/Formularios.cfc
+copying /modules_app/apic-v1/ModuleConfig.cfc
+copying /includes/helpers/QuerysHelper.cfm
+copying /box.json
+End finding
+.
+BACKUP 2017-11-15 09:22:43 -----------
+Finding modified or new files...
+Init copy...
+copying /models/formulario/FormularioDAO.cfc
+copying /models/BaseModel.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/traduccion/TraduccionService.cfc
+copying /config/Coldbox.cfc
+copying /includes/helpers/ApplicationHelper.cfm
+copying /includes/helpers/GenerarConsultaInformeAgrupacionRestoAgrupaciones.cfm
+copying /includes/helpers/QuerysHelper.cfm
+End finding
+.
+BACKUP 2017-11-15 14:16:06 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/BaseHandler.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/views/home/documentation.cfm
+copying /includes/helpers/QuerysHelper.cfm
+End finding
+.
+BACKUP 2017-11-16 10:08:58 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/BaseHandler.cfc
+copying /.jsbeautifyrc
+copying /.cflintrc
+copying /.gitignore
+copying /Application.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/Response.cfc
+copying /config/Coldbox.cfc
+copying /includes/helpers/QuerysHelper.cfm
+End finding
+.
+BACKUP 2017-11-16 14:41:54 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/BaseHandler.cfc
+copying /.jsbeautifyrc
+copying /.cflintrc
+copying /.gitignore
+copying /interceptors/LangInterceptor.cfc
+copying /interceptors/SecurityInterceptor.cfc
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /interceptors/DatabaseInterceptor.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/BaseModel.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/Response.cfc
+copying /config/Coldbox.cfc
+copying /config/CacheBox.cfc
+copying /modules_app/apic-v1/handlers/Home.cfc
+copying /modules_app/apic-v1/views/home/documentation.cfm
+copying /includes/helpers/ApplicationHelper.cfm
+copying /includes/helpers/QuerysHelper.cfm
+End finding
+.
+BACKUP 2017-11-16 19:05:48 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/BaseHandler.cfc
+copying /handlers/Authenticate.cfc
+copying /.jsbeautifyrc
+copying /.cflintrc
+copying /.gitignore
+copying /interceptors/LangInterceptor.cfc
+copying /interceptors/SecurityInterceptor.cfc
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /interceptors/DatabaseInterceptor.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/BaseModel.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/Response.cfc
+copying /models/security/AuthenticationService.cfc
+copying /models/traduccion/TraduccionDAO.cfc
+copying /models/traduccion/TraduccionService.cfc
+copying /config/Coldbox.cfc
+copying /config/CacheBox.cfc
+copying /modules_app/apic-v1/handlers/Home.cfc
+copying /modules_app/apic-v1/views/home/documentation.cfm
+copying /includes/helpers/ApplicationHelper.cfm
+End finding
+.
+BACKUP 2017-11-17 09:04:21 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/BaseHandler.cfc
+copying /handlers/Authenticate.cfc
+copying /.jsbeautifyrc
+copying /.cflintrc
+copying /.gitignore
+copying /interceptors/LangInterceptor.cfc
+copying /interceptors/SecurityInterceptor.cfc
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /interceptors/DatabaseInterceptor.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/BaseModel.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/Response.cfc
+copying /models/security/AuthenticationService.cfc
+copying /models/traduccion/TraduccionDAO.cfc
+copying /models/traduccion/TraduccionService.cfc
+copying /config/Coldbox.cfc
+copying /config/Application.cfc
+copying /config/CacheBox.cfc
+copying /modules_app/apic-v1/handlers/Home.cfc
+copying /modules_app/apic-v1/views/home/documentation.cfm
+copying /includes/helpers/ApplicationHelper.cfm
+copying /coldbox/system/core/util/Util.cfc
+End finding
+.
+BACKUP 2017-11-17 12:50:57 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/BaseHandler.cfc
+copying /handlers/Authenticate.cfc
+copying /interceptors/LangInterceptor.cfc
+copying /interceptors/SecurityInterceptor.cfc
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /interceptors/DatabaseInterceptor.cfc
+copying /cf-jwt-simple/jwt.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/campo/CampoFormularioImagen.cfc
+copying /models/campo/CampoFormularioPais.cfc
+copying /models/campo/CampoFormularioText.cfc
+copying /models/campo/CampoFormularioRelacion.cfc
+copying /models/campo/CampoFormularioList.cfc
+copying /models/campo/CampoFormularioTextArea.cfc
+copying /models/campo/CampoFormularioRadio.cfc
+copying /models/campo/CampoFormularioPoblacion.cfc
+copying /models/campo/CampoFormularioProvincia.cfc
+copying /models/campo/CampoFormularioFecha.cfc
+copying /models/campo/CampoFormulario.cfc
+copying /models/Response.cfc
+copying /models/security/AuthenticationService.cfc
+copying /models/traduccion/TraduccionDAO.cfc
+copying /models/traduccion/TraduccionService.cfc
+copying /config/Routes.cfm
+copying /config/Coldbox.cfc
+copying /config/Application.cfc
+copying /config/CacheBox.cfc
+copying /modules_app/apic-v1/handlers/Home.cfc
+copying /modules_app/apic-v1/views/home/documentation.cfm
+copying /includes/helpers/GestionParticipantes.cfm
+copying /includes/helpers/QuerysHelper.cfm
+copying /coldbox/system/core/util/Util.cfc
+End finding
+.
+BACKUP 2017-11-17 14:27:48 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/BaseHandler.cfc
+copying /handlers/Authenticate.cfc
+copying /interceptors/LangInterceptor.cfc
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /interceptors/DatabaseInterceptor.cfc
+copying /cf-jwt-simple/jwt.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/campo/CampoFormularioCheck.cfc
+copying /models/campo/CampoFormularioImagen.cfc
+copying /models/campo/CampoDAO.cfc
+copying /models/campo/CampoFormularioPais.cfc
+copying /models/campo/CampoFormularioText.cfc
+copying /models/campo/CampoFormularioRelacion.cfc
+copying /models/campo/CampoFormularioList.cfc
+copying /models/campo/CampoFormularioTextArea.cfc
+copying /models/campo/CampoFormularioRadio.cfc
+copying /models/campo/CampoFormularioPoblacion.cfc
+copying /models/campo/CampoFormularioProvincia.cfc
+copying /models/campo/CampoFormularioFecha.cfc
+copying /models/campo/CampoFormulario.cfc
+copying /models/security/AuthenticationService.cfc
+copying /models/traduccion/TraduccionDAO.cfc
+copying /models/traduccion/TraduccionService.cfc
+copying /config/Routes.cfm
+copying /config/Coldbox.cfc
+copying /config/Application.cfc
+copying /config/CacheBox.cfc
+copying /modules_app/apic-v1/views/home/documentation.cfm
+copying /includes/helpers/GestionParticipantes.cfm
+copying /includes/helpers/QuerysHelper.cfm
+copying /coldbox/system/core/util/Util.cfc
+End finding
+.
+BACKUP 2017-11-20 14:32:39 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/BaseHandler.cfc
+copying /cf-jwt-simple/jwt.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/tipoparticipante/TipoParticipanteService.cfc
+copying /models/security/AuthenticationService.cfc
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/handlers/Formularios.cfc
+copying /modules_app/apic-v1/ModuleConfig.cfc
+End finding
+.
+BACKUP 2017-11-21 09:21:22 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/BaseHandler.cfc
+copying /cf-jwt-simple/jwt.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/BaseModel.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/tipoparticipante/TipoParticipanteService.cfc
+copying /models/security/AuthenticationService.cfc
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/handlers/Formularios.cfc
+copying /modules_app/apic-v1/ModuleConfig.cfc
+End finding
+.
+BACKUP 2017-11-21 12:38:58 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/Echo.cfc
+copying /handlers/BaseHandler.cfc
+copying /handlers/Authenticate.cfc
+copying /logs/COLDBOXTRACER.log
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /cf-jwt-simple/jwt.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/evento/EventoService.cfc
+copying /models/BaseModel.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/informe/InformeDAO.cfc
+copying /models/tipoparticipante/TipoParticipanteService.cfc
+copying /models/security/AuthenticationService.cfc
+copying /config/Routes.cfm
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/handlers/Participantes.cfc
+copying /modules_app/apic-v1/handlers/Home.cfc
+copying /modules_app/apic-v1/handlers/TiposParticipantes.cfc
+copying /modules_app/apic-v1/handlers/Formularios.cfc
+copying /modules_app/apic-v1/ModuleConfig.cfc
+End finding
+.
+BACKUP 2017-11-21 12:39:24 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/Echo.cfc
+copying /handlers/BaseHandler.cfc
+copying /handlers/Authenticate.cfc
+copying /logs/COLDBOXTRACER.log
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /cf-jwt-simple/jwt.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/evento/EventoService.cfc
+copying /models/BaseModel.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/informe/InformeDAO.cfc
+copying /models/tipoparticipante/TipoParticipanteService.cfc
+copying /models/security/AuthenticationService.cfc
+copying /config/Routes.cfm
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/handlers/Participantes.cfc
+copying /modules_app/apic-v1/handlers/Home.cfc
+copying /modules_app/apic-v1/handlers/TiposParticipantes.cfc
+copying /modules_app/apic-v1/handlers/Formularios.cfc
+copying /modules_app/apic-v1/ModuleConfig.cfc
+End finding
+.
+BACKUP 2017-11-21 15:09:47 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/Echo.cfc
+copying /handlers/BaseHandler.cfc
+copying /handlers/Authenticate.cfc
+copying /logs/COLDBOXTRACER.log
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/evento/EventoService.cfc
+copying /models/BaseModel.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/informe/InformeDAO.cfc
+copying /models/tipoparticipante/TipoParticipanteService.cfc
+copying /models/security/AuthenticationService.cfc
+copying /config/Routes.cfm
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/handlers/Participantes.cfc
+copying /modules_app/apic-v1/handlers/Home.cfc
+copying /modules_app/apic-v1/handlers/TiposParticipantes.cfc
+copying /modules_app/apic-v1/handlers/Formularios.cfc
+copying /modules_app/apic-v1/ModuleConfig.cfc
+End finding
+.
+BACKUP 2017-11-22 09:47:23 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/Echo.cfc
+copying /handlers/BaseHandler.cfc
+copying /handlers/Authenticate.cfc
+copying /logs/COLDBOXTRACER.log
+copying /logs/system.log
+copying /logs/access.log
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /access/FILELOG.log
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/evento/EventoService.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/informe/InformeDAO.cfc
+copying /models/tipoparticipante/TipoParticipanteService.cfc
+copying /models/Response.cfc
+copying /models/security/AuthenticationService.cfc
+copying /config/Routes.cfm
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/handlers/Participantes.cfc
+copying /modules_app/apic-v1/handlers/Home.cfc
+copying /modules_app/apic-v1/handlers/TiposParticipantes.cfc
+copying /modules_app/apic-v1/handlers/Formularios.cfc
+copying /modules_app/apic-v1/ModuleConfig.cfc
+copying /includes/helpers/ApplicationHelper.cfm
+End finding
+.
+BACKUP 2017-11-22 10:53:16 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/Echo.cfc
+copying /handlers/BaseHandler.cfc
+copying /handlers/Authenticate.cfc
+copying /.gitignore
+copying /logs/COLDBOXTRACER.log
+copying /logs/system.log
+copying /logs/access.log
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /cf-jwt-simple/jwt.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/evento/EventoService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/informe/InformeDAO.cfc
+copying /models/TokenService.cfc
+copying /models/tipoparticipante/TipoParticipanteService.cfc
+copying /models/Response.cfc
+copying /models/security/AuthenticationService.cfc
+copying /config/Routes.cfm
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/handlers/Home.cfc
+copying /modules_app/apic-v1/handlers/Formularios.cfc
+copying /modules_app/apic-v1/ModuleConfig.cfc
+copying /includes/helpers/ApplicationHelper.cfm
+End finding
+.
+BACKUP 2017-11-22 10:56:57 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/Echo.cfc
+copying /handlers/BaseHandler.cfc
+copying /handlers/Authenticate.cfc
+copying /.gitignore
+copying /logs/COLDBOXTRACER.log
+copying /logs/system.log
+copying /logs/access.log
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /cf-jwt-simple/jwt.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/evento/EventoService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/informe/InformeDAO.cfc
+copying /models/TokenService.cfc
+copying /models/tipoparticipante/TipoParticipanteService.cfc
+copying /models/Response.cfc
+copying /models/security/AuthenticationService.cfc
+copying /config/Routes.cfm
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/handlers/Home.cfc
+copying /modules_app/apic-v1/handlers/Formularios.cfc
+copying /modules_app/apic-v1/ModuleConfig.cfc
+copying /includes/helpers/ApplicationHelper.cfm
+End finding
+.
