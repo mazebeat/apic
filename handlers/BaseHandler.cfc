@@ -196,9 +196,9 @@ component extends="coldbox.system.EventHandler"{
 		if(!len(event.getCurrentView())){
 			// if(getSetting("environment") EQ "development" && isdefined("url.debug")) {
 			if(isdefined("url.debug") && isdefined('url.show') && url.show IS 1) {
-				writeDump(var="#event.getCurrentEvent()#", label="Event");
-				writeDump(var="#session#", label="Session");
-				writeDump(var="#prc.response.getDataPacket()#", label="JSON Response");
+				// writeDump(var="#event.getCurrentEvent()#", label="Event");
+				// writeDump(var="#prc.response.getDataPacket()#", label="JSON Response");
+				// writeDump(var="#session#", label="Session");
 				abort;
 			}
 			
