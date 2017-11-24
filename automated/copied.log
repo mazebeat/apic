@@ -506,3 +506,20 @@ copying /config/Coldbox.cfc
 copying /includes/helpers/ApplicationHelper.cfm
 End finding
 .
+BACKUP 2017-11-24 08:18:01 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/BaseHandler.cfc
+copying /logs/system.log
+copying /logs/access.log
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/security/AuthenticationService.cfc
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/handlers/Participantes.cfc
+copying /includes/helpers/ApplicationHelper.cfm
+End finding
+.

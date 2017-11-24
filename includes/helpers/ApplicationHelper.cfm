@@ -34,7 +34,7 @@
                 </cfif>
                 <cfif DateDiff("s", application.rate_limiter[CGI.REMOTE_ADDR].last_attempt, NOW()) LT arguments.waitTimeRequest>
                     <cfif application.rate_limiter[CGI.REMOTE_ADDR].attempts GTE arguments.maxRequest>                    
-                        <!--- <cfset logBox.getLogger("fileLogger").info("limiter invoked for: '#cgi.remote_addr#', #application.rate_limiter[CGI.REMOTE_ADDR].attempts#, #cgi.request_method#, '#cgi.SCRIPT_NAME#', '#cgi.QUERY_STRING#', '#cgi.http_user_agent#', '#application.rate_limiter[CGI.REMOTE_ADDR].last_attempt#', #listlen(cgi.http_cookie,";")#")> --->
+                        <cfset logBox.getLogger("fileLogger").info("limiter invoked for: '#cgi.remote_addr#', #application.rate_limiter[CGI.REMOTE_ADDR].attempts#, #cgi.request_method#, '#cgi.SCRIPT_NAME#', '#cgi.QUERY_STRING#', '#cgi.http_user_agent#', '#application.rate_limiter[CGI.REMOTE_ADDR].last_attempt#', #listlen(cgi.http_cookie,";")#")>
                         <cfset prc.response.addHeader("Retry-After", arguments.waitTimeRequest)
                                             .setError(true)
                                             .addMessage("You are making too many requests too fast, please slow down and wait #arguments.waitTimeRequest# seconds (#cgi.remote_addr#)")

@@ -86,32 +86,34 @@
 		<cfargument name="id_participante" type="numeric" required="true">
 
 		<!--- <cftry> --->
-			<cfquery name="local.participantesByID" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
-				SELECT nombre, apellidos, email_participante AS email, nombre_empresa, id_tipo_participante, id_sala
-				FROM vParticipantes
-				WHERE id_participante=<cfqueryparam value="#arguments.id_participante#" CFSQLType="CF_SQL_INTEGER">
-				AND id_evento=<cfqueryparam value="#session.id_evento#" CFSQLType="CF_SQL_INTEGER">
-			</cfquery>
+			<cfif NOT structKeyExists(arguments.rc, 'ids')>			
+				<cfif NOT isdefined('session.clientsession.defaults.form.fields')>					
+					<cfset session.clientsession.defaults.form.fields = defaultValues()>
+				<cfelseif isEmpty(session.clientsession.defaults.form.fields)>
+					<cfset session.clientsession.defaults.form.fields = defaultValues()>
+				</cfif>
+				<cfset arguments.event.paramValue('ids', session.clientsession.defaults.form.fields)>			
+			</cfif>
+		
+			<cfset var datosConsulta = qs.generarConsultaInforme(arguments.rc.ids)>
 			
-			<cfif queryColumnExists(local.participantesByID, 'id_tipo_participante')>
-				<cfquery name="local.vTipoParticipante" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#"> 
-					SELECT nombre FROM vTiposDeParticipantes
-					WHERE id_tipo_participante=<cfqueryparam value="#local.participantesByID.id_tipo_participante#" CFSQLType="CF_SQL_INTEGER">
-				</cfquery>
+			<cfoutput>
+				<cfsavecontent variable = "consulta">
+					SELECT 
+						p.id_participante, 
+						p.id_tipo_participante AS 'id_tipo_participante',
+						#datosConsulta#
+					FROM vParticipantes p
+					WHERE p.id_participante=#arguments.id_participante#
+					AND p.id_evento=#session.id_evento#
+				</cfsavecontent>
+			</cfoutput>
+		
+			<cfquery name="local.participantesByID" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
+				#consulta#
+			</cfquery>
 
-				<cfset queryDeleteColumn(local.participantesByID, "id_tipo_participante")> 
-				<cfset queryAddColumn(local.participantesByID, "tipo_participante", "varchar", [local.vTipoParticipante.nombre])>
-			</cfif>
-
-			<cfif queryColumnExists(local.participantesByID, 'id_sala')>
-				<cfquery name="local.vSalas" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#"> 
-					SELECT nombre FROM vSalas
-					WHERE id_sala=<cfqueryparam value="#local.participantesByID.id_sala#" CFSQLType="CF_SQL_INTEGER">
-				</cfquery>
-
-				<cfset queryDeleteColumn(local.participantesByID, "id_sala")> 
-				<cfset queryAddColumn(local.participantesByID, "sala", "varchar", [local.vSalas.nombre])>
-			</cfif>
+			<cfset local.participantesByID = qs.rellenarDatosInforme(consulta, local.participantesByID)>
 
 			<cfreturn local.participantesByID>
 		<!--- <cfcatch type="any">

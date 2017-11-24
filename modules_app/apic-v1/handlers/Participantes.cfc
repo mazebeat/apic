@@ -90,9 +90,6 @@
 		<cfargument name="rc">
 		<cfargument name="prc">	
 
-
-		<!--- <cfdump var="#createObject("component", "adminmodels.query")#"><cfabort> --->
-
 		<cfset s = service.all(arguments.event, arguments.rc)>
 
 		<cfif NOT structIsEmpty(s.data.records)>

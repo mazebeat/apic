@@ -8,6 +8,7 @@
 	<cfproperty name="dao"		inject="model:participante.ParticipanteDAO">
     <cfproperty name="log"		inject="logbox:logger:{this}">
 	<cfproperty name="tpDAO"	inject="model:tipoparticipante.TipoParticipanteDAO">
+	<cfproperty name="cache" 	inject="cachebox:default">
     
 <!------------------------------------------- CONSTRUCTOR ------------------------------------------->
 	<cffunction name="init" access="public" returntype="ParticipanteService" output="false" hint="constructor">
@@ -71,18 +72,23 @@
 
 		<cfset s = { ok =true, mensaje="", data ={ "records"={},  "count"=0 } }>
 
-		<cftry>
-			<cfset var records = dao.get(event, rc, id_participante)>
-			<cfif isdefined("url.debug")>
-				<cfdump var="#records#" label="records">
-				<cfabort>
-			</cfif>
+		<!--- <cftry> --->
+			<!--- <cfset var cacheKey = 'q-participante-get-#id_participante#'>
+
+			<cfif cache.lookup(cacheKey)>
+				<cfset var records = cache.get(cacheKey)>
+			<cfelse> --->
+				<cfset var records = dao.get(event, rc, id_participante)>
+
+				<!--- <cfset cache.set(cacheKey, records, 60, 30)> --->
+			<!--- </cfif> --->
+
 			<cfset s.data.records = records>
-			<cfset s.data.count = records.recordCount>
-		<cfcatch type = "any">
+			<cfset s.data.count   = records.recordCount>
+	<!--- 	<cfcatch type = "any">
 			<cfthrow type="any" message="#cfcatch.Message#">
 		</cfcatch>
-		</cftry> 
+		</cftry>  --->
 		
 		<cfreturn s>
 	</cffunction>

@@ -116,8 +116,8 @@
 				id_tipo_campo, 
 				id_tipo_campo_fijo
 			FROM vCampos
-			WHERE id_idioma = <cfqueryparam value="#session.language#" CFSQLType="CF_SQL_CHAR">
-			AND id_agrupacion IN (<cfqueryparam value="#arguments.ids_agrupacion#" CFSQLType="CF_SQL_INTEGER" list="yes">)		
+			WHERE id_agrupacion IN (<cfqueryparam value="#arguments.ids_agrupacion#" CFSQLType="CF_SQL_INTEGER" list="yes">)		
+			AND id_idioma = <cfqueryparam value="#session.language#" CFSQLType="CF_SQL_CHAR">
 			AND id_tipo_campo = 1
 			AND id_tipo_campo_fijo IN (4,6,9)
 		</cfquery>

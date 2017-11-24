@@ -441,7 +441,9 @@ component extends="coldbox.system.EventHandler"{
 		}
 
 		/* Do not check authentication for the authenticate handler */
-		if (findNoCase("authenticate", event.getCurrentEvent()) == 0 && findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
+		if (findNoCase("Echo", event.getCurrentEvent()) == 0 && 
+			findNoCase("Authenticate", event.getCurrentEvent()) == 0 && 
+			findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
 
 			event.paramValue("token","");
 

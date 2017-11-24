@@ -74,38 +74,12 @@
 		<cfargument name="ids_campo" type="any" required="true" default="" displayname="Obtiene campos por ID" hint="Lista de IDs campo separados por coma">
 
 		<cfquery name="local.qCamposInforme" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
-			SELECT titulo, id_campo , id_agrupacion , id_tipo_campo_fijo, id_tipo_campo
-			FROM
-			(
-				SELECT titulo, ic.id_campo, id_tipo_campo, ic.id_agrupacion, ci.id_tipo_campo_fijo
-				FROM vInformesCamposFormularios ic 
-				INNER JOIN vCampos ci on ic.id_campo=ci.id_campo
-				WHERE id_idioma=<cfqueryparam value="#session.language#" cfsqltype="CF_SQL_CHAR">
-				AND ci.id_campo IN (<cfqueryparam value="#arguments.ids_campo#" CFSQLType="CF_SQL_INTEGER" list="yes">)
-
-				UNION ALL
-
-				SELECT titulo, ic.id_campo, id_tipo_campo, ic.id_agrupacion, 0 AS id_tipo_campo_fijo
-				FROM vInformesCamposFormularios ic 
-				INNER JOIN vCamposAgrupacionesAutomaticas ci 	
-				ON ic.id_campo=ci.id_campo
-				WHERE id_idioma=<cfqueryparam value="#session.language#" cfsqltype="CF_SQL_CHAR">
-				AND ci.id_campo IN (<cfqueryparam value="#arguments.ids_campo#" CFSQLType="CF_SQL_INTEGER" list="yes">)
-			) a
-			GROUP BY id_campo;
+			SELECT id_campo, id_tipo_campo, id_agrupacion, id_tipo_campo_fijo
+			FROM  vCampos  
+			WHERE id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_CHAR">
+			AND id_campo IN (<cfqueryparam value="#arguments.ids_campo#" CFSQLType="CF_SQL_INTEGER" list="yes">)
+			ORDER BY NULL
 		</cfquery>
-
-		<!--- 
-		SELECT 
-			titulo, 
-			id_campos, 
-			id_tipo_campo,
-			IFNULL(tiposCamposFijos_id_tipo_campo_fijo, 0)  AS id_tipo_campo_fijo,
-			agrupacionesDeCampos_id_agrupacion AS id_agrupacion
-		FROM campos
-		WHERE id_campos IN (<cfqueryparam value="#arguments.ids_campo#" CFSQLType="CF_SQL_INTEGER" list="yes">)
-		AND id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_CHAR">;
-		--->
 
 		<cfset var listaCampos = valuelist(local.qCamposInforme.id_campo)>
 
@@ -129,7 +103,8 @@
 				<cfcase value="3,4,5,6,7,8,9,99,109,110,111,112,118,119,120,131,133,134,135,235,236,237,238,239,240,248,242,246,244,154,157,158,159,247,250,253,254,255,259,559,560,264,265,160,268,168,169,170">
 					<cfif (arrayFind([3,4,6,7,8,9,109,110,111,112,118,119,120,131,235,236,237,238,239,240,248,244,157,158,254,255,559,560,160], id_campo) gt 0)>
 						<!--- CAMPOS NORMALES --->
-						<cfset ArrayAppend(s, generarUnaColumnaCampoOtros(id_campo, titulo))>
+						<!--- <cfset ArrayAppend(s, generarUnaColumnaCampoOtros(id_campo, titulo))> --->
+						<cfset ArrayAppend(s, generarUnaColumnaCampoOtros(id_campo))>
 						
 						<!--- <cfif structKeyExists(arguments.rc, 'CAMPO_#id_campo#')>
 							<cfset valor = evaluate('arguments.rc.CAMPO_#id_campo#')>
@@ -153,7 +128,8 @@
 					</cfif>
 				</cfcase>
 				<cfdefaultcase>
-					<cfset ArrayAppend(s, trim(generarUnaColumna(titulo, id_agrupacion, id_campo, id_tipo_campo, id_tipo_campo_fijo)))>
+					<!--- <cfset ArrayAppend(s, trim(generarUnaColumna(titulo, id_agrupacion, id_campo, id_tipo_campo, id_tipo_campo_fijo)))> --->
+					<cfset ArrayAppend(s, trim(generarUnaColumna(id_agrupacion, id_campo, id_tipo_campo, id_tipo_campo_fijo)))>
 					
 					<!--- <cfif listfind('2,3,4', id_tipo_campo) gt 0>
 						<cfset ArrayAppend(w,  generarUnaColumnaWhere(id_agrupacion, id_campo, valor, id_tipo_campo_fijo))>
@@ -166,7 +142,7 @@
 	</cffunction>
 
 	<cffunction name="generarUnaColumna" access="public" returntype="string" output="false">
-		<cfargument name="titulo"				type="string" 	required="true"/>
+		<!--- <cfargument name="titulo"				type="string" 	required="true"/> --->
 		<cfargument name="id_agrupacion" 		type="numeric"	required="true"/>
 		<cfargument name="id_campo" 			type="numeric"	required="true"/>
 		<cfargument name="id_tipo_campo" 		type="numeric"	required="true"/>
@@ -355,11 +331,11 @@
 
 	<cffunction name="generarUnaColumnaCampoOtros" access="public" rturntype="string" output="false">
 		<cfargument name="id_campo" required="true"/>
-		<cfargument name="titulo" required="true"/>
+		<!--- <cfargument name="titulo" required="true"/> --->
 
 		<cfset var s = ''>
 		<cfinclude template="/default/admin/helpers/string.cfm">
-		<cfset var n = codificarNombreColumna(arguments.titulo)>
+		<!--- <cfset var n = codificarNombreColumna(arguments.titulo)> --->
 
 		<cfoutput>
 			<cfswitch expression="#arguments.id_campo#">
