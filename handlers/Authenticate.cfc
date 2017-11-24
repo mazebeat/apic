@@ -13,8 +13,8 @@ component extends="Base" {
 
 	// REST Allowed HTTP Methods Ex: this.allowedMethods = 
 	this.allowedMethods = {
-		"index"            = METHODS.POST,
-		"generatePassword" = METHODS.POST
+		"index"            = METHODS.POST & "," & METHODS.OPTIONS,
+		"generatePassword" = METHODS.POST & "," & METHODS.OPTIONS
 	};
 
 	/**

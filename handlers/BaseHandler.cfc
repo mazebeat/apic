@@ -27,7 +27,8 @@ component extends="coldbox.system.EventHandler"{
 		"POST"  = "POST",
 		"PATCH" = "PATCH",
 		"PUT"   = "PUT",
-		"DELETE"= "DELETE"
+		"DELETE"= "DELETE",
+		"OPTIONS" = "OPTIONS"
 	};
 	
 	// HTTP STATUS CODES
@@ -116,9 +117,10 @@ component extends="coldbox.system.EventHandler"{
 	* Around handler for all actions it inherits
 	*/
 	function aroundHandler(event, rc, prc, targetAction, eventArguments) {
-
+	
 		try{
-			// start a resource timer
+			
+
 			var stime    = getTickCount();
 
 			// prepare our response object
@@ -141,6 +143,18 @@ component extends="coldbox.system.EventHandler"{
 
 			// Check Session			
 			validateSession(event, rc, prc);
+
+			event.setHTTPHeader(name="Access-Control-Allow-Origin", value="*");
+			event.setHTTPHeader(name='Access-Control-Allow-Methods', value='GET,POST,PUT,DELETE,OPTIONS');
+			// event.setHTTPHeader(name='Access-Control-Allow-Headers', value='Content-Type'); 
+			// event.setHTTPHeader(name='Access-Control-Allow-Credentials', value='false'); 
+			// event.setHTTPHeader(name='Access-Control-Max-Age', value='60'); 
+
+			// prc.response.addHeader('Access-Control-Allow-Origin', '*')
+			// 			.addHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+			// 			.addHeader('Access-Control-Allow-Headers', 'Content-Type')
+			// 			.addHeader('Access-Control-Allow-Credentials', 'false')
+			// 			.addHeader('Access-Control-Max-Age', '60');
 
 			// Execute action
 			if (!prc.response.getError()) {
@@ -196,8 +210,8 @@ component extends="coldbox.system.EventHandler"{
 		if(!len(event.getCurrentView())){
 			// if(getSetting("environment") EQ "development" && isdefined("url.debug")) {
 			if(isdefined("url.debug") && isdefined('url.show') && url.show IS 1) {
-				// writeDump(var="#event.getCurrentEvent()#", label="Event");
-				// writeDump(var="#prc.response.getDataPacket()#", label="JSON Response");
+				writeDump(var="#event.getCurrentEvent()#", label="Event");
+				writeDump(var="#prc.response.getDataPacket()#", label="JSON Response");
 				// writeDump(var="#session#", label="Session");
 				abort;
 			}
@@ -217,7 +231,7 @@ component extends="coldbox.system.EventHandler"{
 		// Global Response Headers
 		prc.response.addHeader("x-response-time", prc.response.getResponseTime())
 				.addHeader("x-cached-response", prc.response.getCachedResponse());
-		
+	
 		// Response Headers
 		for(var thisHeader in prc.response.getHeaders()){
 			event.setHTTPHeader(name=thisHeader.name, value=thisHeader.value);
@@ -273,7 +287,8 @@ component extends="coldbox.system.EventHandler"{
 		// Setup Response
 		prc.response = getModel("Response")
 			.setError(true)
-			.addMessage("InvalidHTTPMethod Execution of (#faultAction#): #event.getHTTPMethod()#")
+			// .addMessage("InvalidHTTPMethod Execution of (#faultAction#): #event.getHTTPMethod()#")
+			.addMessage("InvalidHTTPMethod Execution: #event.getHTTPMethod()#")
 			.setStatusCode(STATUS.NOT_ALLOWED)
 			.setStatusText(MESSAGES.NOT_ALLOWED);
 		// Render Error Out
@@ -421,9 +436,9 @@ component extends="coldbox.system.EventHandler"{
 	 */
 	private any function checkAuthenticationToken(event, rc, prc, targetAction, eventArguments, args) {
 		/* Only accept application/json for content body on posts */
-		if (!prc.response.getError() && event.getHTTPMethod() == "POST" || event.getHTTPMethod() == "PUT") {
+		if (!prc.response.getError() && event.getHTTPMethod() == "POST" || event.getHTTPMethod() == "PUT" || event.getHTTPMethod() == "OPTIONS") {
 			
-			if (event.getHTTPHeader("Content-Type") != "application/json") {
+			if (findNoCase("application/json", event.getHTTPHeader("Content-Type")) == 0) {
 				prc.response.setError(true)
 							.addMessage("Content-Type application/json is required!")
 							.setStatusCode(STATUS.BAD_REQUEST)

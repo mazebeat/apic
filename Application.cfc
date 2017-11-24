@@ -52,6 +52,12 @@ component{
 		// Process ColdBox Request
 		application.cbBootstrap.onRequestStart( arguments.targetPage );
 
+		var pageCtx = getpagecontext().getresponse();
+		pageCtx.setHeader('Access-Control-Allow-Origin', "*");
+		pageCtx.setHeader('Access-Control-Allow-Headers', "Origin, X-Requested-With, Content-Type, Accept");
+		pageCtx.setHeader('Access-Control-Allow-Methods', "GET, POST, PUT, DELETE, OPTIONS");
+		pageCtx.setHeader('Access-Control-Allow-Credentials', "true");
+		
 		return true;
 	}
 
