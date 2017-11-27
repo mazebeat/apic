@@ -548,3 +548,8 @@ copying /logs/access.log
 copying /Application.cfc
 End finding
 .
+BACKUP 2017-11-27 08:38:17 -----------
+Finding modified or new files...
+Init copy...
+End finding
+.
