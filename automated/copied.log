@@ -553,3 +553,63 @@ Finding modified or new files...
 Init copy...
 End finding
 .
+BACKUP 2017-11-30 17:38:54 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/Echo.cfc
+copying /handlers/BaseHandler.cfc
+copying /handlers/Base.cfc
+copying /handlers/Authenticate.cfc
+copying /tests/specs/unit/PermisosTokenTest.cfc
+copying /tests/specs/unit/security/PermisosTokenDAOTest.cfc
+copying /tests/specs/unit/security/PermisosTokenServiceTest.cfc
+copying /logs/system.log
+copying /logs/access.log
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/security/EventosTokenService.cfc
+copying /models/security/ClientesToken.cfc
+copying /models/security/ClientesTokenDAO.cfc
+copying /models/security/AuthenticationService.cfc
+copying /models/security/ClientesTokenService.cfc
+copying /models/security/PermisosToken.cfc
+copying /models/security/EventosTokenDAO.cfc
+copying /models/security/EventosToken.cfc
+copying /models/security/PermisosTokenService.cfc
+copying /models/security/PermisosTokenDAO.cfc
+copying /config/Routes.cfm
+End finding
+.
+BACKUP 2017-11-30 17:40:01 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/Echo.cfc
+copying /handlers/BaseHandler.cfc
+copying /handlers/Base.cfc
+copying /handlers/Authenticate.cfc
+copying /tests/specs/unit/PermisosTokenTest.cfc
+copying /tests/specs/unit/security/PermisosTokenDAOTest.cfc
+copying /tests/specs/unit/security/PermisosTokenServiceTest.cfc
+copying /logs/system.log
+copying /logs/access.log
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/security/EventosTokenService.cfc
+copying /models/security/ClientesToken.cfc
+copying /models/security/ClientesTokenDAO.cfc
+copying /models/security/AuthenticationService.cfc
+copying /models/security/ClientesTokenService.cfc
+copying /models/security/PermisosToken.cfc
+copying /models/security/EventosTokenDAO.cfc
+copying /models/security/EventosToken.cfc
+copying /models/security/PermisosTokenService.cfc
+copying /models/security/PermisosTokenDAO.cfc
+copying /config/Routes.cfm
+End finding
+.

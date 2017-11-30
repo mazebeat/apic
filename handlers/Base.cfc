@@ -28,7 +28,7 @@ component extends="BaseHandler"{
 	}
 	*/
 
-    function init(){
+    function init() {
         super.init();
         return this;
     }

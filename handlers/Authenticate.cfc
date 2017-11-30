@@ -13,8 +13,10 @@ component extends="Base" {
 
 	// REST Allowed HTTP Methods Ex: this.allowedMethods = 
 	this.allowedMethods = {
-		"index"            = METHODS.POST & "," & METHODS.OPTIONS,
-		"generatePassword" = METHODS.POST & "," & METHODS.OPTIONS
+		"index"               = METHODS.POST & "," & METHODS.OPTIONS,
+		"generatePassword"    = METHODS.POST & "," & METHODS.OPTIONS,
+		"obtainPassword"      = METHODS.POST & "," & METHODS.OPTIONS,
+		"activateDesactivate" = METHODS.POST & "," & METHODS.OPTIONS
 	};
 
 	/**
@@ -35,7 +37,7 @@ component extends="Base" {
 		event.paramValue("password", "");
 
 		try {
-			var jsonData = event.getHTTPContent( json=true );
+			var jsonData = event.getHTTPContent(json=true);
 
 			if(isStruct(jsonData) && !structIsEmpty(jsonData)) {
 				
@@ -49,7 +51,7 @@ component extends="Base" {
 							clientPassword= { type= "cliente", id= 1, token= token },
 							auth          = authservice.validate(rc.password)
 						};
-						session.id_evento = 1;
+						session.id_evento = '= 1';
 						prc.response.addMessage("enviroment = #getSetting("environment")#");
 	
 						// return;
@@ -127,6 +129,7 @@ component extends="Base" {
 
 	/**
 	 * Genera una nueva contraseña para entregar al cliente. Esta contraseña sirve para identificar al usuario.
+	 * 
 	 * @rc.id ID de Cliente o Evento que se requiera generar
 	 * @rc.password Contraseña o secretWord para validar que es alguien de Tufabricadeventos.com quien está generandolo.
 	 * @rc.isevent Boolean \ Optional: Default false
@@ -134,21 +137,17 @@ component extends="Base" {
 	 * @returnType model:Response
 	 */
 	any function generatePassword( event, rc, prc ) {
-		event.paramValue("password", "");
+		jsonData = event.getHTTPContent( json=true );
+		isevent = false;
 
-		local.jsonData = event.getHTTPContent( json=true );
-		local.isevent = false;
-
-		if(isStruct(local.jsonData) && !structIsEmpty(local.jsonData)) {
-			if(NOT local.jsonData.keyExists('password') && (NOT local.jsonData.password EQ authservice.secretWord)) {
+		if(isStruct(jsonData) && !structIsEmpty(jsonData)) {
+			if(NOT jsonData.keyExists('password') && (NOT jsonData.password EQ authservice.secretWord)) {
 				prc.response.setError(true)
 						.addMessage("Parameters password incorrect/empty")
 						.setStatusCode(STATUS.BAD_REQUEST)
 						.setStatusText(MESSAGES.BAD_REQUEST);
 				return;
 			} 
-
-			local.password = jsonData.password;
 
 			if(NOT jsonData.keyExists('id')) {
 				prc.response.setError(true)
@@ -158,17 +157,91 @@ component extends="Base" {
 				return;
 			}
 
-			local.id = jsonData.id;
+			id = jsonData.id;
 
 			if(jsonData.keyExists('isevent')) {
-				local.isevent  = jsonData.isevent;
+				isevent  = jsonData.isevent;
+			}
+
+			// try {
+				rsp = authservice.generatePassword(id, isevent);
+
+				prc.response.setData({ 
+					"id"       = id, 
+					"password" = rsp
+				});
+			// } catch(any e) {
+			// 	prc.response.setData({ 
+			// 		"id"       = id, 
+			// 		"password" = 'No existe contraseña, por favor generar.'
+			// 	});
+			// 	prc.response.setError(true)
+			// 					.addMessage("Error when was trying to generate password")
+			// 					.setStatusCode(STATUS.BAD_REQUEST)
+			// 					.setStatusText(MESSAGES.BAD_REQUEST);
+							
+			// 	if(getSetting("environment") eq "development") {
+			// 		prc.response.addMessage(e.message);
+			// 	}
+			// }
+		} else {
+			prc.response.setError(true)
+								.addMessage("JSON POST Data incorrect")
+								.setStatusCode(STATUS.BAD_REQUEST)
+								.setStatusText(MESSAGES.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Obtener una nueva contraseña para entregar al cliente. Esta contraseña sirve para identificar al usuario.
+	 * 
+	 * @rc.id ID de Cliente o Evento que se requiera generar
+	 * @rc.password Contraseña o secretWord para validar que es alguien de Tufabricadeventos.com quien está generandolo.
+	 * @rc.isevent Boolean \ Optional: Default false
+	 *
+	 * @returnType model:Response
+	 */
+	any function obtainPassword( event, rc, prc ) {
+		jsonData = event.getHTTPContent( json=true );
+		isevent = false;
+
+		if(isStruct(jsonData) && !structIsEmpty(jsonData)) {
+			if(NOT jsonData.keyExists('password') && (NOT jsonData.password EQ authservice.secretWord)) {
+				prc.response.setError(true)
+						.addMessage("Parameters password incorrect/empty")
+						.setStatusCode(STATUS.BAD_REQUEST)
+						.setStatusText(MESSAGES.BAD_REQUEST);
+				return;
+			} 
+
+			if(NOT jsonData.keyExists('id')) {
+				prc.response.setError(true)
+		 					.addMessage("Parameters ID incorrect/empty")
+		 					.setStatusCode(STATUS.BAD_REQUEST)
+		 					.setStatusText(MESSAGES.BAD_REQUEST);
+				return;
+			}
+
+			id = jsonData.id;
+
+			if(jsonData.keyExists('isevent')) {
+				isevent  = jsonData.isevent;
 			}
 
 			try {
-				prc.response.setData({ "password" = authservice.generatePassword(local.id, local.isevent) });
+				rsp = authservice.obtainPassword(id, isevent);
+
+				if(isEmpty(rsp.password)) {
+					prc.response.addMessage("El cliente no tiene contraseña asiganada.");
+				}
+				prc.response.setData({ 
+					"id"         = id, 
+					"password"   = rsp.password,
+					"fecha_baja" = (!isnull(rsp.fecha_baja) && rsp.fecha_baja != '' )? getIsoTimeString(rsp.fecha_baja) : rsp.fecha_baja
+				});				
 			} catch(any e) {
 				prc.response.setError(true)
-								.addMessage("Error when was trying to generate password")
+								.addMessage("Error when was trying to get password")
 								.setStatusCode(STATUS.BAD_REQUEST)
 								.setStatusText(MESSAGES.BAD_REQUEST);
 							
@@ -182,5 +255,34 @@ component extends="Base" {
 								.setStatusCode(STATUS.BAD_REQUEST)
 								.setStatusText(MESSAGES.BAD_REQUEST);
 		}
+	}
+
+	/**
+	 * ActivateDesactivate Tal cual como dice su nombre, activa o desactiva un objeto ApiClienteToken|ApiEventoToken según su estado.
+	 *
+	 * @event 
+	 * @rc 
+	 * @prc 
+	 */
+	any function activateDesactivate( event, rc, prc ) {
+		jsonData = event.getHTTPContent( json=true );
+		isevent = false;
+
+		var rsp = authservice.activateDesactivate(jsonData.id, jsonData.isevent);
+
+		prc.response.setData({ 
+			"id"         = jsonData.id,
+			"fecha_baja" = (!isnull(rsp.fecha_baja) && rsp.fecha_baja != '' )? getIsoTimeString(rsp.fecha_baja) : rsp.fecha_baja
+		})
+		.addMessage('Fecha baja actualizada');
+	}
+
+	/**
+	 * CreateSessionEvent Crea variable de sesión para gestionar más de un idevento por cliente.
+	 *
+	 * @authuser ApiClienteToken|ApiEventoToken
+	 */
+	private any function createSessionEvento(required any authuser) {
+		
 	}
 }

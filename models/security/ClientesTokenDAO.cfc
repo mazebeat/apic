@@ -32,11 +32,17 @@ component accessors="true" {
 		var queryS = "SELECT * 
 					  FROM apic_clientesToken 
 					  WHERE id_cliente = :idcliente";
-        var query = new Query(datasource = "#application.datasource#", sql = "#queryS#").addParam(name = "idcliente", value = arguments.idcliente, cfsqltype = "CF_SQL_NUMERIC");
+        var query = new Query(datasource = "#application.datasource#", sql = "#queryS#").addParam(name = "idcliente", value = arguments.idcliente, cfsqltype = "CF_SQL_INTEGER");
 		var records = query.execute().getResult();
-		var evento = eventDao.getByIdCliente(records.id_cliente);
 
-		queryAddColumn(records, "id_evento", [evento.id_evento]);
+		if(records.recordCount GT 0) {
+			var evento = eventDao.getByIdCliente(records.id_cliente);
+			if(evento.recordCount GT 0) {
+				queryDeleteColumn(records, 'id_evento');
+				queryAddColumn(records, "id_evento", [evento.id_evento]);
+				querySetCell(records, 'id_evento', evento);
+			}
+		}
 
 		return records;
     }
@@ -47,14 +53,28 @@ component accessors="true" {
 	 * @password 
 	 * @tokenexpiration 
 	 */
-	private query function register(required numeric idcliente, required string password) {
-		var queryS = "INSERT INTO apic_clientesToken (id_cliente, password) 
-					  VALUES ('1', PASSWORD(:password))";
-		var query = new Query(datasource="#application.datasource#", sql="#queryS#")
-					.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_NUMERIC")
-					.addParam(name="password", value=arguments.password, cfsqltype="CF_SQL_VARCHAR");
-        
-		return query.execute().getResult();
+	void function register(required numeric idcliente) {
+		transaction action="begin" {
+			try {
+				var queryS = "INSERT INTO apic_permisosToken (lectura, escritura, borrado) VALUES (1,1,1)";
+				var query = new Query(datasource="#application.datasource#", sql="#queryS#");        
+
+				var result = query.execute();
+
+				queryS = "INSERT INTO apic_clientesToken (id_cliente, password, id_permisosToken) 
+				VALUES (:idcliente, ' ', :idpermisos)";
+				
+				query = new Query(datasource="#application.datasource#", sql="#queryS#")
+				.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_INTEGER")
+				.addParam(name="idpermisos", value=result.getPrefix().generatedKey, cfsqltype="CF_SQL_INTEGER");
+
+				result = query.execute();
+			
+				transaction action="commit";
+			} catch(any e) {
+				transaction action="rollback";
+			}
+		}
 	}
 
 	/**
@@ -64,13 +84,47 @@ component accessors="true" {
 	 */
 	void function updateToken(required numeric idcliente, required string token) {
 		var queryS = "UPDATE apic_clientesToken 
-					  SET token = :token, fecha_modificacion_token = CURRENT_TIMESTAMP 
+					  SET token = :token, 
+					  fecha_modificacion_token = CURRENT_TIMESTAMP 
 					  WHERE id_cliente = :idcliente";
 		var query = new Query(datasource="#application.datasource#", sql="#queryS#")
-					.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_NUMERIC")
+					.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_INTEGER")
 					.addParam(name="token", value=arguments.token, cfsqltype="CF_SQL_LONGVARCHAR");
         
-		query.execute().getResult();
+		query.execute();
+	}
+
+	/**
+	 * Actualiza el registro token para un evento en concreto
+	 * @idcliente 
+	 * @password 
+	 */
+	void function updatePassword(required numeric idcliente, required string password) {
+		transaction action="begin" {
+			try {
+		
+				var query = new Query(datasource="#application.datasource#", sql="SELECT id FROM apic_clientesToken WHERE id_cliente = :idcliente")
+					.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_INTEGER");
+
+				var result = query.execute().getResult();
+
+				if(result.recordCount EQ 0) {
+					this.register(idcliente);
+				}
+				
+				var queryS = " UPDATE apic_clientesToken SET password = :password, fecha_baja = NULL 
+							   WHERE id_cliente = :idcliente";
+
+				var query = new Query(datasource="#application.datasource#", sql="#queryS#")
+							.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_INTEGER")
+							.addParam(name="password", value=arguments.password, cfsqltype="CF_SQL_VARCHAR");
+				
+				query.execute();
+				transaction action="commit";
+			} catch(any e) {
+				transaction action="rollback";
+			}
+		}
 	}
 
 	/**
@@ -85,10 +139,39 @@ component accessors="true" {
 					AND token = :token
 					LIMIT 1	";
 		var query = new Query(datasource="#application.datasource#", sql="#queryS#")
-					.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_NUMERIC")
+					.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_INTEGER")
 					.addParam(name="token", value=arguments.token, cfsqltype="CF_SQL_LONGVARCHAR");
 
 		return query.execute().getResult();
-	}
+	} 
 
+	query function getPassword(required numeric idcliente) {
+		var queryS = "SELECT id_cliente, IFNULL(password, '') as password, fecha_baja
+					  FROM apic_clientesToken 
+					  WHERE id_cliente = :idcliente";
+        var query = new Query(datasource = "#application.datasource#", sql = "#queryS#").addParam(name = "idcliente", value = arguments.idcliente, cfsqltype = "CF_SQL_INTEGER");
+		var records = query.execute().getResult();
+
+		return records;
+	}
+	
+	query function activateDesactivate(required numeric idcliente) {
+		var queryS = "UPDATE apic_clientesToken
+					  SET fecha_baja = IF(fecha_baja IS NOT NULL, NULL, CURRENT_TIMESTAMP)
+					  WHERE id_cliente = :idcliente";
+
+		var query = new Query(datasource="#application.datasource#", sql="#queryS#")
+		.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_INTEGER")
+		
+		query.execute().getResult();					
+
+		var queryS = "SELECT id_cliente, fecha_baja 
+					  FROM apic_clientesToken 
+					  WHERE id_cliente = :idcliente";
+
+		var query = new Query(datasource="#application.datasource#", sql="#queryS#")
+		.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_INTEGER")
+		
+		return query.execute().getResult();					
+	}
 }

@@ -38,7 +38,8 @@ component accessors="true"{
 	 * @tokenexpiration 
 	 */
 	any function register(required numeric idevento, required string password, date tokenexpiration) {
-		// dao.register();
+		// TODO: mejorar registros
+		dao.register();
 	}
 
 	/**
@@ -48,6 +49,15 @@ component accessors="true"{
 	 */
 	any function updateToken(required numeric idevento, required string token){
 		dao.updateToken(arguments.idevento, arguments.token);
+	}
+
+	/**
+	 * Actualiza el registro password para un evento en concreto
+	 * @idevento 
+	 * @password 
+	 */
+	any function updatePassword(required numeric idevento, required string password){
+		dao.updatePassword(arguments.idevento, arguments.password);
 	}
 
 	/**
@@ -64,4 +74,18 @@ component accessors="true"{
 
         return populator.populateFromQuery(wirebox.getInstance("EventosToken"), query, 1);
 	}	
+
+	any function getPassword(required numeric idevento=0, required string password=""){
+		var query = dao.getPassword(arguments.idevento, arguments.password);
+
+        if(idevento EQ 0 OR query.recordcount EQ 0){
+            return wirebox.getInstance("EventosToken");
+        }
+
+		return populator.populateFromQuery(wirebox.getInstance("EventosToken"), query, 1);
+	}
+
+	any function activateDesactivate(required numeric id) {
+		return dao.activateDesactivate(id);
+	}
 }

@@ -24,15 +24,15 @@
 	 * Validate user by username and password
 	 * @password 
 	 */
-	public any function validate(required string password) {
+	any function validate(required string password) {
 
 		var data   = passwordToStruct(password);
 		var result = {};
 
 		if(data.id != 0 && data.type EQ "c") {
-			result = variables.clienteTokenService.get(data.id);
+			result = clienteTokenService.get(data.id);
 		} else if(data.id != 0 && data.type EQ "e"){
-			result = variables.eventosTokenService.get(data.id);
+			result = eventosTokenService.get(data.id);
 		} else {
 			throw(message="Password Error");
 		}
@@ -44,7 +44,7 @@
 	 * Generate APIc access token
 	 * @userId 
 	 */
-	public string function grantToken(required string id, string type = 'c') {
+	string function grantToken(required string id, string type = 'c') {
 
 		var token   = "";
 		var payload = {
@@ -56,7 +56,7 @@
 
 		try {
 			/* Encode the data structure as a json web token */
-			token = variables.jwt.encode(payload, "HS512");
+			token = jwt.encode(payload, "HS512");
 			
 			if(type EQ "c") {
 				clienteTokenService.updateToken(id, token);
@@ -72,12 +72,12 @@
 	 * Check if user token is valid and still available (ontime)
 	 * @accessToken user token
 	 */	
-	public boolean function validateToken(required string accessToken) {
+	boolean function validateToken(required string accessToken) {
 		
 		var validToken = false;
 	
 		try {
-			var data   = variables.jwt.decode(accessToken);		
+			var data   = jwt.decode(accessToken);		
 			validToken = true;
 
 			session.token.data = data;
@@ -102,7 +102,7 @@
 	 * Decode token 
 	 * @accessToken user token
 	 */
-	public struct function decodeToken(required string accessToken) {		
+	struct function decodeToken(required string accessToken) {		
 		return jwt.decode(accessToken);
 	}
 
@@ -110,16 +110,16 @@
 	 * Desencriptar contraseña
 	 * @password
 	 */	
-	private string function decryptPassword(required string password) {
-		return decrypt(password, variables.secretKey, 'AES', 'Base64');
+	string function decryptPassword(required string password) {
+		return decrypt(password, secretKey, 'AES', 'Base64');
 	}
 
 	/** 
 	 * Encriptar contraseña 
 	 * @password
 	 */		
-	private string function encryptPassword(required string password) {
-		return encrypt(password, variables.secretKey, 'AES','Base64'); 
+	string function encryptPassword(required string password) {
+		return encrypt(password, secretKey, 'AES','Base64'); 
 	}	
 
 	/**
@@ -134,27 +134,64 @@
 			password = "e_";
 		}
 
-		password &= id & "_" & variables.secretWord;
+		password &= id & "_" & secretWord & "_" & randRange(1, 256, "SHA1PRNG");
 
 		return encryptPassword(password);
 	}
 
-	public string function generatePassword(required number id, boolean isEvento = false) {
-		return createPassword(id, isEvento);
+	/**
+	 * generatePassword
+	 *
+	 * @id 
+	 * @isEvento 
+	 */
+	string function generatePassword(required number id, boolean isEvento = false) {
+		password = createPassword(id, isEvento);
+
+		if(!isEvento) {
+			clienteTokenService.updatePassword(id, password);
+		} else {
+			eventosTokenService.updatePassword(id, password);
+		}
+
+		return password;
+	}
+
+	/**
+	 * obtainPassword
+	 *
+	 * @password 
+	 */
+	any function obtainPassword(required number id, boolean isEvento = false) {
+		password = {};
+
+		try {
+			if(isEvento) {
+				password = eventosTokenService.getPassword(id);
+			} else {
+				password = clienteTokenService.getPassword(id);
+			}
+		} catch(any e) {
+			if(isdefined('url.debug')) {
+				throw(e);	
+			}
+		}
+
+		return password;
 	}
 
 	private struct function passwordToStruct(required string password) {
+		var temp = [];
 		var result = {
 			type   = "c",
 			id     = 0,
 			secret = ""
 		};
-		var temp = [];
 
 		try {
 			temp = ListToArray(decryptPassword(password), "_");
 			
-			if(NOT temp.len() EQ 3) {
+			if(NOT temp.len() GTE 3) {
 				throw(message="Wrong password");
 			}
 
@@ -167,7 +204,7 @@
 			}
 		}
 
-		if(NOT result.secret EQ variables.secretWord) {
+		if(NOT result.secret EQ secretWord) {
 			throw(message="Password doesn't match");
 		}
 
@@ -188,4 +225,22 @@
 		
 		return auth;
 	}
-}
+
+	any function activateDesactivate(required number id, required boolean isevent) {
+		var rsp = {};
+
+		try {
+			if(isevent) {
+				rsp = eventosTokenService.activateDesactivate(id);
+			} else {
+				rsp = clienteTokenService.activateDesactivate(id);
+			}
+		} catch(any e) {
+			if(isdefined('url.debug')) {
+				throw(e);	
+			}
+		}
+
+		return rsp;
+	}
+} 

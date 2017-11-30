@@ -4,7 +4,8 @@
 component extends="Base"{
 	// Properties	
 	// property name="dsn" inject="coldbox:datasource:sigo_dsn";
-	
+	property name="srv" inject="model:security.EventosTokenService";
+	 
 	// OPTIONAL HANDLER PROPERTIES
 	this.prehandler_only      = "";
 	this.prehandler_except    = "";
@@ -24,5 +25,13 @@ component extends="Base"{
 	 */
 	any function index(event, rc, prc) {
 		prc.response.addMessage("Bienvenido a tufabricadeventos.com API RESTFul");						
+	}
+
+	any function test(event, rc, prc) {
+		var cli = srv.get(9).permisos().getId_permisosToken();
+		if(isdefined("url.debug")) {
+			writeDump(var="#cli#", label="var");
+			abort;
+		}
 	}
 }

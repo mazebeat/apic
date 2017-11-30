@@ -113,18 +113,96 @@ component extends="coldbox.system.EventHandler"{
         return this;
     }
 		
+
+	/**
+	 * PreHandler for all actions it inherits
+	 *
+	 * @event 
+	 * @rc 
+	 * @prc 
+	 * @targetAction 
+	 * @eventArguments 
+	 */
+	function preHandler(event, rc, prc targetAction, eventArguments) {
+		event.setHTTPHeader(name="Access-Control-Allow-Origin", value="*");
+		event.setHTTPHeader(name='Access-Control-Allow-Methods', value='GET,POST,PUT,DELETE,OPTIONS');
+		// event.setHTTPHeader(name='Access-Control-Allow-Headers', value='Content-Type'); 
+		// event.setHTTPHeader(name='Access-Control-Allow-Credentials', value='false'); 
+		// event.setHTTPHeader(name='Access-Control-Max-Age', value='60'); 
+
+		// prc.response.addHeader('Access-Control-Allow-Origin', '*')
+		// 			.addHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+		// 			.addHeader('Access-Control-Allow-Headers', 'Content-Type')
+		// 			.addHeader('Access-Control-Allow-Credentials', 'false')
+		// 			.addHeader('Access-Control-Max-Age', '60');
+
+		if(structKeyExists(session, 'clientsession')) {
+			try{
+				if (structKeyExists(session.clientsession, 'auth')) {
+					// prepare our response object
+					prc.response = getModel("Response");
+
+					var usr      = session.clientsession.auth;
+					var permisos = usr.permisos();
+
+					switch (event.getHTTPMethod()) {
+						case "GET":
+							if(permisos.getLectura() != 1) {
+								prc.response.setError(true)
+								.addMessage("Action does not allowed")
+								.setStatusCode(STATUS.NOT_AUTHORIZED)
+								.setStatusText(MESSAGES.NOT_AUTHORIZED);
+							}						
+							break;
+						case "POST":
+							if(permisos.getEscritura() != 1) {
+								throw(message='POST NO');
+							}						
+							break;
+						case "PUT":
+							break;
+						case "DELETE":
+							if(permisos.getBorrado() != 1) {
+								throw(message='DELETE NO');
+							}						
+							break;
+						case "OPTIONS":
+							break;
+						default:
+							
+					}
+				}
+			} catch(Any e){
+				// Log Locally
+				log.error("Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
+
+				// Setup General Error Response
+				prc.response
+					.setError(true)
+					.addMessage("General application error: #e.message#")
+					.setStatusCode(STATUS.INTERNAL_ERROR)
+					.setStatusText(MESSAGES.INTERNAL_ERROR);			
+				
+				// Development additions
+				if(getSetting("environment") eq "development") {
+					// TODO: Modificar el modo de mostrar errores en desarrollo.		
+					prc.response.addMessage("Detail: #e.detail#")
+								.addMessage("StackTrace: #e.stacktrace#");
+				}
+			}
+        }
+	}
+
 	/**
 	* Around handler for all actions it inherits
 	*/
 	function aroundHandler(event, rc, prc, targetAction, eventArguments) {
-	
 		try{
 			
-
 			var stime    = getTickCount();
 
 			// prepare our response object
-			prc.response = getModel("Response");
+			// prc.response = getModel("Response");
 			
 			// Limiter
 			limiterByTime(maxRequest=maxRequest, waitTimeRequest=waitTimeRequest, prc= prc, event= event);
@@ -141,20 +219,8 @@ component extends="coldbox.system.EventHandler"{
 			// Check APIc Token
 			args = checkAuthenticationToken(event, rc, prc, targetAction, eventArguments, args);
 
-			// Check Session			
+			// Check Sessions			
 			validateSession(event, rc, prc);
-
-			event.setHTTPHeader(name="Access-Control-Allow-Origin", value="*");
-			event.setHTTPHeader(name='Access-Control-Allow-Methods', value='GET,POST,PUT,DELETE,OPTIONS');
-			// event.setHTTPHeader(name='Access-Control-Allow-Headers', value='Content-Type'); 
-			// event.setHTTPHeader(name='Access-Control-Allow-Credentials', value='false'); 
-			// event.setHTTPHeader(name='Access-Control-Max-Age', value='60'); 
-
-			// prc.response.addHeader('Access-Control-Allow-Origin', '*')
-			// 			.addHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-			// 			.addHeader('Access-Control-Allow-Headers', 'Content-Type')
-			// 			.addHeader('Access-Control-Allow-Credentials', 'false')
-			// 			.addHeader('Access-Control-Max-Age', '60');
 
 			// Execute action
 			if (!prc.response.getError()) {
@@ -435,9 +501,11 @@ component extends="coldbox.system.EventHandler"{
 	 * Check Atuhentication Token
 	 */
 	private any function checkAuthenticationToken(event, rc, prc, targetAction, eventArguments, args) {
+		
 		/* Only accept application/json for content body on posts */
-		if (!prc.response.getError() && event.getHTTPMethod() == "POST" || event.getHTTPMethod() == "PUT" || event.getHTTPMethod() == "OPTIONS") {
-			
+		if (!prc.response.getError() && 
+			(event.getHTTPMethod() == "POST" || event.getHTTPMethod() == "PUT")) {
+
 			if (findNoCase("application/json", event.getHTTPHeader("Content-Type")) == 0) {
 				prc.response.setError(true)
 							.addMessage("Content-Type application/json is required!")
@@ -462,7 +530,8 @@ component extends="coldbox.system.EventHandler"{
 
 			event.paramValue("token","");
 
-			if(getSetting("environment") == "development" && (rc.token eq "token" || !len(rc.token)) && isdefined('url.debug')) {
+			if(getSetting("environment") == "development" && 
+				(rc.token eq "token" || !len(rc.token)) && isdefined('url.debug')) {
 				// Render Error Out
 				rc.contraints.token = "";
 				rc.token            = authService.grantToken(1);
@@ -509,5 +578,4 @@ component extends="coldbox.system.EventHandler"{
 			}
 		}
 	}
-
 }

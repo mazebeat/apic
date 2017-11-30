@@ -19,7 +19,7 @@ component accessors="true"{
 	/**
 	* Validate
 	*/
-	any function get(required numeric idcliente=0) {
+	any function get(required numeric idcliente = 0) {
 		var query = dao.get(arguments.idcliente);
 
         if(idcliente EQ 0 OR query.recordcount EQ 0) {
@@ -36,7 +36,8 @@ component accessors="true"{
 	 * @tokenexpiration 
 	 */
 	any function register(required numeric idcliente, required string password, date tokenexpiration) {
-		var query = dao.register();
+		// TODO: mejorar registros
+		dao.register();
 	}
 
 	/**
@@ -46,6 +47,15 @@ component accessors="true"{
 	 */
 	any function updateToken(required numeric idcliente, required string token){
 		dao.updateToken(arguments.idcliente, arguments.token);
+	}
+
+	/**
+	 * Actualiza el registro password para un evento en concreto
+	 * @idcliente 
+	 * @password 
+	 */
+	any function updatePassword(required numeric idcliente, required string password){
+		dao.updatePassword(arguments.idcliente, arguments.password);
 	}
 
 	/**
@@ -62,4 +72,27 @@ component accessors="true"{
 
         return populator.populateFromQuery(wirebox.getInstance("ClientesToken"), query, 1);
 	}	
+	
+	/**
+	* getPassword
+	*/
+	any function getPassword(required numeric idcliente=0) {
+		var query = dao.getPassword(arguments.idcliente);
+		
+        if(idcliente EQ 0 OR query.recordcount EQ 0) {
+            return wirebox.getInstance("ClientesToken");
+		}
+		
+		return populator.populateFromQuery(wirebox.getInstance("ClientesToken"), query, 1);
+	}
+
+	any function activateDesactivate(required numeric idcliente) {
+		var query = dao.activateDesactivate(arguments.idcliente);
+
+        if(idcliente EQ 0 OR query.recordcount EQ 0) {
+            return wirebox.getInstance("ClientesToken");
+        }
+
+        return populator.populateFromQuery(wirebox.getInstance("ClientesToken"), query, 1);
+	}
 }

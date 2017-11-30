@@ -10,6 +10,7 @@ component extend {
         if (findNoCase("authenticate", event.getCurrentEvent()) == 0 &&
             findNoCase("Echo", event.getCurrentEvent()) == 0 && 
             findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
+           
             if(getSetting("environment") == "development" && isdefined('url.debug')) {
                 session.clientSession = { 
                     clientPassword= { type= "cliente", id=1, token= rc.token }
@@ -40,10 +41,25 @@ component extend {
 						}         
 					}
 				}
-			}
-		}
+            }
+        }
+
+        validateActions(event, rc, prc);
     }
 
-    function postProcess(event, rc, prc, interceptData, buffer ) {
+    function postProcess(event, rc, prc, interceptData, buffer ) {}
+
+    /**
+     * Validate User Actions
+     */
+    function validateActions(event, rc, prc) {
+        // if(structKeyExists(session, 'clientsession')) {
+        //     if(structKeyExists(session.clientsession, 'auth')) {
+        //         if(isdefined("url.debug")) {
+        //             writeDump(var="#session#", label="session");
+        //             abort;
+        //         }
+        //     }
+        // }
     }
 }
