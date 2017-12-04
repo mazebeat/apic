@@ -3,6 +3,10 @@
  */
 component extends="Base" {
 
+	property name="prmToken" type="any"	inject="model:security.PermisosTokenService";
+	property name="cService" type="any"	inject="model:security.ClientesTokenService";
+	property name="eService" type="any"	inject="model:security.EventosTokenService";
+
 	// OPTIONAL HANDLER PROPERTIES
 	this.prehandler_only 	  = "";
 	this.prehandler_except 	  = "";
@@ -16,7 +20,9 @@ component extends="Base" {
 		"index"               = METHODS.POST & "," & METHODS.OPTIONS,
 		"generatePassword"    = METHODS.POST & "," & METHODS.OPTIONS,
 		"obtainPassword"      = METHODS.POST & "," & METHODS.OPTIONS,
-		"activateDesactivate" = METHODS.POST & "," & METHODS.OPTIONS
+		"activateDesactivate" = METHODS.POST & "," & METHODS.OPTIONS,
+		"permissionsUser"     = METHODS.POST & "," & METHODS.OPTIONS,
+		"savePermissionsUser" = METHODS.POST & "," & METHODS.OPTIONS,
 	};
 
 	/**
@@ -47,14 +53,14 @@ component extends="Base" {
 					// Development Enviroment
 					if(getSetting("environment") == "development" && isdefined('url.debug')) {
 						var token = authservice.grantToken(1);
-						session.clientSession = { 
-							clientPassword= { type= "cliente", id= 1, token= token },
-							auth          = authservice.validate(rc.password)
+						session["usersession"] = { 
+							"clientpassword" = { "type" = "cliente", "id" = 1, "token" = token },
+							"auth"           = serializeJSON(authservice.validate(rc.password))
 						};
-						session.id_evento = '= 1';
+						session["id_evento"] = '= 1';
 						prc.response.addMessage("enviroment = #getSetting("environment")#");
 	
-						// return;
+						return;
 					}
 					// END Development Enviroment
 
@@ -85,11 +91,20 @@ component extends="Base" {
 							}
 						}
 					
-						session.clientsession = { 
-							clientPassword= { type= type, id= id, token= token },
-							auth          = authuser
+						session["usersession"] = { 
+							"clientpassword"= { 
+								"type"= type, 
+								"id"= id, 
+								"token"= token 
+							},
+							"auth"          = authuser,
+							"defaults" = {
+									"form" = {
+										"fields" = ""
+								}
+							}
 						};
-						session.id_evento = authuser.getId_evento();
+						session["id_evento"] = authuser.getId_evento();
 
 						rc.token = token;
 						prc.response.setData({"token" = token});
@@ -137,8 +152,8 @@ component extends="Base" {
 	 * @returnType model:Response
 	 */
 	any function generatePassword( event, rc, prc ) {
-		jsonData = event.getHTTPContent( json=true );
-		isevent = false;
+		var jsonData = event.getHTTPContent( json=true );
+		var isevent = false;
 
 		if(isStruct(jsonData) && !structIsEmpty(jsonData)) {
 			if(NOT jsonData.keyExists('password') && (NOT jsonData.password EQ authservice.secretWord)) {
@@ -163,27 +178,27 @@ component extends="Base" {
 				isevent  = jsonData.isevent;
 			}
 
-			// try {
+			try {
 				rsp = authservice.generatePassword(id, isevent);
 
 				prc.response.setData({ 
 					"id"       = id, 
 					"password" = rsp
 				});
-			// } catch(any e) {
-			// 	prc.response.setData({ 
-			// 		"id"       = id, 
-			// 		"password" = 'No existe contraseña, por favor generar.'
-			// 	});
-			// 	prc.response.setError(true)
-			// 					.addMessage("Error when was trying to generate password")
-			// 					.setStatusCode(STATUS.BAD_REQUEST)
-			// 					.setStatusText(MESSAGES.BAD_REQUEST);
+			} catch(any e) {
+				prc.response.setData({ 
+					"id"       = id, 
+					"password" = 'No existe contraseña, por favor generar.'
+				});
+				prc.response.setError(true)
+								.addMessage("Error when was trying to generate password")
+								.setStatusCode(STATUS.BAD_REQUEST)
+								.setStatusText(MESSAGES.BAD_REQUEST);
 							
-			// 	if(getSetting("environment") eq "development") {
-			// 		prc.response.addMessage(e.message);
-			// 	}
-			// }
+				if(getSetting("environment") eq "development") {
+					prc.response.addMessage(e.message);
+				}
+			}
 		} else {
 			prc.response.setError(true)
 								.addMessage("JSON POST Data incorrect")
@@ -265,8 +280,8 @@ component extends="Base" {
 	 * @prc 
 	 */
 	any function activateDesactivate( event, rc, prc ) {
-		jsonData = event.getHTTPContent( json=true );
-		isevent = false;
+		var jsonData = event.getHTTPContent( json=true );
+		var isevent = false;
 
 		var rsp = authservice.activateDesactivate(jsonData.id, jsonData.isevent);
 
@@ -285,4 +300,60 @@ component extends="Base" {
 	private any function createSessionEvento(required any authuser) {
 		
 	}
-}
+
+	any function permissionsUser( event, rc, prc ) {
+		var jsonData = event.getHTTPContent( json=true );
+
+		if(!jsonData.isevent){
+			var usr = cService.get(jsonData.id);
+		} else {
+			var usr = eService.get(jsonData.id);
+		}
+
+		var permisos = usr.permisos();
+		
+		prc.response.setData({ 
+			"lectura"    = permisos.lectura,
+			"escritura"  = permisos.escritura,
+			"borrado"    = permisos.borrado
+		});
+	}
+
+	any function savePermissionsUser( event, rc, prc ) {
+		var jsonData = event.getHTTPContent( json=true );
+
+		if(!jsonData.isevent){
+			var usr = cService.get(jsonData.id);
+		} else {
+			var usr = eService.get(jsonData.id);
+		}
+
+		if(arrayLen(jsonData.permissions) < 3) {
+			throw(message = "Error: cantidad permisos");
+		}
+
+		if(isnull(usr.getId_permisosToken())) {
+			throw(message = "Error: Objeto vacio");
+		}
+			
+		var permisos = usr.permisos();
+
+		for (i = 1; i <= arrayLen(jsonData.permissions); i++) {
+			var value = jsonData.permissions[i];
+
+			if(i == 1) {
+				permisos.setLectura(value);
+			} else if(i == 2) {
+				permisos.setEscritura(value);
+			} else if(i == 3) {
+				permisos.setBorrado(value);
+			}
+		}
+		
+		try {
+			permisos.updateModel()
+		} catch(Any e) {
+			throw(e);
+		}
+	}
+}	

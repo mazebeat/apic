@@ -11,10 +11,17 @@ component output="false" peristent="true" accessors="true" table="apic_permisosT
 	property name="fecha_alta"	ormtype="timestamp"	column="fecha_alta";
 	property name="fecha_baja"	ormtype="timestamp"	column="fecha_baja";
 
+	property name="wirebox"	inject="wirebox" setter="false" getter="false";
+	
+
 	/**
 	 * Constructor
 	 */
 	PermisosToken function init(){
 		return this;
+	}
+
+	any function updateModel() {
+		return wirebox.getInstance('PermisosTokenService').updateModel(this);
 	}
 }

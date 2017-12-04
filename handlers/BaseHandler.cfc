@@ -123,74 +123,56 @@ component extends="coldbox.system.EventHandler"{
 	 * @targetAction 
 	 * @eventArguments 
 	 */
-	function preHandler(event, rc, prc targetAction, eventArguments) {
-		event.setHTTPHeader(name="Access-Control-Allow-Origin", value="*");
-		event.setHTTPHeader(name='Access-Control-Allow-Methods', value='GET,POST,PUT,DELETE,OPTIONS');
-		// event.setHTTPHeader(name='Access-Control-Allow-Headers', value='Content-Type'); 
-		// event.setHTTPHeader(name='Access-Control-Allow-Credentials', value='false'); 
-		// event.setHTTPHeader(name='Access-Control-Max-Age', value='60'); 
+	function preHandler(event, rc, prc, targetAction, eventArguments) {
+		try {
+			// Start time
+			var stime    = getTickCount();
 
-		// prc.response.addHeader('Access-Control-Allow-Origin', '*')
-		// 			.addHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-		// 			.addHeader('Access-Control-Allow-Headers', 'Content-Type')
-		// 			.addHeader('Access-Control-Allow-Credentials', 'false')
-		// 			.addHeader('Access-Control-Max-Age', '60');
+			// CORS	
+			event.setHTTPHeader(name="Access-Control-Allow-Origin", value="*");
+			event.setHTTPHeader(name='Access-Control-Allow-Methods', value='GET,POST,PUT,DELETE,OPTIONS');
+			event.setHTTPHeader(name='Access-Control-Allow-Headers', value='Content-Type'); 
+			event.setHTTPHeader(name='Access-Control-Allow-Credentials', value='false'); 
+			event.setHTTPHeader(name='Access-Control-Max-Age', value='60'); 
 
-		if(structKeyExists(session, 'clientsession')) {
-			try{
-				if (structKeyExists(session.clientsession, 'auth')) {
-					// prepare our response object
-					prc.response = getModel("Response");
+			// prepare our response object
+			prc.response = getModel("Response");
 
-					var usr      = session.clientsession.auth;
-					var permisos = usr.permisos();
+			// CORS Response
+			prc.response.addHeader('Access-Control-Allow-Origin', '*')
+						.addHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+						.addHeader('Access-Control-Allow-Headers', 'Content-Type')
+						.addHeader('Access-Control-Allow-Credentials', 'false')
+						.addHeader('Access-Control-Max-Age', '60');
 
-					switch (event.getHTTPMethod()) {
-						case "GET":
-							if(permisos.getLectura() != 1) {
-								prc.response.setError(true)
-								.addMessage("Action does not allowed")
-								.setStatusCode(STATUS.NOT_AUTHORIZED)
-								.setStatusText(MESSAGES.NOT_AUTHORIZED);
-							}						
-							break;
-						case "POST":
-							if(permisos.getEscritura() != 1) {
-								throw(message='POST NO');
-							}						
-							break;
-						case "PUT":
-							break;
-						case "DELETE":
-							if(permisos.getBorrado() != 1) {
-								throw(message='DELETE NO');
-							}						
-							break;
-						case "OPTIONS":
-							break;
-						default:
-							
-					}
-				}
-			} catch(Any e){
-				// Log Locally
-				log.error("Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
+			if (findNoCase("authenticate", event.getCurrentEvent()) == 0 && 
+				findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
+				// Limiter
+				limiterByTime(maxRequest, waitTimeRequest, prc, event);
+				// Validat user actions
+				validateActions(event, rc, prc);	
+			}				
+		} catch(Any e){
+			// Log Locally
+			log.error("[PreHandler] Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
 
-				// Setup General Error Response
-				prc.response
-					.setError(true)
-					.addMessage("General application error: #e.message#")
-					.setStatusCode(STATUS.INTERNAL_ERROR)
-					.setStatusText(MESSAGES.INTERNAL_ERROR);			
-				
-				// Development additions
-				if(getSetting("environment") eq "development") {
-					// TODO: Modificar el modo de mostrar errores en desarrollo.		
-					prc.response.addMessage("Detail: #e.detail#")
-								.addMessage("StackTrace: #e.stacktrace#");
-				}
+			// Setup General Error Response
+			prc.response
+				.setError(true)
+				.addMessage("General application error: #e.message#")
+				.setStatusCode(STATUS.INTERNAL_ERROR)
+				.setStatusText(MESSAGES.INTERNAL_ERROR);			
+			
+			// Development additions
+			if(getSetting("environment") eq "development") {
+				// TODO: Modificar el modo de mostrar errores en desarrollo.		
+				prc.response.addMessage("Detail: #e.detail#")
+							.addMessage("StackTrace: #e.stacktrace#");
 			}
-        }
+		}
+		
+		// end timer
+		prc.response.setResponseTime(getTickCount() - stime);
 	}
 
 	/**
@@ -203,9 +185,6 @@ component extends="coldbox.system.EventHandler"{
 
 			// prepare our response object
 			// prc.response = getModel("Response");
-			
-			// Limiter
-			limiterByTime(maxRequest=maxRequest, waitTimeRequest=waitTimeRequest, prc= prc, event= event);
 			
 			// prepare argument execution
 			var args = { event = event, rc = rc, prc = prc };
@@ -228,7 +207,7 @@ component extends="coldbox.system.EventHandler"{
 			}
 		} catch(Any e){
 			// Log Locally
-			log.error("Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
+			log.error("[AroundHandler] Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
 
 			// Setup General Error Response
 			prc.response
@@ -252,13 +231,14 @@ component extends="coldbox.system.EventHandler"{
 				.addHeader("x-current-routed-namespace", event.getCurrentRoutedNamespace())
 				.addHeader("x-current-event", event.getCurrentEvent());
 		}
+
 		// end timer
 		prc.response.setResponseTime(getTickCount() - stime);
+
 		// If results detected, just return them, controllers requesting to return results
 		if(!isNull(actionResults)){
 			return actionResults;
 		}
-		
 		
 		// Verify if controllers doing renderdata overrides? If so, just short-circuit out.
 		if(!structIsEmpty(event.getRenderData())){
@@ -547,7 +527,8 @@ component extends="coldbox.system.EventHandler"{
 				prc.token = authService.decodeToken(rc.token);
 				session.token.isvalid = true;
 			} else {
-				session.isvalid = false;
+				session.token.isvalid = false;
+				sessionInvalidate();
 				
 				// throw("The access token is not valid!");
 				prc.response.setError(true)
@@ -563,17 +544,92 @@ component extends="coldbox.system.EventHandler"{
 	/**
 	 * Valida session del cliente, buscando por ID session.
 	 */
-	private function validateSession(event, rc, prc) {
-		if (findNoCase("authenticate", event.getCurrentEvent()) == 0 && findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
+	private void function validateSession(event, rc, prc) {
+		if (findNoCase("authenticate", event.getCurrentEvent()) == 0 &&
+			findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
+
 			if(NOT StructKeyExists(session, 'id_evento')) {
 				if(structkeyexists(session, 'token')) {
 					if(structkeyexists(session.token, 'isvalid')) {
-						if (StructKeyExists(session, 'clientsession') AND StructKeyExists(session.clientsession, 'auth')) {
-							session.id_evento = session.clientsession.auth.id_evento;  
+						if (StructKeyExists(session, 'usersession') AND StructKeyExists(session.usersession, 'auth')) {
+							session.id_evento = session.usersession.auth.id_evento;  
 						} else {
 							throw("Has not been found a client authenticated");
 						}         
 					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Validate user http actions by HTTP methods
+	 *
+	 * @event 
+	 * @rc 
+	 * @prc 
+	 */
+	private void function validateActions(event, rc, prc) {
+		if(structKeyExists(session, 'usersession')) {
+			try {
+				if (structKeyExists(session.usersession, 'auth')) {
+					if(session.usersession.clientpassword.type EQ 'cliente'){
+						var usr = wirebox.getInstance("ClientesToken");
+					} else {
+						var usr = wirebox.getInstance("EventosToken");
+					}
+
+					var temp     = DeserializeJSON(session.usersession.auth);
+					var id       = temp.id_permisosToken;
+					var permisos = usr.permisosById(id);
+					var error    = false;
+
+					switch (event.getHTTPMethod()) {
+						case "GET":
+							if(permisos.getLectura() != 1) {
+								error = true;
+							}						
+							break;
+						case "POST":
+							if(permisos.getEscritura() != 1) {
+								error = true;
+							}						
+							break;
+						case "PUT":
+							break;
+						case "DELETE":
+							if(permisos.getBorrado() != 1) {
+								error = true;
+							}						
+							break;
+						case "OPTIONS":
+							break;
+						default:								
+					}
+
+					if(error) {
+						prc.response.setError(true)
+								.addMessage("Action not allowed [#event.getHTTPMethod()#]")
+								.setStatusCode(STATUS.NOT_AUTHORIZED)
+								.setStatusText(MESSAGES.NOT_AUTHORIZED);
+					}
+				}
+			} catch(Any e){
+				// Log Locally
+				log.error("Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
+
+				// Setup General Error Response
+				prc.response
+					.setError(true)
+					.addMessage("General application error: #e.message#")
+					.setStatusCode(STATUS.INTERNAL_ERROR)
+					.setStatusText(MESSAGES.INTERNAL_ERROR);			
+				
+				// Development additions
+				if(getSetting("environment") eq "development") {
+					// TODO: Modificar el modo de mostrar errores en desarrollo.		
+					prc.response.addMessage("Detail: #e.detail#")
+								.addMessage("StackTrace: #e.stacktrace#");
 				}
 			}
 		}

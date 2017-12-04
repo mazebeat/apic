@@ -15,7 +15,7 @@ component accessors="true" extends="models.BaseModel" table="apic_clientesToken"
 	property name="fecha_baja" 					ormtype="timestamp"	column="fecha_baja"					;
 	property name="id_permisosToken" 			ormtype="int"		column="id_permisosToken";
 
-	 property name="wirebox"		inject="wirebox";
+	 property name="wirebox" inject="wirebox"  setter="false" getter="false";
 
 	/**
 	 * Validation
@@ -33,14 +33,28 @@ component accessors="true" extends="models.BaseModel" table="apic_clientesToken"
 	}
 
 	/**
-	 * Obtener Permisos
+	 * Obtener permisos por ID
+	 *
+	 * @id 
+	 * @asQuery 
+	 */
+	public function permisosById(required number id, boolean asQuery = false) {
+		// this.setId_permisosToken(wirebox.getInstance('PermisosTokenService').findByApiTokenById(id, asQuery));
+		return wirebox.getInstance('PermisosTokenService').findByApiTokenById(id, asQuery);
+	}
+
+	/**
+	 * Obtener permisos
+	 *
+	 * @asQuery 
 	 */
 	public function permisos(boolean asQuery = false) {
 		if(!isnull(this.getId()) && isNumeric(this.getId_permisosToken())) {
-			this.setId_permisosToken(wirebox.getInstance('PermisosTokenService').findByApiToken(this, asQuery));
-			// return wirebox.getInstance('PermisosTokenService').findByApiToken(this, asQuery);
+			// this.setId_permisosToken(wirebox.getInstance('PermisosTokenService').findByApiToken(this, asQuery));
+			return wirebox.getInstance('PermisosTokenService').findByApiToken(this, asQuery);
 		}
 
 		return this.getId_permisosToken();
 	}
+
 } 	

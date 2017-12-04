@@ -19,10 +19,11 @@ component accessors="true"{
 	/**
 	 * Obtiene y valida si el evento está registrado en la tabla apic_eventosToken por id_evento y 
 	 * la contraseña que se le ha otorgado.
+	 * 
 	 * @idevento 
 	 */
-	any function get(required numeric idevento=0, required string password=""){
-		var query = dao.get(arguments.idevento, arguments.password);
+	any function get(required numeric idevento = 0){
+		var query = dao.get(arguments.idevento);
 
         if(idevento EQ 0 OR query.recordcount EQ 0){
             return wirebox.getInstance("EventosToken");
@@ -33,6 +34,7 @@ component accessors="true"{
 	
 	/**
 	 * Registra un nuevo evento en la tabla apic_eventosToken
+	 * 
 	 * @idevento 
 	 * @password 
 	 * @tokenexpiration 
@@ -44,6 +46,7 @@ component accessors="true"{
 
 	/**
 	 * Actualiza el registro token para un evento en concreto
+	 * 
 	 * @idevento 
 	 * @token 
 	 */
@@ -53,6 +56,7 @@ component accessors="true"{
 
 	/**
 	 * Actualiza el registro password para un evento en concreto
+	 * 
 	 * @idevento 
 	 * @password 
 	 */
@@ -62,6 +66,7 @@ component accessors="true"{
 
 	/**
 	 * Busca un EventoToken por su id y token, para corroborar su vigencia.
+	 * 
 	 * @idevento 
 	 * @token
 	 */
@@ -75,6 +80,12 @@ component accessors="true"{
         return populator.populateFromQuery(wirebox.getInstance("EventosToken"), query, 1);
 	}	
 
+	/**
+	 * Obtener Contraseña
+	 *
+	 * @idevento 
+	 * @password 
+	 */
 	any function getPassword(required numeric idevento=0, required string password=""){
 		var query = dao.getPassword(arguments.idevento, arguments.password);
 
@@ -85,6 +96,11 @@ component accessors="true"{
 		return populator.populateFromQuery(wirebox.getInstance("EventosToken"), query, 1);
 	}
 
+	/**
+	 * Activar o desactivar contraseña
+	 *
+	 * @id 
+	 */
 	any function activateDesactivate(required numeric id) {
 		return dao.activateDesactivate(id);
 	}
