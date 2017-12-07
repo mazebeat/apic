@@ -2,4 +2,26 @@
 @import "theme-default.less";
 @import "base.less";
 @import "doc.less"; 
-@import "landing.less";
+@import "landing.less"; 
+  
+#smoothup { 
+    height: 40px; 
+    width: 40px; 
+    position:fixed; 
+    bottom:3%;
+    right:3%;
+    display:none;
+    -webkit-transition-duration: 0.2s; 
+    -moz-transition-duration: 0.2s; 
+    transition-duration: 0.2s; 
+    z-index: 99999999999;
+    span {
+        margin: auto;
+    }
+    &:hover {
+        -moz-transform: scale(1.2);
+        transform: scale(1.2);
+        -ms-transform: scale(1.2);
+        -webkit-transform: scale(1.2);
+    }
+}

@@ -20,3 +20,5 @@ done < "last_modified.log"
 
 echo "End finding" >> $_log
 echo . >> $_log
+
+sh auto_git.sh

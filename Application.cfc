@@ -23,19 +23,19 @@ component{
 		'/adminmodels' = getDirectoryFromPath(getCurrentTemplatePath()) & '../default/admin/model',
 		'/adminutils'  = getDirectoryFromPath(getCurrentTemplatePath()) & '../default/admin/helpers'
 	};
-	this.datasource  = "sige";
+	this.datasource 			= "sige";
 	this.invokeImplicitAccessor = true;
 
 	// this.ormsettings.search.indexDir = getDirectoryFromPath(getCurrentTemplatePath()) & "/ormindex";
 
 	if (structKeyExists(url, "killsession")) { this.sessionTimeout = createTimeSpan( 0, 0, 0, 1 ); }
-	
+
 	// application start
 	public boolean function onApplicationStart(){
 		application.cbBootstrap = new coldbox.system.Bootstrap( COLDBOX_CONFIG_FILE, COLDBOX_APP_ROOT_PATH, COLDBOX_APP_KEY, COLDBOX_APP_MAPPING );
 		application.cbBootstrap.loadColdbox();
 
-		application.urlbase    = "http" & (cgi.HTTPS EQ 'Yes' ? 's' : '') & "://" & cgi.server_name;
+		application.urlbase    = "http" & (cgi.server_port_secure EQ 1 ? 's' : '') & "://" & cgi.server_name;
 		application.languages  = ["ES", "EN", "IT", "RS"];
 		application.language   = 'ES';
 		application.datasource = this.datasource;
@@ -51,12 +51,13 @@ component{
 	// request start
 	public boolean function onRequestStart( string targetPage ){
 		setting showdebugoutput = structkeyexists(url, "debug");
+		if (structKeyExists( url, "killsession" )) {  this.sessioncookie.disableupdate = false; structClear(session); }
 		if (structKeyExists(url, "reset")) { this.onApplicationStart();	}
-		if (structKeyExists( url, "killsession" )) { this.sessioncookie.disableupdate = false; }
 		
 		// Process ColdBox Request
 		application.cbBootstrap.onRequestStart( arguments.targetPage );
 		
+		// CORS
 		var pageCtx = getpagecontext().getresponse();
 		pageCtx.setHeader('Access-Control-Allow-Origin', "*");
 		pageCtx.setHeader('Access-Control-Allow-Headers', "Origin, X-Requested-With, Content-Type, Accept");
@@ -66,7 +67,7 @@ component{
 		return true;
 	}
 
-	public void function onSessionStart(){
+	public void function onSessionStart() {  
 		application.cbBootStrap.onSessionStart();
 	}
 
