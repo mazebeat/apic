@@ -16,6 +16,25 @@
 	</cffunction>
 
 <!------------------------------------------- PUBLIC ------------------------------------------->
+
+	<cffunction name="get" returntype="query">
+		<cfargument name="id_formulario" type="numeric" required="false" default="#session.id_evento#" displayname="" hint="">
+		<cfargument name="event">
+		<cfargument name="rc">
+
+		<cfquery name="local.forms" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
+			SELECT id_formulario,
+			id_tipo_participante,
+			'' AS 'id_agrupacion',
+			'' AS 'id_campo'
+			FROM sige.vFormularios
+			WHERE id_formulario = <cfqueryparam value="#arguments.id_formulario#" CFSQLType="CF_SQL_INTEGER">
+			AND id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_CHAR">
+		</cfquery>
+
+		<cfreturn local.forms>
+	</cffunction>
+	<!--- 267237 96480555 --->
 	
 	<!--
 		Obtiene todos los formularios según ID de un evento e idioma
@@ -24,30 +43,41 @@
 	--> 
 	<cffunction name="byEvento" returnType="query" hint="Obtiene todos los formularios según ID de un evento e idioma">
 		<cfargument name="id_evento" type="numeric" required="true" hint="">
+		<cfargument name="event">
+		<cfargument name="rc">
+
+		<cfset var link = getURLLink(arguments.rc.token)>
 
 		<cfquery name="local.forms" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 			SELECT DISTINCT(id_formulario),
-			id_tipo_participante
+			<!--- id_tipo_participante, --->
+			<!--- '' AS 'id_agrupacion',
+			'' AS 'fields', --->
+			CONCAT("#link#/formularios/", id_formulario) AS '_link'
 			FROM sige.vFormularios
 			WHERE id_evento = <cfqueryparam value="#arguments.id_evento#" CFSQLType="CF_SQL_INTEGER">
 			AND id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_CHAR">;
 		</cfquery>
-		
-		<!--- 
-		<cfquery name = "local.forms" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
-			SELECT DISTINCT(f.id_formulario), f.*,
-				f.id_tipo_participante, 
-				s.id_agrupacion 
-			FROM sige.vFormularios f
-			RIGHT JOIN vSeleccionAgrupacionesDeCamposFormularios s
-			ON f.id_formulario = s.id_formulario
-			WHERE f.id_evento = <cfqueryparam value="#arguments.id_evento#" CFSQLType="CF_SQL_INTEGER">
-			AND f.id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_CHAR">;
-		</cfquery> 
-		--->
+	
+		<cfreturn local.forms>
+	</cffunction>
 
-		
-		
+
+	<cffunction name="getByIdTipoParticipante" returntype="query">
+		<cfargument name="id_tipo_participante" type="numeric" required="false" displayname="" hint="">
+		<cfargument name="event">
+		<cfargument name="rc">
+
+		<cfquery name="local.forms" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
+			SELECT id_formulario,
+			id_tipo_participante,
+			'' AS 'id_agrupacion',
+			'' AS 'id_campo'
+			FROM sige.vFormularios
+			WHERE id_tipo_participante = <cfqueryparam value="#arguments.id_tipo_participante#" CFSQLType="CF_SQL_INTEGER">
+			AND id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_CHAR">
+		</cfquery>
+
 		<cfreturn local.forms>
 	</cffunction>
 
@@ -55,7 +85,7 @@
 		<cfargument name="id_evento" type="numeric" required="false" default="#session.id_evento#" displayname="" hint="">
 
 		<cfquery name="local.agrupacion" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
-			SELECT DISTINCT(id_agrupacion)
+			SELECT DISTINCT(id_agrupacion), titulo
 			FROM vAgrupacionesDeCampos
 			WHERE id_evento = <cfqueryparam value="#arguments.id_evento#" CFSQLType="CF_SQL_INTEGER">
 			AND id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_CHAR">			
@@ -76,7 +106,6 @@
 
 		<cfreturn local.agrupacion>
 	</cffunction>
-
 
 	<cffunction name="fieldsByGroup" returnType="query" hint="Obtiene todos los formularios según ID de un evento e idioma">
 		<cfargument name="id_agrupacion" type="numeric" required="true" hint="">

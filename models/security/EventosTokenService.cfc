@@ -31,6 +31,19 @@ component accessors="true"{
 
         return populator.populateFromQuery(wirebox.getInstance("EventosToken"), query, 1);
 	}
+
+		/**
+	 * Validate
+	 */
+	any function validate(required numeric idevento = 0, required string password) {
+		var query = dao.validate(idevento, password);
+
+		if(idevento EQ 0 OR query.recordcount EQ 0){
+            return wirebox.getInstance("EventosToken");
+        }
+
+        return populator.populateFromQuery(wirebox.getInstance("EventosToken"), query, 1);
+	}
 	
 	/**
 	 * Registra un nuevo evento en la tabla apic_eventosToken

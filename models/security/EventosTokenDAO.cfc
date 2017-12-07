@@ -160,4 +160,21 @@ component accessors="true" {
 
 		return this.get(idevento);					
 	}
+
+	/**
+	 * Obtiene y valida si el cliente está registrado en la tabla apic_eventosToken por id_evento y 
+	 * la contraseña que se le ha otorgado.
+	 * @idevento ID correspondiente al cliente 
+	 */
+    query function validate(required numeric idevento, required string password) {
+		var queryS = "SELECT * 
+					  FROM apic_eventosToken 
+					  WHERE id_evento = :idevento
+					  AND password = :password";
+		var query = new Query(datasource = "#application.datasource#", sql = "#queryS#")
+		.addParam(name = "idevento", value = arguments.idevento, cfsqltype = "CF_SQL_INTEGER")
+		.addParam(name = "password", value = arguments.password, cfsqltype = "CF_SQL_VARCHAR");
+		
+		return query.execute().getResult();
+    }
 }

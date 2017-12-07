@@ -24,8 +24,7 @@ component accessors="true" {
     }
 
 	/**
-	 * Obtiene y valida si el cliente está registrado en la tabla apic_clientesToken por id_cliente y 
-	 * la contraseña que se le ha otorgado.
+	 * Obtiene el cliente registrado en la tabla apic_clientesToken por id_cliente
 	 * @idcliente ID correspondiente al cliente 
 	 */
     query function get(required numeric idcliente) {
@@ -174,4 +173,21 @@ component accessors="true" {
 		
 		return query.execute().getResult();					
 	}
+
+	/**
+	 * Obtiene y valida si el cliente está registrado en la tabla apic_clientesToken por id_cliente y 
+	 * la contraseña que se le ha otorgado.
+	 * @idcliente ID correspondiente al cliente 
+	 */
+    query function validate(required numeric idcliente, required string password) {
+		var queryS = "SELECT * 
+					  FROM apic_clientesToken 
+					  WHERE id_cliente = :idcliente
+					  AND password = :password";
+		var query = new Query(datasource = "#application.datasource#", sql = "#queryS#")
+		.addParam(name = "idcliente", value = arguments.idcliente, cfsqltype = "CF_SQL_INTEGER")
+		.addParam(name = "password", value = arguments.password, cfsqltype = "CF_SQL_VARCHAR");
+		
+		return query.execute().getResult();
+    }
 }

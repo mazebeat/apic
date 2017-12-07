@@ -93,11 +93,11 @@ component extends="Base" {
 					
 						session["usersession"] = { 
 							"clientpassword"= { 
-								"type"= type, 
-								"id"= id, 
-								"token"= token 
+								"type"  = type, 
+								"id"    = id, 
+								"token" = token
 							},
-							"auth"          = authuser,
+							"auth"          = serializeJSON(authuser),
 							"defaults" = {
 									"form" = {
 										"fields" = ""
@@ -301,6 +301,13 @@ component extends="Base" {
 		
 	}
 
+	/**
+	 * PermissionsUser Obtiene todos los permisos asoociados a ese Objeto ClientesToken | EventosToken
+	 *
+	 * @event 
+	 * @rc 
+	 * @prc 
+	 */
 	any function permissionsUser( event, rc, prc ) {
 		var jsonData = event.getHTTPContent( json=true );
 
@@ -308,6 +315,10 @@ component extends="Base" {
 			var usr = cService.get(jsonData.id);
 		} else {
 			var usr = eService.get(jsonData.id);
+		}
+
+		if(isnull(usr.getId_permisosToken())) {
+			throw(message = "Error: Empty object, please generate password first.", errorcode = 500);
 		}
 
 		var permisos = usr.permisos();
@@ -319,6 +330,13 @@ component extends="Base" {
 		});
 	}
 
+	/**
+	 * SavePermissionsUser Actualiza cambios en los permisos previamente creados cuando se genera una password de API
+	 *
+	 * @event 
+	 * @rc 
+	 * @prc 
+	 */
 	any function savePermissionsUser( event, rc, prc ) {
 		var jsonData = event.getHTTPContent( json=true );
 
@@ -329,11 +347,11 @@ component extends="Base" {
 		}
 
 		if(arrayLen(jsonData.permissions) < 3) {
-			throw(message = "Error: cantidad permisos");
+			throw(message = "Error: Permissions count incorrect.", errorcode = 500);
 		}
 
 		if(isnull(usr.getId_permisosToken())) {
-			throw(message = "Error: Objeto vacio");
+			throw(message = "Error: Empty object, please generate password first.", errorcode = 500);
 		}
 			
 		var permisos = usr.permisos();

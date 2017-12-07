@@ -17,10 +17,23 @@ component accessors="true"{
 	}
 
 	/**
-	* Validate
-	*/
+	 * Get
+	 */
 	any function get(required numeric idcliente = 0) {
 		var query = dao.get(arguments.idcliente);
+
+        if(idcliente EQ 0 OR query.recordcount EQ 0) {
+            return wirebox.getInstance("ClientesToken");
+        }
+
+        return populator.populateFromQuery(wirebox.getInstance("ClientesToken"), query, 1);
+	}
+
+	/**
+	 * Validate
+	 */
+	any function validate(required numeric idcliente = 0, required string password) {
+		var query = dao.validate(idcliente, password);
 
         if(idcliente EQ 0 OR query.recordcount EQ 0) {
             return wirebox.getInstance("ClientesToken");

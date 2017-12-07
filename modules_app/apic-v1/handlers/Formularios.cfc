@@ -25,7 +25,11 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset s = service.all(session.id_evento)>
+		<cfif isdefined('rc.id_evento')>
+			<cfset var s = service.all(rc.id_evento, event, rc)>
+		<cfelse>
+			<cfset var s = service.all(session.id_evento, event, rc)>
+		</cfif>
 
 		<cfif NOT structIsEmpty(s.data.records) AND isQuery(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -42,10 +46,25 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset s = service.byEvento(session.id_evento)>
+		<cfif isdefined('rc.id_evento')>
+			<cfset var cacheKey = 'q-formH-meta-#rc.id_evento#'>
+		<cfelse>
+			<cfset var cacheKey = 'q-formH-meta-#session.id_evento#'>
+		</cfif>
+		
+		<cfif cache.lookup(cacheKey)>
+			<cfset var s = cache.get(cacheKey)>
+		<cfelse>
+			<cfif isdefined('rc.id_evento')>
+				<cfset var s = service.meta(rc.id_evento, event, rc)>
+			<cfelse>
+				<cfset var s = service.meta(session.id_evento, event, rc)>
+			</cfif>
 
-		<cfif NOT structIsEmpty(s.data.records) AND isQuery(s.data.records)>
-			<cfset s.data.records = QueryToStruct(s.data.records)>
+			<cfif NOT structIsEmpty(s.data.records) AND isQuery(s.data.records)>
+				<cfset s.data.records = QueryToStruct(s.data.records)>
+			</cfif>
+			<cfset cache.set(cacheKey, s, 60, 30)>
 		</cfif>
 
 		<cfset prc.response.setData(s.data).setError(!s.ok)> 
@@ -64,12 +83,11 @@
 		<cfif cache.lookup(cacheKey)>
 			<cfset var s = cache.get(cacheKey)>
 		<cfelse>
-			<cfset s = service.get(rc.id_formulario)>
+			<cfset var s = service.get(rc.id_formulario, event, rc)>
 
-			<cfif NOT len(s.data.records) AND isQuery(s.data.records)>
-				<cfset var s.data.records = QueryToStruct(s.data.records)>
+			<cfif NOT structIsEmpty(s.data.records) AND isQuery(s.data.records)>
+				<cfset s.data.records = QueryToStruct(s.data.records)>
 			</cfif>
-
 			<cfset cache.set(cacheKey, s, 60, 30)>
 		</cfif>
 	
@@ -84,7 +102,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset s = service.getByTipoParticipante(rc.id_tipo_participante)>
+		<cfset var s = service.getByTipoParticipante(rc.id_tipo_participante, event, rc)>
 
 		<cfif NOT structIsEmpty(s.data.records) AND isQuery(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>

@@ -8,7 +8,7 @@ _date=$(date +"%F %T")
 
 echo "BACKUP $_date -----------" >> $_log
 echo 'Finding modified or new files...' >> $_log
-find ${_current_dir} -type f -not -path "*/WEB-INF/*" -mtime -1 -ls | awk '{print $11}' > "last_modified.log"
+find ${_current_dir} -type f -not -path "*/WEB-INF/*" -mtime -3 -ls | awk '{print $11}' > "last_modified.log"
 
 echo 'Init copy...' >> $_log
 while read _file

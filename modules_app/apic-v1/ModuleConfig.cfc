@@ -114,10 +114,10 @@ Optional Methods
 			{ pattern="/:lang-alpha/:token/eventos", handler="Eventos", action="index" },
 
 			// Formularios
-			{ pattern="/:lang-alpha/:token/formularios", handler="Formularios", action="index" },
 			{ pattern="/:lang-alpha/:token/formularios/meta", handler="Formularios", action="meta" },
-			{ pattern="/:lang-alpha/:token/formularios/tipoparticipante/:id_tipo_participante-numeric", handler="Formularios", action="getByTipoParticipante" },
+			// { pattern="/:lang-alpha/:token/formularios/tipoparticipante/:id_tipo_participante-numeric", handler="Formularios", action="getByTipoParticipante" },
 			{ pattern="/:lang-alpha/:token/formularios/:id_formulario-numeric", handler="Formularios", action="get" },
+			{ pattern="/:lang-alpha/:token/formularios", handler="Formularios", action="index" },
 
 			// Module Entry Point
 			{ pattern="/:lang-alpha/:token?", handler="home", action="index" },

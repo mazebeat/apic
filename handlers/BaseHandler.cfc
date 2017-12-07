@@ -483,8 +483,7 @@ component extends="coldbox.system.EventHandler"{
 	private any function checkAuthenticationToken(event, rc, prc, targetAction, eventArguments, args) {
 		
 		/* Only accept application/json for content body on posts */
-		if (!prc.response.getError() && 
-			(event.getHTTPMethod() == "POST" || event.getHTTPMethod() == "PUT")) {
+		if (!prc.response.getError() &&  (event.getHTTPMethod() == "POST" || event.getHTTPMethod() == "PUT")) {
 
 			if (findNoCase("application/json", event.getHTTPHeader("Content-Type")) == 0) {
 				prc.response.setError(true)
@@ -525,9 +524,7 @@ component extends="coldbox.system.EventHandler"{
 			if (authService.validateToken(rc.token)) {
 				/* Validate token and store token data in prc scope */
 				prc.token = authService.decodeToken(rc.token);
-				session.token.isvalid = true;
 			} else {
-				session.token.isvalid = false;
 				sessionInvalidate();
 				
 				// throw("The access token is not valid!");
@@ -570,16 +567,24 @@ component extends="coldbox.system.EventHandler"{
 	 * @prc 
 	 */
 	private void function validateActions(event, rc, prc) {
+		
 		if(structKeyExists(session, 'usersession')) {
 			try {
 				if (structKeyExists(session.usersession, 'auth')) {
+					var usr = {};
+					var temp     = {};
+					
 					if(session.usersession.clientpassword.type EQ 'cliente'){
-						var usr = wirebox.getInstance("ClientesToken");
+						usr = wirebox.getInstance("ClientesToken");
 					} else {
-						var usr = wirebox.getInstance("EventosToken");
+						usr = wirebox.getInstance("EventosToken");
 					}
-
-					var temp     = DeserializeJSON(session.usersession.auth);
+					if(isJson(session.usersession.auth)) {
+						temp     = DeserializeJSON(session.usersession.auth);
+					} else {
+						temp     = session.usersession.auth;
+					}
+					
 					var id       = temp.id_permisosToken;
 					var permisos = usr.permisosById(id);
 					var error    = false;

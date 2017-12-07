@@ -30,9 +30,9 @@
 		var result = {};
 
 		if(data.id != 0 && data.type EQ "c") {
-			result = clienteTokenService.get(data.id);
+			result = clienteTokenService.validate(data.id, password);
 		} else if(data.id != 0 && data.type EQ "e"){
-			result = eventosTokenService.get(data.id);
+			result = eventosTokenService.validate(data.id, password);
 		} else {
 			throw(message="Password Error");
 		}
@@ -82,8 +82,6 @@
 
 			session.token.data = data;
 		} catch(any e) {
-			sessionInvalidate();
-			
 			if(isdefined('url.debug')) {
 				throw(e);	
 			}
@@ -111,7 +109,7 @@
 	 * @password
 	 */	
 	string function decryptPassword(required string password) {
-		return decrypt(password, secretKey, 'AES', 'Base64');
+		return decrypt(password, secretKey, 'AES/ECB/PKCS5Padding', 'Base64');
 	}
 
 	/** 
@@ -119,7 +117,7 @@
 	 * @password
 	 */		
 	string function encryptPassword(required string password) {
-		return encrypt(password, secretKey, 'AES','Base64'); 
+		return encrypt(password, secretKey, 'AES/ECB/PKCS5Padding', 'Base64'); 
 	}	
 
 	/**
@@ -135,8 +133,9 @@
 		}
 
 		password &= id & "_" & secretWord & "_" & randRange(1, 256, "SHA1PRNG");
+		finalPassword = encryptPassword(password);
 
-		return encryptPassword(password);
+		return finalPassword;
 	}
 
 	/**
@@ -147,13 +146,13 @@
 	 */
 	string function generatePassword(required number id, boolean isEvento = false) {
 		password = createPassword(id, isEvento);
-
+		
 		if(!isEvento) {
 			clienteTokenService.updatePassword(id, password);
 		} else {
 			eventosTokenService.updatePassword(id, password);
 		}
-
+		
 		return password;
 	}
 
@@ -191,7 +190,7 @@
 		try {
 			temp = ListToArray(decryptPassword(password), "_");
 			
-			if(NOT temp.len() GTE 3) {
+			if(NOT arrayLen(temp) GTE 3) {
 				throw(message="Wrong password");
 			}
 
