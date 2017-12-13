@@ -104,7 +104,7 @@ Optional Methods
 			{ pattern="/:lang-alpha/:token/participantes/:tipo_participante", handler="Participantes", action="byType", contraints={ tipo_participante="(/([\w])\w+/+g)", token="(([(\w|\d)\.\-\\])\w+/g)" } },
 
 			// -> All		
-			{ pattern="/:lang-alpha/:token/participantes", handler="Participantes", action="index" },
+			{ pattern="/:lang-alpha/:token/participantes", handler="Participantes", action={ GET="index", POST="create" } },
 
 			// Tipo de Participantes
 			{ pattern="/:lang-alpha/:token/tiposparticipantes/:id_tipo_participante-numeric", handler="TiposParticipantes", action="get" },

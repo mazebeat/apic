@@ -143,7 +143,8 @@
 			SELECT DISTINCT(id_campo),
 				id_agrupacion,
 				id_tipo_campo, 
-				id_tipo_campo_fijo
+				id_tipo_campo_fijo,
+				titulo
 			FROM vCampos
 			WHERE id_agrupacion IN (<cfqueryparam value="#arguments.ids_agrupacion#" CFSQLType="CF_SQL_INTEGER" list="yes">)		
 			AND id_idioma = <cfqueryparam value="#session.language#" CFSQLType="CF_SQL_CHAR">
@@ -163,7 +164,6 @@
 			WHERE id_campo = <cfqueryparam value="#arguments.id_campo#" cfsqltype="CF_SQL_INTEGER">
 			AND id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_CHAR">
 		</cfquery>
-
 		
 		<cfreturn qValoresCamposGruposFormulario>
 	</cffunction>

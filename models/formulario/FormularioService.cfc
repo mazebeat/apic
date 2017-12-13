@@ -488,10 +488,14 @@
 	</cffunction>
 
 	<cffunction name="camposPorEvento" returnType="any" output="false"  hint="">
+		<cfargument name="filtered" type="any" required="false" default="true">
+
 		<cfset var allGroups = dao.groupsByEvent()>
 		<cfset var fields 	 = dao.allFieldsByGroupDefault(valueList(allGroups.id_agrupacion))>
-	
-		<cfset fields = valueList(fields.id_campo)>
+		
+		<cfif filtered>
+			<cfset fields = valueList(fields.id_campo)>
+		</cfif>
 
 		<cfreturn fields>
 	</cffunction>

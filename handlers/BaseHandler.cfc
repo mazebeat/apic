@@ -129,26 +129,29 @@ component extends="coldbox.system.EventHandler"{
 			var stime    = getTickCount();
 
 			// CORS	
-			event.setHTTPHeader(name="Access-Control-Allow-Origin", value="*");
-			event.setHTTPHeader(name='Access-Control-Allow-Methods', value='GET,POST,PUT,DELETE,OPTIONS');
-			event.setHTTPHeader(name='Access-Control-Allow-Headers', value='Content-Type'); 
-			event.setHTTPHeader(name='Access-Control-Allow-Credentials', value='false'); 
-			event.setHTTPHeader(name='Access-Control-Max-Age', value='60'); 
+			// event.setHTTPHeader(name='Access-Control-Allow-Origin', value='*');
+			// event.setHTTPHeader(name='Access-Control-Allow-Methods', value='GET,POST,PUT,DELETE,OPTIONS');
+			// event.setHTTPHeader(name='Access-Control-Allow-Headers', value='Content-Type'); 
+			// event.setHTTPHeader(name='Access-Control-Allow-Credentials', value='false'); 
+			// event.setHTTPHeader(name='Access-Control-Max-Age', value='60'); 
 
 			// prepare our response object
 			prc.response = getModel("Response");
 
 			// CORS Response
-			prc.response.addHeader('Access-Control-Allow-Origin', '*')
-						.addHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-						.addHeader('Access-Control-Allow-Headers', 'Content-Type')
-						.addHeader('Access-Control-Allow-Credentials', 'false')
-						.addHeader('Access-Control-Max-Age', '60');
+			// prc.response.addHeader('Access-Control-Allow-Origin', '*')
+			// 			.addHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+			// 			.addHeader('Access-Control-Allow-Headers', 'Content-Type')
+			// 			.addHeader('Access-Control-Allow-Credentials', 'false')
+			// 			.addHeader('Access-Control-Max-Age', '60');
 
-			if (findNoCase("authenticate", event.getCurrentEvent()) == 0 && 
+			if (findNoCase("Echo", event.getCurrentEvent()) == 0 && 
+				findNoCase("Authenticate", event.getCurrentEvent()) == 0 && 
 				findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
+
 				// Limiter
 				limiterByTime(maxRequest, waitTimeRequest, prc, event);
+				
 				// Validat user actions
 				validateActions(event, rc, prc);	
 			}				
@@ -483,22 +486,46 @@ component extends="coldbox.system.EventHandler"{
 	private any function checkAuthenticationToken(event, rc, prc, targetAction, eventArguments, args) {
 		
 		/* Only accept application/json for content body on posts */
-		if (!prc.response.getError() &&  (event.getHTTPMethod() == "POST" || event.getHTTPMethod() == "PUT")) {
+		if ((event.getHTTPMethod() == "POST" || event.getHTTPMethod() == "PUT") && !prc.response.getError()) {
 
+		
 			if (findNoCase("application/json", event.getHTTPHeader("Content-Type")) == 0) {
-				prc.response.setError(true)
-							.addMessage("Content-Type application/json is required!")
-							.setStatusCode(STATUS.BAD_REQUEST)
-							.setStatusText(MESSAGES.BAD_REQUEST);
+				// prc.response.setError(true)
+				// 			.addMessage("Content-Type application/json is required!")
+				// 			.setStatusCode(STATUS.BAD_REQUEST)
+				// 			.setStatusText(MESSAGES.BAD_REQUEST);
+
+				throw(message = "Content-Type application/json is required!", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
 			}
 
 			try {
-				structAppend(rc, event.getHTTPContent(json=true));
+				// TODO: Check this part of code, does a lot of error codes
+				// if(isdefined("url.debug")) {
+				// 	var json = event.getHTTPContent();
+				// 	writeDump(var="#event.getHTTPContent()#", label="event");
+				// 	writeDump(var="#isJSON(event.getHTTPContent())#", label="event");
+				// 	writeDump(var="#isJSON(json)#", label="event");
+				// 	abort;
+				// }
+				// if(isJSON(event.getHTTPContent())) {
+					structAppend(rc, event.getHTTPContent( json = true));
+				// } else {
+				// 	structAppend(rc, serializeJSON(event.getHTTPContent()));
+				// }
 			} catch(Any e) {
-				prc.response.setError(true)
-							.addMessage("Invalid JSON Format!")
-							.setStatusCode(STATUS.BAD_REQUEST)
-							.setStatusText(MESSAGES.BAD_REQUEST);
+				
+				// prc.response.setError(true)
+				// .addMessage("Invalid JSON Format!")
+				// .setStatusCode(STATUS.BAD_REQUEST)
+				// .setStatusText(MESSAGES.BAD_REQUEST);
+
+				// if(getSetting("environment") eq "development") {
+				// 	// TODO: Modificar el modo de mostrar errores en desarrollo.		
+				// 	prc.response.addMessage("Detail: #e.detail#")
+				// 	.addMessage("StackTrace: #e.stacktrace#");
+				// }
+
+				throw(message = "Invalid JSON Format!", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST, object=e);
 			}
 		}
 

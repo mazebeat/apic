@@ -672,3 +672,25 @@ copying /includes/less/landing.less
 copying /includes/less/base.less
 End finding
 .
+BACKUP 2017-12-13 10:25:33 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/BaseHandler.cfc
+copying /handlers/Authenticate.cfc
+copying /server.json
+copying /CQFO6Q~M/logs/system.log
+copying /CQFO6Q~M/logs/access.log
+copying /CQFO6Q~M/logs/system.20171213.094655.zip
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/QueryService.cfc
+copying /models/participante/Participante.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/security/AuthenticationService.cfc
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/handlers/Participantes.cfc
+copying /modules_app/apic-v1/ModuleConfig.cfc
+End finding
+.

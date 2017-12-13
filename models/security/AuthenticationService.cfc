@@ -109,7 +109,7 @@
 	 * @password
 	 */	
 	string function decryptPassword(required string password) {
-		return decrypt(password, secretKey, 'AES/ECB/PKCS5Padding', 'Base64');
+		return decrypt(password, secretKey, 'AES', 'Base64');
 	}
 
 	/** 
@@ -117,7 +117,7 @@
 	 * @password
 	 */		
 	string function encryptPassword(required string password) {
-		return encrypt(password, secretKey, 'AES/ECB/PKCS5Padding', 'Base64'); 
+		return encrypt(password, secretKey, 'AES', 'Base64'); 
 	}	
 
 	/**

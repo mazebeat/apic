@@ -43,15 +43,14 @@
 
 		<cfset var link = getURLLink(arguments.rc.token)>
 
+
 		<cfif NOT structKeyExists(arguments.rc, 'ids')>			
-			<cfif NOT isdefined('session.clientsession.defaults.form.fields')>					
-				<cfset session.clientsession.defaults.form.fields = defaultValues()>
-			<cfelseif isEmpty(session.clientsession.defaults.form.fields)>
-				<cfset session.clientsession.defaults.form.fields = defaultValues()>
+			<cfif NOT isdefined('session.usersession.defaults.form.fields') OR isEmpty(session.usersession.defaults.form.fields)>					
+				<cfset session.usersession.defaults.form.fields = defaultValues()>
 			</cfif>
-			<cfset arguments.event.paramValue('ids', session.clientsession.defaults.form.fields)>			
+			<cfset arguments.event.paramValue('ids', session.usersession.defaults.form.fields)>			
 		</cfif>
-	
+
 		<cfset var datosConsulta = qs.generarConsultaInforme(arguments.rc.ids)>
 		
 		<cfoutput>
@@ -87,12 +86,12 @@
 
 		<!--- <cftry> --->
 			<cfif NOT structKeyExists(arguments.rc, 'ids')>			
-				<cfif NOT isdefined('session.clientsession.defaults.form.fields')>					
-					<cfset session.clientsession.defaults.form.fields = defaultValues()>
-				<cfelseif isEmpty(session.clientsession.defaults.form.fields)>
-					<cfset session.clientsession.defaults.form.fields = defaultValues()>
+				<cfif NOT isdefined('session.usersession.defaults.form.fields')>					
+					<cfset session.usersession.defaults.form.fields = defaultValues()>
+				<cfelseif isEmpty(session.usersession.defaults.form.fields)>
+					<cfset session.usersession.defaults.form.fields = defaultValues()>
 				</cfif>
-				<cfset arguments.event.paramValue('ids', session.clientsession.defaults.form.fields)>			
+				<cfset arguments.event.paramValue('ids', session.usersession.defaults.form.fields)>			
 			</cfif>
 		
 			<cfset var datosConsulta = qs.generarConsultaInforme(arguments.rc.ids)>
@@ -131,7 +130,7 @@
 		@ tipo_participante string Tipo de participante
 	 --->
 	<cffunction name="byType" hint="Obtiene todos los participantes por tipo de participante" output="false" returntype="Query">
-		 			<cfargument name="event">
+		<cfargument name="event">
 		<cfargument name="rc">
 		<cfargument name="tipo_participante" type="string" required="true">
 
@@ -179,8 +178,134 @@
 	</cffunction>
 
 	<cffunction name="defaultValues" returntype="any">
-		<cfset var campos = formS.camposPorEvento()>
+		<cfargument name="filtered" type="boolean" default="false" required="false">
+
+		<cfset var campos = formS.camposPorEvento(filtered)>
 	
 		<cfreturn campos>
+	</cffunction>
+
+	<cffunction name="create" hint="Inserta un nuevo participante" output="false" returntype="struct">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="dataFields">
+
+		<cfset var dataFields = event.getHTTPContent( json=true )>
+		
+		<cftry>
+			<cfset var idtipoparticipante = dataFields.id_tipo_participante>
+			<cfset var idformulario = 1>
+			<cfset structDelete(dataFields, 'id_tipo_participante')>
+		<cfcatch>
+			<cfthrow message="ID Tipo Participante did not found it">
+		</cfcatch>
+		</cftry>
+		
+		<cfset var defaultFields = formS.camposPorEvento(filtered=false)>
+
+		<cfquery name="local.findout" dbtype="query"> 
+			SELECT * AS q 
+			FROM defaultFields
+			WHERE id_campo IN (#structKeyList(dataFields, ",")#)
+			AND (titulo LIKE '%mail%' OR titulo LIKE '%correo%')
+		</cfquery>
+
+		<cfif local.findout.recordcount LTE 0>
+			<cfthrow message="Email does not exists">
+		</cfif>
+
+		<cfset var email = structFindKey(dataFields, local.findout.id_campo)>
+
+		<cfset var p = new Participante()>
+		<cfset p.setEmail_Participante(arrayFirst(email).value)>
+		<cfset p.generateEmail()>
+		
+		<cftransaction> 
+			<cftry> 
+				<!--- code to run ---> 
+				<cfquery name="local.newp" result="rnewp" datasource="#application.datasource#">
+					INSERT INTO participantes
+					(
+						login,
+						password,
+						fecha_alta,
+						activo,
+						formulariosEventos_id_formulariosEventos,
+						tiposDeParticipantes_id_tipo_participante,
+						importado,
+						inscrito,
+						id_evento,
+						idiomas_id_idioma,
+						insitu,
+						ip_alta,
+						user_agent_alta
+					)
+					VALUES
+					(
+						<cfqueryparam value="#p.getLogin()#" CFSQLType="CF_SQL_VARCHAR">,
+						<cfqueryparam value="#p.getPassword()#" CFSQLType="CF_SQL_VARCHAR">,
+						<cfqueryparam value="#NOW()#" CFSQLType="CF_SQL_TIMESTAMP">,
+						<cfqueryparam value="#1#" CFSQLType="CF_SQL_TINYINT">,
+						<cfqueryparam value="#idformulario#" CFSQLType="CF_SQL_INTEGER">,
+						<cfqueryparam value="#idtipoparticipante#" CFSQLType="CF_SQL_INTEGER">,
+						<cfqueryparam value="#0#" CFSQLType="CF_SQL_TINYINT">,
+						<cfqueryparam value="#0#" CFSQLType="CF_SQL_TINYINT">,
+						<cfqueryparam value="#session.id_evento#" CFSQLType="CF_SQL_INTEGER">,
+						<cfqueryparam value="#session.language#" CFSQLType="CF_SQL_VARCHAR">,
+						<cfqueryparam value="#0#" CFSQLType="CF_SQL_TINYINT">,
+						<cfqueryparam value="#cgi.REMOTE_ADDR#" CFSQLType="CF_SQL_VARCHAR">,
+						<cfqueryparam value="#cgi.HTTP_USER_AGENT#" CFSQLType="CF_SQL_VARCHAR">
+					)
+				</cfquery>
+
+				<cfset id = LSParseNumber(rnewp.generatedkey)>
+				<cfset var newpd = createDatos(id, dataFields)>
+				<cfset createExtension(id)>
+				
+				<cftransaction action="commit" /> 
+
+			<cfcatch type="any"> 
+				<cftransaction action="rollback" /> 
+				<cfif isdefined("url.debug")>
+					<cfdump var="#cfcatch.detail#" label="cfcatch">
+					<cfabort>
+				</cfif>
+			</cfcatch> 
+			</cftry> 
+		</cftransaction>
+
+		<cfreturn { "new_id": id, "new_datos_id" : newpd }>
+	</cffunction>
+
+	<cffunction name="createDatos" returntype="any">
+		<cfargument name="id" type="numeric"> 
+		<cfargument name="datos"> 
+
+		<cfset finaldata = []>
+		
+		<cfloop collection="#datos#" item="key">
+			<cfset arrayAppend(finaldata, "(" & key & "," & id & ",'" & datos[key] & "'," & session.id_evento & ",NOW())")>
+		</cfloop>
+
+		<cfquery name="local.createDatos" result="rnewpd" datasource="#application.datasource#">
+			INSERT INTO participantesDatos 
+				(campos_id_campos, participantes_id_participante, valor, eventos_id_evento, fecha_alta)
+			VALUES
+				#arrayToList(finaldata, ",")#
+		</cfquery>
+
+		<cfreturn rnewpd.generatedkey>
+	</cffunction>
+
+
+	<cffunction name="createExtension">
+		<cfargument name="id"> 
+
+		<cfquery name="local.extension" datasource="#application.datasource#">
+			INSERT INTO participantesDatosExtension 
+				(id_participante)
+			VALUES 
+				(#arguments.id#)
+		</cfquery>
 	</cffunction>
 </cfcomponent>

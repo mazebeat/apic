@@ -16,7 +16,8 @@
 			"index" = '#METHODS.GET#,#METHODS.HEAD#',
 			"get"   = '#METHODS.GET#',
 			"list"  = '#METHODS.GET#',
-			"byType"= '#METHODS.GET#'
+			"byType"= '#METHODS.GET#',
+			"create"= '#METHODS.POST#'
 		};
 	</cfscript>
 
@@ -131,8 +132,6 @@
 			SELECT COUNT(*) FROM vParticipantes 
 		</cfquery>
 
-		<cfdump var="#local.metaParticipantes#">		
-
 		<cfdump var="GETINFO"><cfabort>		
 	</cffunction>
 
@@ -155,7 +154,28 @@
 		
 		<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>
 	</cffunction>
-<!------------------------------------------- PRIVATE EVENTS ------------------------------------------>
 
+	<!--- 
+		Obtiene el o los participantes que contengan el tipo de participante especificado
+		@return JSON
+	 --->
+	<cffunction name="create" output="false" hint="Crea un participante">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
+
+		<cfset s = service.create(arguments.event, arguments.rc)>
+
+		<!--- <cfif NOT structIsEmpty(s.data.records)>
+			<cfset s.data.records = QueryToStruct(s.data.records)>
+		</cfif> --->
+		
+		<cfset arguments.prc.response.setData(s.data).setError(!s.ok)> 
+		
+		<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>
+	</cffunction>
+
+<!------------------------------------------- PRIVATE EVENTS ------------------------------------------>
+	
 </cfcomponent>
 
