@@ -694,3 +694,24 @@ copying /modules_app/apic-v1/handlers/Participantes.cfc
 copying /modules_app/apic-v1/ModuleConfig.cfc
 End finding
 .
+BACKUP 2017-12-20 15:43:52 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/Echo.cfc
+copying /handlers/BaseHandler.cfc
+copying /index.cfm
+copying /logs/system.20171218.123424.zip
+copying /logs/system.log
+copying /logs/access.log
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/participante/Participante.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/campo/CampoFormularioText.cfc
+copying /models/FormValidationService.cfc
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/views/home/upload.cfm
+copying /includes/helpers/ApplicationHelper.cfm
+End finding
+.

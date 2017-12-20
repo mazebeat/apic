@@ -47,33 +47,12 @@
 <!------------------------------------------- CONSTRUCTOR ------------------------------------------->
 	<cffunction name="init" access="public" returntype="Participante" output="false" hint="constructor">
 		<cfscript>	
-			var SECRET_KEY = 'zTHCdTeo782ox5QBtpu1q8d2gwKe8fHp';
 			return this;
 		</cfscript>
 	</cffunction>
 
 <!------------------------------------------- PUBLIC ------------------------------------------->
 
-	<cffunction name="encriptar" return="string" output="false">
-		<cfargument name="cadena" required="true">
-		
-		<cfset var s = encrypt(arguments.cadena, this.SECRET_KEY, 'DESEDE', 'Hex')>
-		<!--- ENCRIPTAMOS --->
-		<cfreturn s>
-	</cffunction>
-
-	<cffunction name="desEncriptar" return="string" output="false">
-		<cfargument name="cadena" required="true">
-		<cfset var s = ''>
-		<cftry>
-			<!--- DESENCRIPTAMOS --->
-			<cfset s = decrypt(arguments.cadena, this.SECRET_KEY, 'DESEDE', 'Hex')>
-		<cfcatch type="any">
-			<cfset s = '-'>
-		</cfcatch>
-		</cftry>
-		<cfreturn s>
-	</cffunction>
 
 	<cffunction name="generateEmail">
 		<cfset part_email = this.getEmail_participante()>
@@ -92,5 +71,6 @@
 			<cfset this.setPassword(listFirst(part_email, '@') & '_' & right(gettickcount(), 5))>
 		</cfif>
 	</cffunction>
+
 
 </cfcomponent>

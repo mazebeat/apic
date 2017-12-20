@@ -100,37 +100,45 @@
 	--> 
 	<cffunction name="meta" returnType="struct" hint="Obtiene todos los formularios según ID de un evento e idioma">
 		<cfargument name="id_evento" type="numeric" required="true" hint="">
-		<cfargument name="event">
-		<cfargument name="rc">
+		<cfargument name="sortBy" type="string" required="false" default="field" hint="Could be by 'field', 'form', 'group'">
 		
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
 		<cfset var campos  = createObject("java", "java.util.LinkedHashMap").init()>
 
-		<cfset var cacheKey = 'q-form-meta-#id_evento#'>
-<!--- 
+		<cfset var cacheKey = 'q-form-meta-#id_evento#-#sortBy#'>
+
 		<cfif cache.lookup(cacheKey)>
 			<cfset campos = cache.get(cacheKey)>
-		<cfelse> --->
+		<cfelse>
 			<cfset var allGroups = dao.groupsByEvent(id_evento)>
 			<cfset var fields 	 = dao.allFieldsByGroup(valueList(allGroups.id_agrupacion))>
+
+			<cfif sortBy EQ 'field'>
+				<cfloop query="fields">
+					<cfif NOT structKeyExists(campos, id_campo)>
+						<cfset campos[id_campo] = obtainMetaOfField(id_campo)>
+					</cfif>
+				</cfloop>
 			
-			<cfloop query="fields">
-				<cfif !structKeyExists(campos, id_agrupacion)>
-					<cfquery name="local.title" dbtype="query" cachedWithin="#createTimeSpan( 0, 0, 1, 0 )#">
-						SELECT titulo FROM allGroups WHERE id_agrupacion = #id_agrupacion#
-					</cfquery>
-					<cfset campos['groups'][id_agrupacion]['title'] = local.title.titulo>
-				</cfif>
-				<cfset campos['groups'][id_agrupacion]['fields'][id_campo] = obtainMetaOfField(id_campo)>
-			</cfloop>
-	<!--- 
+			<cfelseif sortBy EQ 'form'>
+			
+			<cfelseif sortBy EQ 'group'>
+				<cfloop query="fields">
+					<cfif !structKeyExists(campos, id_agrupacion)>
+						<cfquery name="local.title" dbtype="query" cachedWithin="#createTimeSpan( 0, 0, 1, 0 )#">
+							SELECT titulo FROM allGroups WHERE id_agrupacion = #id_agrupacion#
+						</cfquery>
+						<cfset campos['groups'][id_agrupacion]['title'] = local.title.titulo>
+					</cfif>
+					<cfset campos['groups'][id_agrupacion]['fields'][id_campo] = obtainMetaOfField(id_campo)>
+				</cfloop>
+			</cfif>
+	
 			<cfset cache.set(cacheKey, campos, 60, 30)>
-		</cfif> --->
+		</cfif>
 		
-		<cfset s.data.records           = campos>
-		<cfset s.data.totalAgrupaciones = allGroups.recordCount>
-		<cfset s.data.totalCampos       = structCount(campos)>
-		<cfset s.data.total             = structCount(campos) +  allGroups.recordCount>
+		<cfset s.data.records = campos>
+		<cfset s.data.total   = structCount(campos)>
 
 		<cfreturn s>
 	</cffunction>
@@ -224,12 +232,7 @@
 			<!--- <cfset var allGroups = cache.get(cacheKey)> --->
 		<!--- <cfelse> --->
 		<cfset var frm = dao.getByIdTipoParticipante(id_tipo_participante, event, rc)>
-		
-		<cfif isdefined("url.debug")>
-			<cfdump var="#frm#" label="var">
-			<cfabort>
-		</cfif>
-		
+				
 		<cfloop query="frm">
 			<cfset var groups = dao.groupsByForm(id_formulario)>
 			<cfset querySetCell(frm, 'id_agrupacion', valueList(groups.id_agrupacion), frm.CurrentRow)>
@@ -239,8 +242,6 @@
 		
 		<cfset s.data.records = frm>
 		<cfset s.data.total   = frm.recordCount>
-		
-		<!--- 663473412 --->
 		
 		<cfreturn s>
 	</cffunction>
@@ -320,6 +321,10 @@
 				<cfset meta['configuration']['readonly']  = numericToBoolean(config.solo_lectura)>
 				<cfset meta['configuration']['minlength'] = config.min_chars>
 				<cfset meta['configuration']['maxlength'] = config.max_chars>
+				<cfif config.dninie GT 0>
+					<cfset meta['configuration']['dninie'] = numericToBoolean(config.dninie)>
+				</cfif>
+				
 			</cfcase>
 
 			<!-- CAMPO DE EMAIL -->
@@ -431,10 +436,12 @@
 
 				<cfset var config = objCampo.getConfiguracion(local.campo)>	
 
-				<cfset meta['name']                       = campo.titulo>
-				<cfset meta['type']                       = 'date'>
-				<cfset meta['inputType']                  = 'input'>
-				<cfset meta['configuration']['readonly']  = numericToBoolean(campo.solo_lectura)>
+				<cfset meta['name']                      = campo.titulo>
+				<cfset meta['type']                      = 'date'>
+				<cfset meta['inputType']                 = 'input'>
+				<cfset meta['format']                    = 'ISO 8601'>
+				<cfset meta['timezone']                  = 'Europe/Madrid'>
+				<cfset meta['configuration']['readonly'] = numericToBoolean(campo.solo_lectura)>
 			</cfcase>
 			
 			<!-- CAMPO RELACIÓN ENTRE PARTICIPANTES -->
@@ -498,5 +505,11 @@
 		</cfif>
 
 		<cfreturn fields>
+	</cffunction>
+
+	<cffunction name="formFields">
+		<cfset var formFields = this.meta(session.id_evento)>
+
+		<cfreturn formFields.data.records>
 	</cffunction>
 </cfcomponent>

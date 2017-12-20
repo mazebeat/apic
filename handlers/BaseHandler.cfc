@@ -22,12 +22,12 @@ component extends="coldbox.system.EventHandler"{
 
 	// Verb aliases - in case we are dealing with legacy browsers or servers (e.g. IIS7 default)
 	METHODS = {
-		"HEAD"  = "HEAD",
-		"GET"   = "GET",
-		"POST"  = "POST",
-		"PATCH" = "PATCH",
-		"PUT"   = "PUT",
-		"DELETE"= "DELETE",
+		"HEAD"    = "HEAD",
+		"GET"     = "GET",
+		"POST"    = "POST",
+		"PATCH"   = "PATCH",
+		"PUT"     = "PUT",
+		"DELETE"  = "DELETE",
 		"OPTIONS" = "OPTIONS"
 	};
 	
@@ -601,16 +601,13 @@ component extends="coldbox.system.EventHandler"{
 					var usr = {};
 					var temp     = {};
 					
-					if(session.usersession.clientpassword.type EQ 'cliente'){
+					if(session.usersession.type EQ 'cliente'){
 						usr = wirebox.getInstance("ClientesToken");
 					} else {
 						usr = wirebox.getInstance("EventosToken");
 					}
-					if(isJson(session.usersession.auth)) {
-						temp     = DeserializeJSON(session.usersession.auth);
-					} else {
-						temp     = session.usersession.auth;
-					}
+
+					var temp = DeserializeJSON(decrypt(session.usersession.auth, "WTq8zYcZfaWVvMncigHqwQ==", "AES", "Base64"));
 					
 					var id       = temp.id_permisosToken;
 					var permisos = usr.permisosById(id);

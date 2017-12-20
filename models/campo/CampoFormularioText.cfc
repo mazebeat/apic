@@ -1,7 +1,6 @@
 <cfcomponent output="false" extends="models.campo.CampoFormulario">
 
 	<cffunction name="init" returntype="campoFormulario">
-		<cfset super.init()>
 		<cfreturn this>
 	</cffunction>
 
@@ -30,7 +29,7 @@
 				FROM vCamposTipoNumeroConfiguracion
 				WHERE id_campo = <cfqueryparam value="#campo.id_campo#" cfsqltype="CF_SQL_INTEGER">
 			</cfquery>
-			<cfif local.qConfig.recordCount gt 0>
+	<cfif local.qConfig.recordCount gt 0>
 				<cfset campo.min_chars = local.qConfig.min_chars>
 				<cfset campo.max_chars = local.qConfig.max_chars>
 			<cfelse>
@@ -58,7 +57,7 @@
 		
 		<cfelseif campo.id_encapsulado is 10>
 			<!--- URL --->
-			<!--- <cfquery name="local.qConfig" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
+			<cfquery name="local.qConfig" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 				<!---SELECT solo_lectura
 				from vCamposTipoUrlConfiguracion
 				where id_campo = <cfqueryparam value="#campo.id_campo#" cfsqltype="CF_SQL_INTEGER">--->
@@ -69,10 +68,10 @@
 			</cfquery>
 
 			<cfif local.qConfig.recordCount gt 0>
-				<cfset variables.instancia.configuracion.solo_lectura= local.qConfig.solo_lectura>
+				<cfset campo.solo_lectura= local.qConfig.solo_lectura>
 			<cfelse>
-				<cfset variables.instancia.configuracion.solo_lectura = 0>
-			</cfif> --->
+				<cfset campo.solo_lectura = 0>
+			</cfif>
 		
 		<cfelseif campo.id_encapsulado is 17>
 			<!--- CUPON DESCUENTO --->

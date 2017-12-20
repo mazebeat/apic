@@ -7,22 +7,37 @@ component extend {
     property name="authService" inject="model:security.AuthenticationService";
 
     void function preProcess( event, rc, prc, interceptData, buffer ) {
+        // if(isdefined("url.debug")) {
+        //     writeDump(var="#session#", label="session");
+        //     abort;
+        // }
+        
         if (findNoCase("authenticate", event.getCurrentEvent()) == 0 &&
             findNoCase("Echo", event.getCurrentEvent()) == 0 && 
             findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
            
             if(getSetting("environment") == "development" && isdefined('url.debug')) {
-                session.clientSession = { 
-                    clientPassword= { type= "cliente", id=1, token= rc.token }
-                };
-                session.id_evento = 1;
+                if(!isdefined("usersession")){
+                    var auth = authservice.validate(authservice.generatePassword(1, true));
+                    auth = encrypt(serializeJSON(auth), "WTq8zYcZfaWVvMncigHqwQ==", "AES", "Base64");
+                    session["usersession"] = { 
+                        "type" = "evento",
+                        "auth" = auth,
+                        "defaults" = {
+                            "form" = {
+                                "fields" = ""
+                            }
+                        }
+                    };
+                }
+                session["id_evento"] = 1;
             }
 
 			if(NOT StructKeyExists(session, 'id_evento')) {
 				if(structkeyexists(session, 'token')) {
 					if(structkeyexists(session.token, 'isvalid')) {
-						if (StructKeyExists(session, 'clientsession') AND StructKeyExists(session.clientsession, 'auth')) {
-							session.id_evento = session.clientsession.auth.id_evento;  
+						if (StructKeyExists(session, 'usersession') AND StructKeyExists(session.usersession, 'auth')) {
+							session["id_evento"] = session.usersession.auth.id_evento;  
 						} else {
                             prc.response = getModel("Response").setError(true)
                                                             .addMessage("Has not been found a client authenticated")
@@ -53,8 +68,8 @@ component extend {
      * Validate User Actions
      */
     function validateActions(event, rc, prc) {
-        // if(structKeyExists(session, 'clientsession')) {
-        //     if(structKeyExists(session.clientsession, 'auth')) {
+        // if(structKeyExists(session, 'usersession')) {
+        //     if(structKeyExists(session.usersession, 'auth')) {
         //         if(isdefined("url.debug")) {
         //             writeDump(var="#session#", label="session");
         //             abort;

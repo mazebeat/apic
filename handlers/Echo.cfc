@@ -29,9 +29,9 @@ component extends="Base"{
 
 	any function test(event, rc, prc) {
 		var cli = srv.get(9).permisos().getId_permisosToken();
-		if(isdefined("url.debug")) {
-			writeDump(var="#cli#", label="var");
-			abort;
-		}
+		// if(isdefined("url.debug")) {
+			// writeDump(var="#cli#", label="var");
+			// abort;
+		// }
 	}
 }
