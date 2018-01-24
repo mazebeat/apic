@@ -16,7 +16,8 @@ component extends="Base"{
 
 	// REST Allowed HTTP Methods Ex: this.allowedMethods = {delete='POST,DELETE',index='GET'}
 	this.allowedMethods = {
-		"index" = METHODS.GET
+		"index"   = METHODS.GET
+		// "savelog" = METHODS.POST
 	};
 	
 	/**
@@ -27,11 +28,19 @@ component extends="Base"{
 		prc.response.addMessage("Bienvenido a tufabricadeventos.com API RESTFul");						
 	}
 
+	// any function savelog(event, rc, prc) {
+	// 	// myfile = FileRead("/logs/android.log");
+	// 	// try {
+	// 	if(structKeyExist(rc, 'data')) {
+	// 		logBox.getLogger("myLog").info(rc.data);
+	// 	} else {
+	// 		log.info(rc)
+	// 	}
+
+	// 	// } catch (any err) {}
+	// }
+
 	any function test(event, rc, prc) {
-		var cli = srv.get(9).permisos().getId_permisosToken();
-		// if(isdefined("url.debug")) {
-			// writeDump(var="#cli#", label="var");
-			// abort;
-		// }
+		
 	}
 }

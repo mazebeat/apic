@@ -715,3 +715,9 @@ copying /modules_app/apic-v1/views/home/upload.cfm
 copying /includes/helpers/ApplicationHelper.cfm
 End finding
 .
+BACKUP 2018-01-24 09:41:04 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/Echo.cfc
+End finding
+.

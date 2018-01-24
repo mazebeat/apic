@@ -1,16 +1,1 @@
 /z/apic/handlers/Echo.cfc
-/z/apic/handlers/BaseHandler.cfc
-/z/apic/index.cfm
-/z/apic/logs/system.20171218.123424.zip
-/z/apic/logs/system.log
-/z/apic/logs/access.log
-/z/apic/interceptors/ClientSessionInterceptor.cfc
-/z/apic/models/formulario/FormularioService.cfc
-/z/apic/models/participante/Participante.cfc
-/z/apic/models/participante/ParticipanteDAO.cfc
-/z/apic/models/participante/ParticipanteService.cfc
-/z/apic/models/campo/CampoFormularioText.cfc
-/z/apic/models/FormValidationService.cfc
-/z/apic/config/Coldbox.cfc
-/z/apic/modules_app/apic-v1/views/home/upload.cfm
-/z/apic/includes/helpers/ApplicationHelper.cfm
