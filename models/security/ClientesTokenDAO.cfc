@@ -18,7 +18,7 @@ component accessors="true" {
 	 * Obtiene todos los registros de la tabla apic_clientesToken
 	 */
 	query function getAll() {
-        var query = new Query(datasource="#application.datasource#", sql="SELECT * FROM apic_clientesToken");
+        var query = new Query(name="local.allCT", datasource="#application.datasource#", sql="SELECT * FROM apic_clientesToken");
 		
 		return query.execute().getResult();
     }
@@ -31,7 +31,7 @@ component accessors="true" {
 		var queryS = "SELECT * 
 					  FROM apic_clientesToken 
 					  WHERE id_cliente = :idcliente";
-        var query = new Query(datasource = "#application.datasource#", sql = "#queryS#").addParam(name = "idcliente", value = arguments.idcliente, cfsqltype = "CF_SQL_INTEGER");
+        var query = new Query(name="local.getCT", datasource = "#application.datasource#", sql = "#queryS#").addParam(name = "idcliente", value = arguments.idcliente, cfsqltype = "CF_SQL_INTEGER");
 		var records = query.execute().getResult();
 
 		if(records.recordCount GT 0) {
@@ -56,7 +56,7 @@ component accessors="true" {
 		transaction action="begin" {
 			try {
 				var queryS = "INSERT INTO apic_permisosToken (lectura, escritura, borrado) VALUES (1,1,1)";
-				var query = new Query(datasource="#application.datasource#", sql="#queryS#");        
+				var query = new Query(name="local.registerCT", datasource="#application.datasource#", sql="#queryS#");        
 
 				var result = query.execute();
 
@@ -86,7 +86,7 @@ component accessors="true" {
 					  SET token = :token, 
 					  fecha_modificacion_token = CURRENT_TIMESTAMP 
 					  WHERE id_cliente = :idcliente";
-		var query = new Query(datasource="#application.datasource#", sql="#queryS#")
+		var query = new Query(name="local.updateCT", datasource="#application.datasource#", sql="#queryS#")
 					.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_INTEGER")
 					.addParam(name="token", value=arguments.token, cfsqltype="CF_SQL_LONGVARCHAR");
         
@@ -102,7 +102,7 @@ component accessors="true" {
 		transaction action="begin" {
 			try {
 		
-				var query = new Query(datasource="#application.datasource#", sql="SELECT id FROM apic_clientesToken WHERE id_cliente = :idcliente")
+				var query = new Query(name="local.updatePasswordCT", datasource="#application.datasource#", sql="SELECT id FROM apic_clientesToken WHERE id_cliente = :idcliente")
 					.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_INTEGER");
 
 				var result = query.execute().getResult();
@@ -114,7 +114,7 @@ component accessors="true" {
 				var queryS = " UPDATE apic_clientesToken SET password = :password, fecha_baja = NULL 
 							   WHERE id_cliente = :idcliente";
 
-				var query = new Query(datasource="#application.datasource#", sql="#queryS#")
+				var query = new Query(name="local.updatePasswordCT2", datasource="#application.datasource#", sql="#queryS#")
 							.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_INTEGER")
 							.addParam(name="password", value=arguments.password, cfsqltype="CF_SQL_VARCHAR");
 				

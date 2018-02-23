@@ -5,6 +5,7 @@ component extends="Base"{
 	// Properties	
 	// property name="dsn" inject="coldbox:datasource:sigo_dsn";
 	property name="srv" inject="model:security.EventosTokenService";
+	property name="dao" inject="model:security.ClientesTokenDAO";
 	 
 	// OPTIONAL HANDLER PROPERTIES
 	this.prehandler_only      = "";

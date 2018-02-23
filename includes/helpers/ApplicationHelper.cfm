@@ -11,15 +11,15 @@
 </cffunction>
 
 
-<cffunction name="limiterByTime">
+<cffunction name="limiterByTime" access="public">
     <cfargument name="maxRequest"       type="numeric">
     <cfargument name="waitTimeRequest"  type="numeric">
     <cfargument name="prc">
     <cfargument name="event">
 
-    <cfset var userRequest = checkIPUser()>
+    <!--- <cfset var userRequest = checkIPUser()> --->
 
-    <cfset cleanIPUser()>
+    <!--- <cfset cleanIPUser()> --->
 
     <cfif structKeyExists( url, "killsession" )>
         <cfset  application.rate_limiter = {}>
@@ -80,7 +80,7 @@
     <cfset addIPUser(prc, event)>
 </cffunction>
 
-<cffunction name="cleanIPUser">
+<cffunction name="cleanIPUser" access="public">
 
     <cfif (RandRange( 1, 10 ) EQ 5)>
         <cfquery name="local.qIPCheck" datasource="#application.datasource#">
@@ -95,7 +95,7 @@
     </cfif>
 </cffunction>
 
-<cffunction name="checkIPUser">
+<cffunction name="checkIPUser" access="public">
     <!--- <cfquery name="local.qIPCheck" datasource="#application.datasource#">
         SELECT
             COUNT(*) AS user_request_count
@@ -126,7 +126,7 @@
 
 </cffunction>
 
-<cffunction name="addIPUser">
+<cffunction name="addIPUser" access="public">
     <cfargument name="prc">
     <cfargument name="event">
 
@@ -165,7 +165,7 @@
 <!--- 
     Convert any Coldfusion date/time to ISO 8601 format
 --->
-<cffunction name="getIsoTimeString" returntype="string">
+<cffunction name="getIsoTimeString" returntype="string" access="public">
     <cfargument name="datetime" required="true" type="date">
     <cfargument name="convertToUTC" default="true">
   
@@ -184,4 +184,160 @@
     <cfargument name="Date" type="string" required="true" hint="ISO 8601 date/time stamp."/>
     
     <cfreturn arguments.Date.ReplaceFirst("^.*?(\d{4})-?(\d{2})-?(\d{2})T([\d:]+).*$", "$1-$2-$3 $4") />
+</cffunction>
+
+<<cffunction name="sendErrorMail" output="false" returntype="void">
+	<cfargument name="donde" required="true" default="DESCONOCIDO">
+	<cfargument name="contenido" required="true">
+    <cfargument name="argumentos" required="false">
+    <cfargument name="event" required="false">
+    <cfargument name="rc" required="false">
+    <cfargument name="prc" required="false">
+
+    <cfoutput>
+    <cfinclude template="/default/maquina.cfm">
+        <cfoutput>
+            <cfsavecontent variable="contenidoEmail">
+                    #queMaquina#
+                    <br>
+                    <table>
+                    ID_EVENTO: #session.id_evento#<br>
+                    <cfquery name="qNombreEvento" datasource="#application.datasource#" cachedwithin="#createtimespan(1,0,0,0)#">
+                        select nombre
+                        from vEventos
+                        where id_evento = #session.ID_EVENTO#
+                    </cfquery>
+                    NOMBRE: #qNombreEvento.nombre#<br>
+
+                    <cfdump var="IP REMOTA: #CGI.REMOTE_ADDR#">
+                    <cfdump var="ES LOCALHOST: #isLocalHost(CGI.REMOTE_ADDR)#">
+                    <cfdump var="LOCALHOST IP: #getLocalHostIP()#">
+                    <cfdump var="FECHA Y HORA: #now()#">
+                
+                    MESSAGE: <cfdump var="#arguments.contenido#"><br>
+
+                    <cfif isdefined("arguments.contenido.StackTrace")>
+                        <cfdump var="#arguments.contenido.StackTrace#">
+                    </cfif>
+
+                    <cfif isdefined('arguments.argumentos')>
+                        ARGUMENTS:<br>
+                        <cfdump var="#arguments.argumentos#">
+                    </cfif>
+
+                    <cfif isdefined("cgi")>
+                    HTTP_HOST: #CGI.HTTP_HOST#<br>
+                    HTTP_USER_AGENT: #CGI.HTTP_USER_AGENT#<br>
+                    </cfif>
+
+                    <cfif isdefined("url")>
+                    URL: <cfdump var="#URL#"><br>
+                    </cfif>
+
+                    <cfif isdefined("FORM")>
+                    FORM: <cfdump var="#FORM#"><br>
+                    </cfif>
+                    
+                    <cfif isdefined("SESSION")>
+                    SESSION: <cfdump var="#SESSION#"><br>
+                    </cfif>
+
+                    <cfif isdefined("prc.response")>
+                    DATA: <cfdump var="#prc.response.getDataPacket()#"><br>
+                    </cfif>
+
+                    <cfset var sURL = {}>
+
+                    <cfif isdefined("form")>
+                    <cfloop collection="#form#" item="id">
+                        <cfset structInsert(sURL, id, form[id], true)>
+                    </cfloop>
+                </cfif>
+
+                <cftry>
+                    <cfif isdefined("url")>
+                        <cfloop collection="#url#" item="id">
+                            <cfset structInsert(sURL, id, url[id], true)>
+                        </cfloop>
+                    </cfif>
+                <cfcatch type="any">
+                </cfcatch>
+                </cftry>
+
+
+ <!--- <table class="row full-width-demo">
+    <tr>
+        <td>
+            <table class="container">
+                <tr>
+                    <td class="wrapper last">
+                        <table class="twelve columns">
+                            <tr>
+                                <td>
+                                    I'm full width!
+                                </td>
+                                <td class="expander"></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table> --->
+
+            </cfsavecontent>
+        </cfoutput>
+
+        <cftry>
+            <cfset contenidoEmail = limitarLongitudLinea(contenidoEmail)>
+
+            <cfset enviarElError(
+                argumentCollection: {
+                    subject       : "API ERROR SIGE #queMaquina# #arguments.donde#",
+                    contenidoEmail: contenidoEmail
+                }
+            )>
+
+        <cfcatch type="any">
+
+        </cfcatch>
+        </cftry>
+
+        </cfoutput>
+</cffunction>
+
+<!--- 
+    Envia un contenido hacia las direcciones de correo indicadas
+ --->
+<cffunction name="enviarElError" access="public">
+	<cfargument name="to" required="false" default="diego@tufabricadeventos.com">
+    <!--- <cfargument name="to" required="false" default="errores@tufabricadeventos.com; diego@tufabricadeventos.com"> --->
+    <cfargument name="from" required="false" default="errores@tufabricadeventos.com">
+	<cfargument name="subject" required="true">
+    <cfargument name="contenidoEmail" required="true">
+    
+	<cfquery name="local.qServidorEnviarError" datasource="sige">
+		SELECT server, username, password
+		FROM servidoresCorreo
+		WHERE id_servidor = 4
+		<!--- 
+		id_servidor = 1 = EEUU
+		id_servidor = 4 = EUROPA
+		--->
+    </cfquery>
+    
+	<cfmail
+		server      = "#local.qServidorEnviarError.server#"
+		username    = "#local.qServidorEnviarError.username#"
+		password    = "#local.qServidorEnviarError.password#"
+
+		to          = "#arguments.to#"
+		from        = "#arguments.from#"
+
+		subject     = "#arguments.subject#"
+		spoolenable = "false"
+	    type        = "html">
+			#arguments.contenidoEmail#
+	</cfmail>
 </cffunction>

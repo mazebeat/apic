@@ -5,10 +5,23 @@
 */
 component{
 	// Application properties
-	this.name              = hash( getCurrentTemplatePath() );
-	this.sessionManagement = true;
-	this.sessionTimeout    = createTimeSpan(0,0,20,0);
-	this.setClientCookies  = true;
+	this.name                   = hash( getCurrentTemplatePath() );
+	
+	this.locale                 = 'es_ES';	
+	this.timezone               = 'America/Madrid';
+	
+	this.invokeImplicitAccessor = true;
+	
+	this.sessionManagement      = true;
+	this.sessionTimeout         = createTimeSpan(0,0,20,0);
+	this.clientManagement       = true;
+	this.clientStorage          = 'cookie';
+	this.setClientCookies       = true;
+
+	this.datasource             = "sige_up"; // sige_up | sige 
+	
+	this.secureJSON             = true;
+	this.compression            = true;
 
 	// COLDBOX STATIC PROPERTY, DO NOT CHANGE UNLESS THIS IS NOT THE ROOT OF YOUR COLDBOX APP
 	COLDBOX_APP_ROOT_PATH = getDirectoryFromPath( getCurrentTemplatePath() );
@@ -23,8 +36,6 @@ component{
 		'/adminmodels' = getDirectoryFromPath(getCurrentTemplatePath()) & '../default/admin/model',
 		'/adminutils'  = getDirectoryFromPath(getCurrentTemplatePath()) & '../default/admin/helpers'
 	};
-	this.datasource 			= "sige";
-	this.invokeImplicitAccessor = true;
 
 	// this.ormsettings.search.indexDir = getDirectoryFromPath(getCurrentTemplatePath()) & "/ormindex";
 
@@ -51,6 +62,7 @@ component{
 	// request start
 	public boolean function onRequestStart( string targetPage ){
 		setting showdebugoutput = structkeyexists(url, "debug");
+
 		if (structKeyExists( url, "killsession" )) {  this.sessioncookie.disableupdate = false; structClear(session); }
 		if (structKeyExists(url, "reset")) { this.onApplicationStart();	}
 		

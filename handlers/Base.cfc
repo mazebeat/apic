@@ -1,7 +1,7 @@
 /**
  * Base
  */
-component extends="BaseHandler"{
+component extends="BaseHandler" {
 	
 	// OPTIONAL HANDLER PROPERTIES
 	this.prehandler_only 	= "";
@@ -10,23 +10,8 @@ component extends="BaseHandler"{
 	this.posthandler_except = "";
 	this.aroundHandler_only = "";
 	this.aroundHandler_except = "";
-	
-    // REST Allowed HTTP Methods Ex: this.allowedMethods = {delete='POST,DELETE',index='GET'}
 	this.allowedMethods = {};
-    /*
-	function postHandler(event, rc, prc, action, eventarguments ){
-	}
-	function aroundHandler( event, rc, prc, targetAction, eventarguments ){
-		// executed targeted action
-		arguments.targetAction( event );
-	}
-	function onMissingAction( event, rc, prc, missingAction, eventarguments ){
-	}
-	function onError( event, rc, prc, faultAction, exception, eventarguments ){
-	}
-	function onInvalidHTTPMethod( event, rc, prc, faultAction, eventarguments ){
-	}
-	*/
+
 
     function init() {
         super.init();
@@ -79,7 +64,7 @@ component extends="BaseHandler"{
     /**
      * Obtiene la dirección IP del cliente.
      */
-    public string function getClientIp() {
+    string function getClientIp() {
         local.response = "";
 
         try {
@@ -104,12 +89,25 @@ component extends="BaseHandler"{
         return local.response;
     }
 
-    public any function QueryToStruct(required query Query, numeric Row = 0) {
+    /**
+     * Convert query to struct
+     *  
+     * @Query 
+     * @Row 
+     */
+    any function QueryToStruct(required query Query, numeric Row = 0) {
         include template="/includes/helpers/QuerysHelper.cfm";
         return QueryToStruct(arguments.Query, arguments.Row);
     }
 
-     public any function QueryToStruct2(required query Query, string index = '', numeric Row = 0) {
+    /**
+     * Convert query to struct version 2
+     *
+     * @Query 
+     * @index 
+     * @Row 
+     */
+    any function QueryToStruct2(required query Query, string index = '', numeric Row = 0) {
          include template="/includes/helpers/QuerysHelper.cfm";
          return QueryToStruct2(arguments.Query, arguments.index, arguments.Row);
     }

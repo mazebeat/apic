@@ -6,20 +6,24 @@
 	<!--- Properties --->
 	<cfproperty name="formS"	inject="model:formulario.FormularioService">
 	<cfproperty name="dao"		inject="model:participante.ParticipanteDAO">
+	<cfproperty name="cdao"		inject="model:campo.CampoDAO">
 
-<!------------------------------------------- CONSTRUCTOR ------------------------------------------->
-
+	<!------------------------------------------- CONSTRUCTOR ------------------------------------------->
 	<cffunction name="init" access="public" returntype="FormValidationService" output="false" hint="constructor">
 		<cfscript>
 			return this;
 		</cfscript>
 	</cffunction>
 
-<!------------------------------------------- PUBLIC ------------------------------------------->
+	<!------------------------------------------- PUBLIC ------------------------------------------->
 
+	<!--- 
+		Método de validación principal para POST/PUT de participantes.
+		@dataFields
+	 --->
 	<cffunction name="validateCreateDataFields" returntype="struct">
 		<cfargument name="dataFields" type="struct" required="true">
-		
+
 		<cfset var keyList     = []>
 		<cfset var validEmails = []>
 
@@ -27,8 +31,7 @@
 		<cfif NOT structKeyExists(arguments.dataFields, 'data') OR NOT isStruct(arguments.dataFields.data)>
 			<cfthrow message="Invalida JSON Data. The key 'data' does not exists or is not a object">
 		</cfif>
-
-		<cfif NOT structKeyExists(arguments.dataFields.data, 'records') OR NOT isArray(arguments.dataFields.data.records)>
+		<cfif NOT structKeyExists(arguments.dataFields.data, 'records') OR NOT isArray(dataFields.data.records)>
 			<cfthrow message="Invalida JSON Data. The key 'data.records' does not exists or is not an array">
 		</cfif>
 		
@@ -36,59 +39,122 @@
 		<cfset var defaultFields = dao.defaultValues(filtered = false)>
 
 		<!--- Se recorre cada uno de los registros entregados --->
-		<cfloop collection="#arguments.dataFields.data.records#" item="key">
-			<cfset record = arguments.dataFields.data.records[key]>
-
-			<!--- Se validan campos login/password --->
-			<cfset validateLoginPassword(record)>
+		<cfloop collection="#dataFields.data.records#" item="key">
+		
+			<cfset record = dataFields.data.records[key]>
 
 			<!--- Validamos si existe el campo "id_tipo_participante" --->
 			<cfif structKeyExists(record, 'id_tipo_participante')>
-				<cfset idtipoparticipante = record.id_tipo_participante>
+				<cfset var idtipoparticipante = record.id_tipo_participante>
 				<cfset structDelete(record, 'id_tipo_participante')>
 			<cfelse>
 				<cfthrow message="Invalida JSON Data. ID tipo participante does not exists">
 			</cfif>
 
+			<!--- Se validan campos login/password --->
+			<cfset validateLoginPassword(record)>
+
+			<!--- Validamos si existe el campo "login-password" --->
+			<cfif structKeyExists(record, 'login')>
+				<cfset var login = record.login>
+				<cfset structDelete(record, 'login')>
+			</cfif>
+			<cfif structKeyExists(record, 'password')>
+				<cfset var password = record.password>
+				<cfset structDelete(record, 'password')>
+			</cfif>
+			<cfif structKeyExists(record, 'inscrito')>
+				<cfset var inscrito = record.inscrito>
+				<cfset structDelete(record, 'inscrito')>
+			</cfif>
+
 			<!--- Validamos que al menos venga el campo correo --->
-			<cfquery name="local.findout" dbtype="query"> 
+			<cfquery name="local.findout" dbtype="query" cachedWithin="#createTimeSpan( 0, 0, dao.queryExpiration, 0 )#">
 				SELECT * 
 				FROM defaultFields
 				WHERE id_campo IN (#structKeyList(record)#)
 				AND (titulo LIKE '%mail%' OR titulo LIKE '%correo%')
 			</cfquery>
-
+			
 			<cfif local.findout.recordcount LTE 0>
-				<cfthrow message="ID field 'Email' does not exists in register [#key#] ">
+				<cfthrow message="Field 'Email' does not exists in register [#key#] ">
 			</cfif>
 
-			<cfset keyList = arrayMerge(keyList, structKeyArray(record), true)>
-			
 			<!--- Renovamos variables para el proceso de guardado en BBDD --->
 			<cfset emailp = arrayFirst(structFindKey(record, local.findout.id_campo)).value>
-			
-			<cfif arrayFind(validEmails, emailp) GT 0>
-				<cfthrow message="Invalida JSON Data. Email [#emailp#] already exists">
+
+			<!--- 
+				Comprobamos que el participante no exista en BBDD, pero solo cuando es una nueva inserción. 
+				@url.force Fuerza la inserción de datos.
+			---> 
+			<cfif getHTTPRequestData().method EQ 'POST' AND (NOT structKeyExists(url, 'force') OR url.force == false)>
+				<cfquery name="local.logins" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, dao.queryExpiration, 0 )#">
+					SELECT COUNT(*) AS 'exists' FROM participantes
+					WHERE login = <cfqueryparam value="#replace((structKeyExists(record, 'login') ? record.login : emailp), "'", "", 'all')#" cfsqltype="CF_SQL_VARCHAR">
+					AND id_evento IN (#session.id_evento#)
+					AND fecha_baja IS NULL
+				</cfquery>
+
+				<cfif local.logins.exists NEQ 0>
+					<cfthrow message="Invalida JSON Data. Email ['#emailp#'] can not be duplicated">
+				</cfif>
 			</cfif>
 
+			<!--- Se validan emails duplicados --->
+			<cfif arrayFind(validEmails, emailp) GT 0>
+				<cfthrow message="Invalida JSON Data. Email ['#emailp#'] already exists">
+			</cfif>
+
+			<!--- Obtenemos las keys de los campos para continuar con el proceso. --->
+			<cfset keyList = arrayMerge(keyList, structKeyArray(record), true)>
+		
 			<cfset arrayAppend(validEmails, emailp)>
-			<cfset structInsert(record, 'email', emailp)>
-			<cfset structInsert(record, 'id_tipo_participante', idtipoparticipante)>
-			<cfset arguments.dataFields.data.records[key] = record>
+
+			<!--- Reintegramos las variables para continuar con las validaciones --->
+			<cfif isdefined('emailp')>
+				<cfset structInsert(record, 'email', trim(emailp))>
+				<cfset emailp = JavaCast( "null", 0 ) >
+			</cfif>
+			<cfif isdefined('login')>
+				<cfset structInsert(record, 'login', trim(login))>
+				<cfset login = JavaCast( "null", 0 ) >
+			</cfif>
+			<cfif isdefined('password')>
+				<cfset structInsert(record, 'password', trim(password))>
+				<cfset password = JavaCast( "null", 0 ) >
+			</cfif>
+			<cfif isdefined('inscrito')>
+				<cfset structInsert(record, 'inscrito', trim(inscrito))>
+				<cfset inscrito = JavaCast( "null", 0 ) >
+			</cfif>
+			<cfif isdefined('idtipoparticipante')>
+				<cfset structInsert(record, 'id_tipo_participante', trim(idtipoparticipante))>
+				<cfset idtipoparticipante = JavaCast( "null", 0 ) >
+			</cfif>
+
+			<cfset dataFields.data.records[key] = record>
 		</cfloop>
 
 		<cfset var formFields = formS.formFields()>
 		
 		<!--- Validamos campos obligatorios --->
-		<cfset requiredFields(keyList, arguments.dataFields.data.records, formFields)>
+		<cfset requiredFields(keyList, dataFields.data.records, formFields)>
 
 		<!--- Validamos por tipo de campo - configuración --->
-		<cfset configFields(keyList, arguments.dataFields.data.records, formFields)>
+		<cfset configFields(keyList, dataFields.data.records, formFields)>
+
+		<cfset formFiles(keyList, dataFields.data.records, formFields)>
 		
 		<cfreturn arguments.dataFields>
 	</cffunction>
 
-	<cffunction name="requiredFields">
+	<!--- 
+		Valida campos obligatorios, "requiered"
+		@ñkeyList
+		@fields 
+		@formFields
+	 --->
+	<cffunction name="requiredFields" output="false" returntype="any">
 		<cfargument name="keyList" type="array" required="true">
 		<cfargument name="fields" type="any" required="true">
 		<cfargument name="formFields" type="any" required="true">
@@ -96,12 +162,15 @@
 		<cfset var reqFields = {}>
 
 		<cfscript>
+			// Filtramos los registros para obtener solo los campos "obligatorios"
 			reqFields = structFilter(formFields, function(key, value) {
 				return structKeyExists(value.configuration, 'required') AND value.configuration.required == true;
 			});
 
+			// Obtenemos las keys como lista
 			var myKeyList = structKeyList(reqFields);
 
+			// Validamos que los campos entregados por el cliente contengan todas las keys obligatorias
 			for(value in listToArray(myKeyList)) {
 				if(arrayFind(keyList, value) == 0) {
 					throw(message="Have not been found [#value#] into [#arrayToList(keyList)#] of the required fields [#myKeyList#]" );
@@ -112,7 +181,10 @@
 		<cfreturn reqFields>
 	</cffunction>
 
-	<cffunction name="configFields">
+	<!--- 
+		Valida campos por su configuración según el tipo de campo al que pertenezca
+	 --->
+	<cffunction name="configFields" output="false" returntype="any">
 		<cfargument name="keyList" type="array" required="true">
 		<cfargument name="fields" type="any" required="true">
 		<cfargument name="formFields" type="any" required="true">
@@ -120,7 +192,7 @@
 		<cfset var reqFields = {}>
 
 		<cfscript>
-			// try {
+			try {
 				for(f in fields) {
 					for(k in structKeyArray(f)) {
 						if(NOT structKeyExists(formFields, k)) { continue; }
@@ -150,23 +222,57 @@
 								case "select":
 									validateList(structFind(f, k), fval);
 									break;
-								default:
+								case "file":
+									validateFile(structFind(f, k), fval);
+									break;
+								default:								
+									break;
 							}
 						}
 					}
 				}
-			// } catch(any e) {
-			// 	if(isdefined("url.debug")) {
-			// 		writeDump(var="#k#", label="e");
-			// 		writeDump(var="#e#", label="e");
-			// 		abort;
-			// 	}	
-			// }
+		 	} catch(any e) { if(isdefined("url.debug")) { writeDump(var="#k#", label="e"); writeDump(var="#e#", label="e"); abort; } }
 		</cfscript>
 
 		<cfreturn reqFields>
 	</cffunction>
 
+	<!--- TODO: Agregar extension imagen --->
+	<cffunction name="formFiles" output="false" returntype="any">
+		<cfargument name="keyList" type="array" required="true">
+		<cfargument name="fields" type="any" required="true">
+		<cfargument name="formFields" type="any" required="true">
+
+		<cfset var reqFields = {}>
+
+		<cfscript>
+			// Filtramos los registros para obtener solo los campos "obligatorios"
+			reqFields = structFilter(formFields, function(key, value) {
+				return (value.type == 'file');
+			});
+
+			// Obtenemos las keys como lista
+			var myKeyList = structKeyList(reqFields);
+
+			var toupload = {};
+			
+			for(data in fields) {
+				for(key in listToArray(myKeyList)) {
+					if(structKeyExists(data, key)) {
+						data[key] = cdao.uploadFile(data[key]);
+					}
+				}							
+			}			
+		</cfscript>
+		
+		<cfreturn reqFields>
+	</cffunction>
+
+	<!---  
+		Valida Textos y sus derivados 
+		@fvalue
+		@validation
+	--->
 	<cffunction name="validateText" output="false" returntype="void">
 		<cfargument name="fvalue">
 		<cfargument name="validation">
@@ -197,6 +303,11 @@
 		</cfscript>
 	</cffunction>
 
+	<!--- 
+		Valida solo nùmeros 
+		@fvalue
+		@validation
+	--->
 	<cffunction name="validateNumber" output="false" returntype="void">
 		<cfargument name="fvalue">
 		<cfargument name="validation">
@@ -208,6 +319,11 @@
 		</cfscript>
 	</cffunction>
 
+	<!--- 
+		Valida emails 
+		@fvalue
+		@validation
+	--->
 	<cffunction name="validateEmail" output="false" returntype="void">
 		<cfargument name="fvalue">
 		<cfargument name="validation">
@@ -219,10 +335,18 @@
 		</cfscript>
 	</cffunction>
 
+	<!--- 
+		Valida campos "lista" 
+		@val
+	--->
 	<cffunction name="ValidateList" output="false" returntype="void">
 		<cfargument name="val">
 	</cffunction>
 
+	<!--- 
+		Valida DNI-NIE-CIF 
+		@val
+	--->
 	<cffunction name="validateDNINIECIF"  output="false" returntype="void">
 		<cfargument name="val">
 
@@ -242,6 +366,10 @@
 		</cfscript>
 	</cffunction>
 
+	<!--- 
+		Sub validación de DNI-NIE 
+		@dni
+	--->
 	<cffunction name="validateDNI" output="false" returntype="boolean">
 		<cfargument name="dni">
 
@@ -282,6 +410,10 @@
 		</cfscript>
 	</cffunction>
 	
+	<!--- 
+		Sub validación de CIF 
+		@cif
+	--->
 	<cffunction name="validateCIF" output="false" returntype="boolean">
 		<cfargument name="cif">
 
@@ -326,6 +458,11 @@
 		</cfscript>
 	</cffunction>
 	
+	<!--- 
+		Valida checkbox 
+		@fvalue
+		@validation		
+	--->
 	<cffunction name="validateCheckbox" output="false" returntype="void">
 		<cfargument name="fvalue">
 		<cfargument name="validation">
@@ -345,6 +482,11 @@
 		</cfscript>
 	</cffunction>
 
+	<!--- 
+		Valida radio buttons
+		@fvalue
+		@validation	
+	 --->
 	<cffunction name="validateRadio" output="false" returntype="void">
 		<cfargument name="fvalue">
 		<cfargument name="validation">
@@ -357,6 +499,11 @@
 		</cfscript>
 	</cffunction>
 
+	<!--- 
+		Valida fechas en formato ISO 8601 
+		@fvalue
+		@validation	
+	--->
 	<cffunction name="validateDate" output="false" returntype="void">
 		<cfargument name="fvalue">
 		<cfargument name="validation">
@@ -370,37 +517,102 @@
 		</cfscript>
 	</cffunction>
 
+	<!--- 
+		Valida la existencia de login y password para crear o modificarlas 
+		@record
+	--->
 	<cffunction name="validateLoginPassword" output="false" returntype="void">
 		<cfargument name="record"> 
 
-		<cfscript>
-			// if(NOT structKeyExists(record, 'login') OR NOT structKeyExists(record, 'password')) {
-			// 	throw(message="Error Validation. It has not been found login and password");
-			// }
+		<cfscript>	
+			if(getHTTPRequestData().method == 'POST') {
+				// if(structKeyExists(record, 'login') OR structKeyExists(record, 'password')) {
+				// 	// if(structKeyExists(record, 'login') AND NOT structKeyExists(record, 'password')) {
+				// 	// 	throw(message="Error Validation. It has not been found login or password");
+				// 	// }
 
-			if(structKeyExists(record, 'login') AND NOT structKeyExists(record, 'password')) {
-				throw(message="Error Validation. It has not been found login and password");
+				// 	// if(structKeyExists(record, 'password') AND NOT structKeyExists(record, 'login')) {
+				// 	// 	throw(message="Error Validation. It has not been found login or password");
+				// 	// }
+
+					
+				// 	if(structKeyExists(record, 'login') AND isEmpty(record.login)) {
+				// 		throw(message="Error Validation. Login's empty ");
+				// 	} 
+
+				// 	if(structKeyExists(record, 'password') AND isEmpty(record.password)) {
+				// 		throw(message="Error Validation. Password's empty ");
+				// 	} 
+
+				// 	var us = dao.getByLogin(record.login);
+
+				// 	if(us.recordcount GT 0) {
+				// 		for(u in us) {
+				// 			if(dao.desEncriptar(u.password) EQ record.password) {
+				// 				throw(message="Error Validation. Participante already exists");
+				// 			} 
+				// 			if(dao.desEncriptar(u.password) NEQ record.password) { 
+				// 			}
+				// 		}				
+				// 	} else {
+				// 	}
+
+				// 	if(isdefined("url.debug")) {
+				// 		writeDump(var="#record#", label="record");
+				// 		abort;
+				// 	}
+
+				// }
 			}
+			if(getHTTPRequestData().method == 'PUT') {
+			// 	if(structKeyExists(record, 'email') AND structKeyExists(record, 'login')) {
+			// 		if(NOT structKeyExists(record, 'login')) {
+			// 			throw(message="Error Validation. It has not been found login");
+			// 		}
 
-			if(structKeyExists(record, 'login') AND isEmpty(record.login)) {
-				throw(message="Error Validation. Login's empty ");
-			} 
+			// 		if(structKeyExists(record, 'login') AND isEmpty(record.login)) {
+			// 			throw(message="Error Validation. Login's empty ");
+			// 		} 
 
-			if(structKeyExists(record, 'password') AND isEmpty(record.password)) {
-				throw(message="Error Validation. Password's empty ");
-			} 
+			// 		var us = dao.getByLogin(record.login);
 
-			if(structKeyExists(record, 'login') AND structKeyExists(record, 'password')) {
-				var us = dao.getByLoginPassword(record.login, record.password);
+			// 		if(us.recordcount LTE 0) {
+			// 			var us = dao.getByLogin(record.email);
+			// 			if(us.recordcount GT 0) {
+			// 				throw(message="Error Validation. Participante does not exists [#record.email#].");
+			// 			}
+			// 		}
+			// 	} 
+			// 	if(structKeyExists(record, 'email') AND NOT structKeyExists(record, 'login')) {
+			// 		var us = dao.getByLogin(record.email);
 
-				if(us.recordcount GT 0) {
-					for(u in us) {
-						if(dao.desEncriptar(u.password) EQ record.password) {
-							throw(message="Error Validation. Participante already exists");
-						}
-					}				
-				}
+			// 		if(us.recordcount LTE 0) {
+			// 			var us = dao.getByLogin(record.email);
+			// 			if(us.recordcount GT 0) {
+			// 				throw(message="Error Validation. Participante does not exists [#record.login#].");
+			// 			}
+			// 		}
+			// 	}
 			}
 		</cfscript>
 	</cffunction>
+
+	<!--- 
+		Valida archivos/url formulario multipart 
+		@fvalue
+		@validation	
+	--->
+	<cffunction name="validateFile" output="false" returntype="void">
+		<cfargument name="fvalue">
+		<cfargument name="validation">
+
+		<cfscript>
+			include '/includes/helpers/ApplicationHelper.cfm';
+			
+			if(NOT isValid('URL', fvalue)) {
+				throw(message="Error Validation. field date is not a date"); 
+			}
+		</cfscript>
+	</cffunction>
+
 </cfcomponent>

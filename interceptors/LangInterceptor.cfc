@@ -18,7 +18,7 @@
 		<cfargument name="buffer" hint="A request buffer to produce elegant output from the interceptor" />
 
 		<cfif structkeyexists(arguments.rc, "lang")>
-			<cfset session.language = uCase(mid(arguments.rc.lang, 1, 2))>
+			<cfset session["language"] = uCase(mid(arguments.rc.lang, 1, 2))>
 
 			<cfif NOT arrayFind(application.languages, session.language)>
 				<cfset prc.response = getModel("Response")>
@@ -37,7 +37,7 @@
 					)>
 			</cfif>
 		<cfelse>
-			<cfset session.language = application.language>
+			<cfset session["language"] = application.language>
 		</cfif>
 	</cffunction>
 

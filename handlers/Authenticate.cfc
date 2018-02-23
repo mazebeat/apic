@@ -17,12 +17,12 @@ component extends="Base" {
 
 	// REST Allowed HTTP Methods Ex: this.allowedMethods = 
 	this.allowedMethods = {
-		"index"               = METHODS.POST & "," & METHODS.OPTIONS,
-		"generatePassword"    = METHODS.POST & "," & METHODS.OPTIONS,
-		"obtainPassword"      = METHODS.POST & "," & METHODS.OPTIONS,
-		"activateDesactivate" = METHODS.POST & "," & METHODS.OPTIONS,
-		"permissionsUser"     = METHODS.POST & "," & METHODS.OPTIONS,
-		"savePermissionsUser" = METHODS.POST & "," & METHODS.OPTIONS,
+		"index"               = METHODS.POST,
+		"generatePassword"    = METHODS.POST,
+		"obtainPassword"      = METHODS.POST,
+		"activateDesactivate" = METHODS.POST,
+		"permissionsUser"     = METHODS.POST,
+		"savePermissionsUser" = METHODS.POST,
 	};
 
 	/**
@@ -50,25 +50,12 @@ component extends="Base" {
 				if(jsonData.keyExists('password')) {
 					rc.password = jsonData.password;
 
-					// Development Enviroment
-					if(getSetting("environment") == "development" && isdefined('url.debug')) {
-						var token = authservice.grantToken(1);
-						session["usersession"] = { 
-							"clientpassword" = { "type" = "cliente", "id" = 1, "token" = token },
-							"auth"           = serializeJSON(authservice.validate(rc.password))
-						};
-						session["id_evento"] = '= 1';
-						prc.response.addMessage("enviroment = #getSetting("environment")#");
-	
-						return;
-					}
-					// END Development Enviroment
-
 					var authuser = authservice.validate(rc.password);
 
 					if (!isNull(authuser)) {
-
 						var token = authuser.token;
+						var id = '';
+						var type = '';
 
 						if(structkeyexists(authuser, 'id_cliente')) {
 							id    = authuser.getId_cliente();
@@ -78,7 +65,7 @@ component extends="Base" {
 							type  = "evento";
 						} 
 
-						if(!authservice.validateToken(token)) {
+						if(isdefined('token') && !authservice.validateToken(token)) {
 							if(type EQ 'cliente') {
 								token = authservice.grantToken(authuser.getId_cliente(), "c");
 							} elseif(type EQ 'evento') {
@@ -90,22 +77,29 @@ component extends="Base" {
 									.setStatusText(MESSAGES.NOT_AUTHENTICATED);
 							}
 						}
-					
+
+						if(isNull(token)) {
+							prc.response
+							.setError(true)
+							.addMessage("Password or Token doesn't exists")
+							.setStatusCode(STATUS.NOT_AUTHENTICATED)
+							.setStatusText(MESSAGES.NOT_AUTHENTICATED);		
+						}
+						
+						aut = encrypt(serializeJSON(authuser), "WTq8zYcZfaWVvMncigHqwQ==", "AES", "Base64");
+						
 						session["usersession"] = { 
-							"clientpassword"= { 
-								"type"  = type, 
-								"id"    = id, 
-								"token" = token
-							},
-							"auth"          = serializeJSON(authuser),
+							"type"     = type, 
+							"auth"     = aut,
 							"defaults" = {
 									"form" = {
 										"fields" = ""
 								}
 							}
 						};
+					
 						session["id_evento"] = authuser.getId_evento();
-
+							
 						rc.token = token;
 						prc.response.setData({"token" = token});
 					} else {
@@ -195,6 +189,7 @@ component extends="Base" {
 								.setStatusCode(STATUS.BAD_REQUEST)
 								.setStatusText(MESSAGES.BAD_REQUEST);
 							
+				
 				if(getSetting("environment") eq "development") {
 					prc.response.addMessage(e.message);
 				}

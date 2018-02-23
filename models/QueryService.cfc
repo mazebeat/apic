@@ -41,7 +41,7 @@
 				arguments.registrosPorPagina = arguments.total;
 			}
 
-		/* 	if(arguments.registrosPorPagina GT queryLimit) {
+			/* if(arguments.registrosPorPagina GT queryLimit) {
 				arguments.registrosPorPagina = queryLimit;
 			} */
 
@@ -49,7 +49,8 @@
 
 			// PAGINAS
 			salida.page = arguments.pagina;
-			if (salida.records gt 0) {
+			if (salida.records gt 0) {				
+				if(salida.records == 0) { salida.records = 1 }
 				salida.total = ceiling(salida.records/arguments.registrosPorPagina);
 			} else {
 				salida.total = 0;
@@ -71,7 +72,7 @@
 		Obtiene los campos que se requieren mostrar para una query.
 	 --->
 	<cffunction name="generarConsultaInforme" returnType="string" hint="">
-		<cfargument name="ids_campo" type="any" required="true" default="" displayname="Obtiene campos por ID" hint="Lista de IDs campo separados por coma">
+		<cfargument name="ids_campo" type="string" required="true" default="" displayname="Obtiene campos por ID" hint="Lista de IDs campo separados por coma">
 
 		<cfquery name="local.qCamposInforme" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 			SELECT id_campo, id_tipo_campo, id_agrupacion, id_tipo_campo_fijo
@@ -376,8 +377,8 @@
 							SELECT DISTINCT(GROUP_CONCAT(valor SEPARATOR '<br>'))
 							FROM resultadosDePagos rp
 							INNER JOIN resultadosDePagosPasarelasDatos rppd ON rp.id_resultado = rppd.id_resultado
-							WHERE rp.id_evento = #session.id_evento#
-							AND rppd.id_evento = #session.id_evento#
+							WHERE rp.id_evento IN (#session.id_evento#)
+							AND rppd.id_evento IN (#session.id_evento#)
 							AND rp.id_participante = p.id_participante
 							AND metodointro = 'auto'
 							AND rp.resultado IN ('ok')
@@ -507,7 +508,7 @@
 							wia.nombre AS titulo
 						FROM vWebsIdiomasActivos wia 
 						INNER JOIN webs w ON w.id_web = wia.id_web
-						AND w.eventos_id_evento = <cfqueryparam value="#session.id_evento#" cfsqltype="cf_sql_integer">
+						AND w.eventos_id_evento IN (#session.id_evento#)
 						AND w.tiposWebs_id_tipo_web = 1
 						ORDER BY wia.nombre
 					</cfquery>
@@ -533,8 +534,6 @@
 						END AS "#arguments.id_campo#"
 					</cfsavecontent>
 				</cfcase>
-
-
 
 				<!--- INSCRITO --->
 				<cfcase value="3">
@@ -1907,7 +1906,7 @@
 			<cfquery name="local.qDatosParticipantes" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 				SELECT id_participante, valor, id_campo
 				FROM vParticipantesDatos
-				WHERE id_evento = <cfqueryparam value="#session.id_evento#" cfsqltype="CF_SQL_INTEGER">
+				WHERE id_evento IN (#session.id_evento#)
 				AND id_participante IN (<cfqueryparam value="#arguments.listaIds#" cfsqltype="CF_SQL_INTEGER" list="true">)
 				AND id_campo = <cfqueryparam value="#id_campo#" cfsqltype="CF_SQL_INTEGER">
 			</cfquery>

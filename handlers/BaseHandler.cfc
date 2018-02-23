@@ -127,23 +127,26 @@ component extends="coldbox.system.EventHandler"{
 		try {
 			// Start time
 			var stime    = getTickCount();
-
-			// CORS	
-			// event.setHTTPHeader(name='Access-Control-Allow-Origin', value='*');
-			// event.setHTTPHeader(name='Access-Control-Allow-Methods', value='GET,POST,PUT,DELETE,OPTIONS');
-			// event.setHTTPHeader(name='Access-Control-Allow-Headers', value='Content-Type'); 
-			// event.setHTTPHeader(name='Access-Control-Allow-Credentials', value='false'); 
-			// event.setHTTPHeader(name='Access-Control-Max-Age', value='60'); 
-
+			
 			// prepare our response object
 			prc.response = getModel("Response");
 
+			// CORS	
+			event.setHTTPHeader(name='Access-Control-Allow-Origin', value='*');
+			event.setHTTPHeader(name='Access-Control-Allow-Methods', value='GET,POST,PUT,DELETE,OPTIONS');
+			event.setHTTPHeader(name='Access-Control-Allow-Headers', value='Content-Type'); 
+			event.setHTTPHeader(name='Access-Control-Allow-Credentials', value='false'); 
+			event.setHTTPHeader(name='Access-Control-Max-Age', value='60'); 
+
 			// CORS Response
-			// prc.response.addHeader('Access-Control-Allow-Origin', '*')
-			// 			.addHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-			// 			.addHeader('Access-Control-Allow-Headers', 'Content-Type')
-			// 			.addHeader('Access-Control-Allow-Credentials', 'false')
-			// 			.addHeader('Access-Control-Max-Age', '60');
+			prc.response.addHeader('Access-Control-Allow-Origin', '*')
+						.addHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+						.addHeader('Access-Control-Allow-Headers', 'Content-Type')
+						.addHeader('Access-Control-Allow-Credentials', 'false')
+						.addHeader('Access-Control-Max-Age', '60');
+
+							
+			
 
 			if (findNoCase("Echo", event.getCurrentEvent()) == 0 && 
 				findNoCase("Authenticate", event.getCurrentEvent()) == 0 && 
@@ -183,11 +186,10 @@ component extends="coldbox.system.EventHandler"{
 	*/
 	function aroundHandler(event, rc, prc, targetAction, eventArguments) {
 		try{
-			
 			var stime    = getTickCount();
 
 			// prepare our response object
-			// prc.response = getModel("Response");
+			prc.response = getModel("Response");
 			
 			// prepare argument execution
 			var args = { event = event, rc = rc, prc = prc };
@@ -197,9 +199,38 @@ component extends="coldbox.system.EventHandler"{
 			if(structKeyExists(rc, "format")){
 				prc.response.setFormat(rc.format);
 			}
+
+			/* Only accept application/json for content body on posts */
+			if ((event.getHTTPMethod() == "POST" || event.getHTTPMethod() == "PUT") && !prc.response.getError()) {
 			
+				if (findNoCase("application/json", event.getHTTPHeader("Content-Type")) == 0) {
+					prc.response.setError(true)
+								.addMessage("Content-Type application/json is required!")
+								.setStatusCode(STATUS.BAD_REQUEST)
+								.setStatusText(MESSAGES.BAD_REQUEST);
+				}
+
+				try {
+					if( isJSON( event.getHTTPContent() ) ){
+						structAppend( rc, event.getHTTPContent( json=true ), true );
+					}
+				} catch(Any e) {
+					prc.response.setError(true)
+					.addMessage("Invalid JSON Format!")
+					.setStatusCode(STATUS.BAD_REQUEST)
+					.setStatusText(MESSAGES.BAD_REQUEST);
+
+					if(getSetting("environment") eq "development") {
+						// TODO: Modificar el modo de mostrar errores en desarrollo.		
+						prc.response.addMessage("Detail: #e.detail#")
+						.addMessage("StackTrace: #e.stacktrace#");
+					}
+				}
+
+			}
+
 			// Check APIc Token
-			args = checkAuthenticationToken(event, rc, prc, targetAction, eventArguments, args);
+			checkAuthenticationToken(event, rc, prc, targetAction, eventArguments, args);
 
 			// Check Sessions			
 			validateSession(event, rc, prc);
@@ -208,25 +239,50 @@ component extends="coldbox.system.EventHandler"{
 			if (!prc.response.getError()) {
 				var actionResults = targetAction(argumentCollection=args);
 			}
-		} catch(Any e){
+		} catch(Any e){	
 			// Log Locally
 			log.error("[AroundHandler] Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
 
 			// Setup General Error Response
 			prc.response
 				.setError(true)
-				.addMessage("General application error: #e.message#")
+				// .addMessage("General application error: #e.message#")
+				.addMessage("General application error")
 				.setStatusCode(STATUS.INTERNAL_ERROR)
-				.setStatusText(MESSAGES.INTERNAL_ERROR);			
-			
+				.setStatusText(MESSAGES.INTERNAL_ERROR);	
+				
 			// Development additions
-			if(getSetting("environment") eq "development") {
+			if((getSetting("environment") eq "development") ) { 
 				// TODO: Modificar el modo de mostrar errores en desarrollo.		
 				prc.response.addMessage("Detail: #e.detail#")
 							.addMessage("StackTrace: #e.stacktrace#");
 			}
-		}
 
+			savecontent variable="errortext" {
+				// writeOutput('An error occurred: http://#cgi.server_name##cgi.script_name#?#cgi.query_string#<br />');
+			
+				// writeOutput('Time: #dateFormat(now(), "short")# #timeFormat(now(), "short")#<br />');
+				// writeDump(var="#form#", label="Form");
+				// writeDump(var="#session#", label="Session");
+				// writeDump(var="#cookie#", label="Cookies");
+				// writeDump(var="#url#", label="URL");
+
+				var oException = new coldbox.system.web.context.ExceptionBean( e );
+
+				var requestBody = toString( getHttpRequestData().content );
+				requestBody = deserializeJSON(requestBody, false);
+
+				// if(isdefined("url.debug")) {
+				// 	writeDump(var="#requestBody.data.records#", label="requestBody.data.record");
+				// 	abort;
+				// }
+				var EventValues = isJson(event.getHTTPContent()) ? deserializeJson(event.getHTTPContent(), true) : event.getHTTPContent();				
+		
+				include template="/views/bugreport.cfm";
+			}
+
+			enviarElError("subject" = "API Error #rc.event#", "contenidoEmail" = errortext);
+		}
 		// Development additions
 		if(getSetting("environment") eq "development"){
 			prc.response.addHeader("x-current-route", event.getCurrentRoute())
@@ -256,14 +312,18 @@ component extends="coldbox.system.EventHandler"{
 		}
 		
 		// Did the controllers set a view to be rendered? If not use renderdata, else just delegate to view.
-		if(!len(event.getCurrentView())){
-			// if(getSetting("environment") EQ "development" && isdefined("url.debug")) {
-			if(isdefined("url.debug") && isdefined('url.show') && url.show IS 1) {
-				writeDump(var="#event.getCurrentEvent()#", label="Event");
-				writeDump(var="#prc.response.getDataPacket()#", label="JSON Response");
-				// writeDump(var="#session#", label="Session");
+		// if(getSetting("environment") EQ "development" && isdefined("url.debug")) {
+		if(isdefined("url.debug")) {
+			writeDump(var="#event.getCurrentEvent()#", label="Event");
+			writeDump(var="#prc.response.getDataPacket()#", label="JSON Response");
+			writeDump(var="#session#", label="Session");
+
+			if(isdefined('url.show')) {
 				abort;
 			}
+		}
+
+		if(!len(event.getCurrentView())){
 			
 			// Magical Response renderings
 			event.renderData(
@@ -291,6 +351,11 @@ component extends="coldbox.system.EventHandler"{
 	* on localized errors
 	*/
 	function onError(event, rc, prc, faultAction, exception, eventArguments){
+
+		if(isdefined("url.debug")) {
+			writeDump(var="onError BaseHandler", label="var");
+			abort;
+		}
 		// Log Locally
 		log.error("Error in base handler (#faultAction#): #exception.message# #exception.detail#", exception);
 		
@@ -476,6 +541,9 @@ component extends="coldbox.system.EventHandler"{
 		log.error( "The action: #faultaction# failed when requesting resource: #event.getCurrentRoutedURL()#", getHTTPRequestData() );
 
 		// display
+		if(getSetting("environment") eq "development") {
+			// event.
+		}
 		event.setHTTPHeader(statusCode="500", statusText="Error executing resource #exception.message#")
 						.renderData( data=prc.response.getDataPacket(), type="json" );
 	}
@@ -484,63 +552,19 @@ component extends="coldbox.system.EventHandler"{
 	 * Check Atuhentication Token
 	 */
 	private any function checkAuthenticationToken(event, rc, prc, targetAction, eventArguments, args) {
-		
-		/* Only accept application/json for content body on posts */
-		if ((event.getHTTPMethod() == "POST" || event.getHTTPMethod() == "PUT") && !prc.response.getError()) {
-
-		
-			if (findNoCase("application/json", event.getHTTPHeader("Content-Type")) == 0) {
-				// prc.response.setError(true)
-				// 			.addMessage("Content-Type application/json is required!")
-				// 			.setStatusCode(STATUS.BAD_REQUEST)
-				// 			.setStatusText(MESSAGES.BAD_REQUEST);
-
-				throw(message = "Content-Type application/json is required!", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
-			}
-
-			try {
-				// TODO: Check this part of code, does a lot of error codes
-				// if(isdefined("url.debug")) {
-				// 	var json = event.getHTTPContent();
-				// 	writeDump(var="#event.getHTTPContent()#", label="event");
-				// 	writeDump(var="#isJSON(event.getHTTPContent())#", label="event");
-				// 	writeDump(var="#isJSON(json)#", label="event");
-				// 	abort;
-				// }
-				// if(isJSON(event.getHTTPContent())) {
-					structAppend(rc, event.getHTTPContent( json = true));
-				// } else {
-				// 	structAppend(rc, serializeJSON(event.getHTTPContent()));
-				// }
-			} catch(Any e) {
-				
-				// prc.response.setError(true)
-				// .addMessage("Invalid JSON Format!")
-				// .setStatusCode(STATUS.BAD_REQUEST)
-				// .setStatusText(MESSAGES.BAD_REQUEST);
-
-				// if(getSetting("environment") eq "development") {
-				// 	// TODO: Modificar el modo de mostrar errores en desarrollo.		
-				// 	prc.response.addMessage("Detail: #e.detail#")
-				// 	.addMessage("StackTrace: #e.stacktrace#");
-				// }
-
-				throw(message = "Invalid JSON Format!", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST, object=e);
-			}
-		}
-
+	
 		/* Do not check authentication for the authenticate handler */
 		if (findNoCase("Echo", event.getCurrentEvent()) == 0 && 
 			findNoCase("Authenticate", event.getCurrentEvent()) == 0 && 
 			findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
 
-			event.paramValue("token","");
+			event.paramValue("token", "");
 
 			if(getSetting("environment") == "development" && 
-				(rc.token eq "token" || !len(rc.token)) && isdefined('url.debug')) {
-				// Render Error Out
+				(rc.token EQ "TOKEN" || !len(rc.token)) && isdefined('url.debug')) {
+				session.id_evento   = 1;
 				rc.contraints.token = "";
-				rc.token            = authService.grantToken(1);
+				rc.token            = authService.grantToken(session.id_evento);
 			}	
 
 			/* Extract the token from the authorization header */
@@ -554,15 +578,12 @@ component extends="coldbox.system.EventHandler"{
 			} else {
 				sessionInvalidate();
 				
-				// throw("The access token is not valid!");
 				prc.response.setError(true)
 							.addMessage("The access token is not valid!")
 							.setStatusCode(STATUS.BAD_REQUEST)
 							.setStatusText(MESSAGES.BAD_REQUEST);
 			}
 		}
-
-		return args;
 	}
 	
 	/**

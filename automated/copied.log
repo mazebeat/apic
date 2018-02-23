@@ -721,3 +721,33 @@ Init copy...
 copying /handlers/Echo.cfc
 End finding
 .
+BACKUP 2018-02-23 10:12:26 -----------
+Finding modified or new files...
+Init copy...
+copying /layouts/_Main.cfm
+copying /handlers/Echo.cfc
+copying /handlers/BaseHandler.cfc
+copying /handlers/Base.cfc
+copying /handlers/Authenticate.cfc
+copying /views/index.html
+copying /views/bugreport.cfm
+copying /logs/system.log
+copying /logs/system.20180222.125830.zip
+copying /logs/system.20180222.160718.zip
+copying /logs/access.log
+copying /interceptors/LangInterceptor.cfc
+copying /interceptors/ExceptionHandlerInterceptor.cfc
+copying /Application.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/FormValidationService.cfc
+copying /models/security/ClientesTokenDAO.cfc
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/handlers/Participantes.cfc
+copying /includes/css/ink.css
+copying /includes/helpers/ApplicationHelper.cfm
+copying /coldbox/system/Bootstrap.cfc
+copying /coldbox/system/includes/BugReport.cfm
+End finding
+.
