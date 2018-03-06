@@ -13,9 +13,10 @@
 <!------------------------------------------- PUBLIC ------------------------------------------->
 	<cffunction name="get" access="public" returntype="string" output="false">
 		<cfargument name="id_traduccion" type="numeric" required="true">
+		<cfargument name="language" type="string" required="true">
 		
 		<cfquery name="local.traduccion" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
-			SELECT texto_#session.language# AS texto
+			SELECT texto_#arguments.language# AS texto
 			FROM traducciones
 			WHERE id_traduccion = <cfqueryparam value="#arguments.id_traduccion#" cfsqltype="CF_SQL_INTEGER">
 		</cfquery>

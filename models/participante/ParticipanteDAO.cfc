@@ -25,8 +25,10 @@
 		@rc	
 	 --->
 	<cffunction name="all" hint="Todos los participantes" output="false" returntype="Query">
+		<cfargument name="id_evento" required="true">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="nopagination" type="boolean" default="false">
 
 		<cfset arguments.event.paramValue('total', '')>
 		<cfset arguments.event.paramValue('page', 1)>
@@ -36,7 +38,7 @@
 			<cfquery name="local.qTotal" datasource="#application.datasource#">
 				SELECT COUNT(*) AS cantidad
 				FROM vParticipantes
-				WHERE id_evento IN (#session.id_evento#)
+				WHERE id_evento IN (#arguments.id_evento#)
 			</cfquery>
 			<cfset arguments.event.setValue('total', local.qTotal.cantidad)>
 		</cfif>
@@ -64,10 +66,12 @@
 				CONCAT("#link#/participantes/",id_participante,"?ids=#arguments.rc.ids#") AS _link
 				FROM vParticipantes p 
 				WHERE p.id_evento IN (#session.id_evento#)
-				LIMIT #arguments.rc.rows# OFFSET #pagination.inicio#
+				<cfif NOT nopagination>
+					LIMIT #arguments.rc.rows# OFFSET #pagination.inicio#
+				</cfif>
 			</cfsavecontent>
 		</cfoutput>
-		
+
 		<cfquery name="local.qParticipantes" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 			#consulta#
 		</cfquery>
@@ -88,41 +92,36 @@
 		<cfargument name="rc">
 		<cfargument name="id_participante" type="numeric" required="true">
 
-		<!--- <cftry> --->
-			<cfif NOT structKeyExists(arguments.rc, 'ids')>			
-				<cfif NOT isdefined('session.usersession.defaults.form.fields')>					
-					<cfset session.usersession.defaults.form.fields = valueList(defaultValues().id_campo)>
-				<cfelseif isEmpty(session.usersession.defaults.form.fields)>
-					<cfset session.usersession.defaults.form.fields = valueList(defaultValues().id_campo)>
-				</cfif>
-				<cfset arguments.event.paramValue('ids', session.usersession.defaults.form.fields)>			
+		<cfif NOT structKeyExists(arguments.rc, 'ids')>			
+			<cfif NOT isdefined('session.usersession.defaults.form.fields')>					
+				<cfset session.usersession.defaults.form.fields = valueList(defaultValues().id_campo)>
+			<cfelseif isEmpty(session.usersession.defaults.form.fields)>
+				<cfset session.usersession.defaults.form.fields = valueList(defaultValues().id_campo)>
 			</cfif>
+			<cfset arguments.event.paramValue('ids', session.usersession.defaults.form.fields)>			
+		</cfif>
 
-			<cfset var datosConsulta = qs.generarConsultaInforme(arguments.rc.ids)>
-			
-			<cfoutput>
-				<cfsavecontent variable = "consulta">
-					SELECT 
-						p.id_participante, 
-						p.id_tipo_participante AS 'id_tipo_participante',
-						#datosConsulta#
-					FROM vParticipantes p
-					WHERE p.id_participante=#arguments.id_participante#
-					AND p.id_evento IN (#session.id_evento#)
-				</cfsavecontent>
-			</cfoutput>
+		<cfset var datosConsulta = qs.generarConsultaInforme(arguments.rc.ids)>
 		
-			<cfquery name="local.participantesByID" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
-				#consulta#
-			</cfquery>
+		<cfoutput>
+			<cfsavecontent variable = "consulta">
+				SELECT 
+					p.id_participante, 
+					p.id_tipo_participante AS 'id_tipo_participante',
+					#datosConsulta#
+				FROM vParticipantes p
+				WHERE p.id_participante=#arguments.id_participante#
+				AND p.id_evento IN (#session.id_evento#)
+			</cfsavecontent>
+		</cfoutput>
+	
+		<cfquery name="local.participantesByID" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
+			#consulta#
+		</cfquery>
 
-			<cfset local.participantesByID = qs.rellenarDatosInforme(consulta, local.participantesByID)>
+		<cfset local.participantesByID = qs.rellenarDatosInforme(consulta, local.participantesByID)>
 
-			<cfreturn local.participantesByID>
-		<!--- <cfcatch type="any">
-			<cfthrow type="any" message="#cfcatch.Message#">
-		</cfcatch>
-		</cftry>  --->
+		<cfreturn local.participantesByID>
 	</cffunction>
 
 	<!--- 
@@ -140,44 +139,38 @@
 		<cfset arguments.event.paramValue('page', 1)>
 		<cfset arguments.event.paramValue('rows', queryLimit)>
 
-		<!--- <cftry> --->
-			<cfquery name="local.tipoParticipante" datasource="#application.datasource#">
-				SELECT id_tipo_participante 
-				FROM vTiposDeParticipantes 
-				WHERE LOWER(nombre)=<cfqueryparam value="#arguments.tipo_participante#" CFSQLType="CF_SQL_VARCHAR">
-				AND eventos_id_evento IN (#session.id_evento#)
-			</cfquery>
+		<cfquery name="local.tipoParticipante" datasource="#application.datasource#">
+			SELECT id_tipo_participante 
+			FROM vTiposDeParticipantes 
+			WHERE LOWER(nombre)=<cfqueryparam value="#arguments.tipo_participante#" CFSQLType="CF_SQL_VARCHAR">
+			AND eventos_id_evento IN (#session.id_evento#)
+		</cfquery>
 
-			<cfif arguments.rc.total EQ ''>
-				<cfquery name="local.qTotal" datasource="#application.datasource#">
-					SELECT COUNT(*) AS cantidad
-					FROM vParticipantes
-					WHERE id_tipo_participante=<cfqueryparam value="#local.tipoParticipante.id_tipo_participante#" CFSQLType="CF_SQL_INTEGER">
-					AND id_evento IN (#session.id_evento#)
-				</cfquery>
-				<cfset arguments.event.setValue('total', local.qTotal.cantidad)>
-			</cfif>
-
-			<cfset var pagination="#qs.generarPaginacion(arguments.rc.total, arguments.rc.page, arguments.rc.rows)#">
-			
-			<cfset var link=getURLLink(arguments.rc.token)>
-
-			<!--- TODO: Agregar ids de filtro campos para esta consulta. --->
-
-			<cfquery name="local.participantesByTipo" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
-				SELECT nombre, apellidos, email_participante, nombre_empresa,
-				CONCAT("#link#/participantes/", id_participante) AS _link
+		<cfif arguments.rc.total EQ ''>
+			<cfquery name="local.qTotal" datasource="#application.datasource#">
+				SELECT COUNT(*) AS cantidad
 				FROM vParticipantes
 				WHERE id_tipo_participante=<cfqueryparam value="#local.tipoParticipante.id_tipo_participante#" CFSQLType="CF_SQL_INTEGER">
 				AND id_evento IN (#session.id_evento#)
-				LIMIT #arguments.rc.rows# OFFSET #pagination.inicio#
 			</cfquery>
-			
-			<!--- <cfcatch type="any">
-				<cfthrow type="any" message="#cfcatch.Message#">
-			</cfcatch>
-		</cftry>  --->
+			<cfset arguments.event.setValue('total', local.qTotal.cantidad)>
+		</cfif>
+
+		<cfset var pagination="#qs.generarPaginacion(arguments.rc.total, arguments.rc.page, arguments.rc.rows)#">
 		
+		<cfset var link=getURLLink(arguments.rc.token)>
+
+		<!--- TODO: Agregar ids de filtro campos para esta consulta. --->
+
+		<cfquery name="local.participantesByTipo" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
+			SELECT nombre, apellidos, email_participante, nombre_empresa,
+			CONCAT("#link#/participantes/", id_participante) AS _link
+			FROM vParticipantes
+			WHERE id_tipo_participante=<cfqueryparam value="#local.tipoParticipante.id_tipo_participante#" CFSQLType="CF_SQL_INTEGER">
+			AND id_evento IN (#session.id_evento#)
+			LIMIT #arguments.rc.rows# OFFSET #pagination.inicio#
+		</cfquery>
+			
 		<cfreturn local.participantesByTipo>
 	</cffunction>
 
@@ -643,10 +636,10 @@
 			<cfset idevento = rEReplaceNoCase(list[4],"[^\d]","")>
 
 			<cfset arrayAppend(out, "UPDATE participantesDatos 
-										SET valor=#value# 
-										WHERE campos_id_campos=#campo#
-										AND eventos_id_evento=#idevento# 
-										AND participantes_id_participante=#id#")>
+									SET valor=#value# 
+									WHERE campos_id_campos=#campo#
+									AND eventos_id_evento=#idevento# 
+									AND participantes_id_participante=#id#")>
 		</cfloop>
 
 		<cfreturn out>

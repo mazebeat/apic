@@ -47,7 +47,7 @@ Optional Methods
 	// Module Properties
 	this.title 				= "apic-v1";
 	this.author 			= "Tufabricadeventos.com";
-	this.webURL 			= "http://www.tufabricadeventos.com/";
+	this.webURL 			= "https://www.tufabricadeventos.com/";
 	this.description 		= "APIc para consumo de clientes";
 	this.version			= "1.0.0";
 	// If true, looks for views in the parent first, if not found, then in the module. Else vice-versa
@@ -68,12 +68,10 @@ Optional Methods
 	function configure(){
 
 		// parent settings
-		parentSettings = {
-		};
+		parentSettings = {};
 
 		// module settings - stored in modules.name.settings
-		settings = {
-		};
+		settings = {};
 
 		// Layout Settings
 		layoutSettings = {
@@ -81,11 +79,30 @@ Optional Methods
 		};
 
 		// datasources
-		datasources = {
-		};
+		datasources = {};
 
 		// SES Routes
-		routes = [			
+		routes = [	
+			{ pattern="/:lang-alpha/:token/agenda/:id_participante-numeric", handler="Agenda", action={ GET="get" } },
+			{ pattern="/:lang-alpha/:token/agenda", handler="Agenda", action={ GET="index" } },
+
+			// Products
+			{ pattern="/:lang-alpha/:token/productos/seleccionados/:id_participante-numeric", handler="Productos", action={ GET="byParticipante" } },
+			{ pattern="/:lang-alpha/:token/productos/seleccionados", handler="Productos", action={ GET="allSelected" } },
+			{ pattern="/:lang-alpha/:token/productos", handler="Productos", action={ GET="index" } },
+
+			// Activities
+			{ pattern="/:lang-alpha/:token/actividades/:id_participante-numeric", handler="Actividades", action={ GET="byParticipante" } },
+			{ pattern="/:lang-alpha/:token/actividades", handler="Actividades", action={ GET="index" } },
+			
+			
+			// Meetings
+			{ pattern="/:lang-alpha/:token/reuniones/:id_participante-numeric", handler="Reuniones", action={ GET="get" } },
+			{ pattern="/:lang-alpha/:token/reuniones", handler="Reuniones", action={ GET="all" } },
+			
+			// Statics
+			{ pattern="/:lang-alpha/:token/estadisticas", handler="Estadisticas", action={ GET="index" } },
+
 			// Documentation
 			{ pattern="/:lang-alpha/doc", handler="home", action="doc", noLayout=true },
 
@@ -95,16 +112,16 @@ Optional Methods
 
 			// -> By ID
 			{ pattern="/:lang-alpha/:token/participantes/:id_participante-numeric/page/:page-numeric/rows/:rows-numeric?", handler="Participantes", action={ GET="get", HEAD="info" } },
-			{ pattern="/:lang-alpha/:token/participantes/:id_participante-numeric/page/:page-numeric/", handler="Participantes", handler="Participantes", action={ GET="get", HEAD="info" } },
+			{ pattern="/:lang-alpha/:token/participantes/:id_participante-numeric/page/:page-numeric/", handler="Participantes", action={ GET="get", HEAD="info" } },
 			{ pattern="/:lang-alpha/:token/participantes/:id_participante-numeric", handler="Participantes", action={ GET="get", HEAD="info" } },
 
-			// -> By Tipo			<!---  --->
+			// -> By Tipo
 			{ pattern="/:lang-alpha/:token/participantes/:tipo_participante/page/:page-numeric/rows/:rows-numeric?", handler="Participantes", action="byType", contraints={ tipo_participante="(/([\w])\w+/+g)", token="(([(\w|\d)\.\-\\])\w+/g)" } },
 			{ pattern="/:lang-alpha/:token/participantes/:tipo_participante/page/:page-numeric/", handler="Participantes", action="byType", contraints={ tipo_participante="(/([\w])\w+/+g)", token="(([(\w|\d)\.\-\\])\w+/g)" } },
 			{ pattern="/:lang-alpha/:token/participantes/:tipo_participante", handler="Participantes", action="byType", contraints={ tipo_participante="(/([\w])\w+/+g)", token="(([(\w|\d)\.\-\\])\w+/g)" } },
 
 			// -> All		
-			{ pattern="/:lang-alpha/:token/participantes", handler="Participantes", action={ GET="index", POST="create" } },
+			{ pattern="/:lang-alpha/:token/participantes", handler="Participantes", action={ GET="index", POST="create", PUT="modify" } },
 
 			// Tipo de Participantes
 			{ pattern="/:lang-alpha/:token/tiposparticipantes/:id_tipo_participante-numeric", handler="TiposParticipantes", action="get" },
@@ -132,8 +149,7 @@ Optional Methods
 		};
 
 		// Custom Declared Interceptors
-		interceptors = [
-		];
+		interceptors = [];
 
 		// Binder Mappings
 		// binder.map("Alias").to("#moduleMapping#.model.MyService");
@@ -142,14 +158,12 @@ Optional Methods
 	/**
 	* Fired when the module is registered and activated.
 	*/
-	function onLoad(){
-	}
+	function onLoad(){}
 
 	/**
 	* Fired when the module is unregistered and unloaded
 	*/
-	function onUnload(){
-	}
+	function onUnload(){}
 
 </cfscript>
 </cfcomponent>

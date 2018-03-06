@@ -41,6 +41,14 @@
                 }
                 local.ColumnValue = arguments.Query[local.ColumnName][local.RowIndex];
 
+                if(isArray(local.ColumnValue)) {
+                    for(i=1; i <= arrayLen(local.ColumnValue); i++) {
+                        if(isQuery(local.ColumnValue[i])) {
+                            local.ColumnValue[i] = QueryToStruct(local.ColumnValue[i]);
+                        }
+                    }
+
+                }
                 if(IsQuery(local.ColumnValue)) {
                     local.ColumnValue = QueryToStruct(local.ColumnValue);
                 } 
@@ -132,20 +140,20 @@
 
     <!--- Define the local scope. --->
     <cfset var local = StructNew() />
-
     
-
     <!--- Append the second to the first. Do this by unioning the two queries. --->
     <cfquery name="local.NewQuery" dbtype="query">
         <!--- Select all from the first query. --->
         (
-            SELECT
-            *
+            SELECT *
             FROM
             #arguments.QueryOne#
-       )
+        )
+
         <!--- Union the two queries together. --->
+
         UNION <cfif arguments.UnionAll>ALL</cfif>
+
         <!--- Select all from the second query. --->
         (
             SELECT
@@ -154,9 +162,6 @@
             #arguments.QueryTwo#
        )
     </cfquery>
-
-    <cfdump var="#local.NewQuery#"><cfabort>
-    
 
     <!--- Return the new query. --->
     <cfreturn local.NewQuery>
@@ -253,3 +258,4 @@
     
     <cfreturn queryObj />
 </cffunction>
+

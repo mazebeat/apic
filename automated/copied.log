@@ -781,3 +781,40 @@ copying /coldbox/system/Bootstrap.cfc
 copying /coldbox/system/includes/BugReport.cfm
 End finding
 .
+BACKUP 2018-03-06 13:32:58 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/BaseHandler.cfc
+copying /logs/system.log
+copying /logs/access.log
+copying /interceptors/LangInterceptor.cfc
+copying /models/producto/ProductoDAO.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/estadistica/ReunionService.cfc
+copying /models/estadistica/ReunionDAO.cfc
+copying /models/agenda/Agenda.cfc
+copying /models/agenda/AgendaService.cfc
+copying /models/agenda/AgendaDAO.cfc
+copying /models/traduccion/TraduccionDAO.cfc
+copying /models/traduccion/TraduccionService.cfc
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/handlers/Estadisticas.cfc
+copying /modules_app/apic-v1/handlers/Agenda.cfc
+copying /modules_app/apic-v1/handlers/Reuniones.cfc
+copying /modules_app/apic-v1/handlers/Home.cfc
+copying /modules_app/apic-v1/ModuleConfig.cfc
+copying /modules_app/apic-v1/views/home/documentation/producto.cfm
+copying /modules_app/apic-v1/views/home/documentation/agenda.cfm
+copying /modules_app/apic-v1/views/home/documentation/tipoparticipante.cfm
+copying /modules_app/apic-v1/views/home/documentation/reunion.cfm
+copying /modules_app/apic-v1/views/home/documentation/authentication.cfm
+copying /modules_app/apic-v1/views/home/documentation/evento.cfm
+copying /modules_app/apic-v1/views/home/documentation/formulario.cfm
+copying /modules_app/apic-v1/views/home/documentation/participante.cfm
+copying /modules_app/apic-v1/views/home/documentation.cfm
+copying /includes/css/styles.css
+copying /includes/helpers/QuerysHelper.cfm
+copying /includes/less/styles.less
+copying /includes/less/base.less
+End finding
+.

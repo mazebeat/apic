@@ -16,15 +16,16 @@
 <!------------------------------------------- PUBLIC ------------------------------------------->
 	<cffunction name="get" access="public" returntype="string" output="false">
 		<cfargument name="id_traduccion" type="numeric" required="true">
+		<cfargument name="language" type="string" default="#session.language#">
 
-		<cfset var cacheKey = 'q-trad-#id_traduccion#'>
+		<cfset var cacheKey = 'q-trad-#arguments.id_traduccion#-#arguments.language#'>
 
-		<cfif cache.lookup(cacheKey)>
+		<!--- <cfif cache.lookup(cacheKey)>
 			<cfset result = cache.get(cacheKey)>
-		<cfelse>
-			<cfset result = dao.get(id_traduccion)>
-			<cfset cache.set(cacheKey, result, 60, 30)>
-		</cfif>
+		<cfelse> --->
+			<cfset result = dao.get(arguments.id_traduccion, arguments.language)>
+			<!--- <cfset cache.set(cacheKey, result, 60, 30)> --->
+		<!--- </cfif> --->
 
 		<cfreturn result>
 	</cffunction>
