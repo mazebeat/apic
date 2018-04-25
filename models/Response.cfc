@@ -38,7 +38,7 @@ component accessors="true" {
 		variables.jsonQueryFormat 	= "query";
 		variables.contentType 		= "";
 		variables.statusCode 		= 200;
-		variables.statusText 		=  "OK";
+		variables.statusText 		= "OK";
 		variables.responsetime		= 0;
 		variables.cachedResponse 	= false;
 		variables.headers 			= [];
@@ -74,12 +74,19 @@ component accessors="true" {
 	 * @output false
 	 */
 	function getDataPacket(boolean reset=false) {
+		try {
+			variables.statusCode = javacast('int', variables.statusCode);
+		} catch (any e) {}
+		
 		var packet = {
-			"error"      = variables.error ? true: false,
-			"messages"   = variables.messages,
-			"data"       = variables.data,
-			"statusCode" = variables.statusCode,
-			"statusText" = variables.statusText
+			"error"          = variables.error ? true: false,
+			"messages"       = variables.messages,
+			"data"           = variables.data,
+			"statusCode"     = variables.statusCode,
+			"statusText"     = variables.statusText,
+			// "cachedResponse" = variables.cachedResponse,
+			// "headers"        = variables.headers,
+			// "responsetime"   = variables.responsetime,
 		};
 
 		// Are we reseting the data packet

@@ -18,7 +18,7 @@ component{
 	this.clientStorage          = 'cookie';
 	this.setClientCookies       = true;
 
-	this.datasource             = "sige_up"; // sige_up | sige 
+	this.datasource             = "sige"; // sige_up | sige 
 	
 	this.secureJSON             = true;
 	this.compression            = true;
@@ -62,6 +62,8 @@ component{
 	// request start
 	public boolean function onRequestStart( string targetPage ){
 		setting showdebugoutput = structkeyexists(url, "debug");
+
+		request._body = ToString( GetHttpRequestData().content );
 
 		if (structKeyExists( url, "killsession" )) {  this.sessioncookie.disableupdate = false; structClear(session); }
 		if (structKeyExists(url, "reset")) { this.onApplicationStart();	}

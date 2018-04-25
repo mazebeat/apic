@@ -34,7 +34,7 @@
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
 		<cfset var campos  = createObject("java", "java.util.LinkedHashMap").init()>
 
-		<cfset var cacheKey = 'q-form-all-#id_evento#'>
+		<!--- <cfset var cacheKey = 'q-form-all-#id_evento#'> --->
 		
 		<!--- <cfif cache.lookup(cacheKey)>
 			<cfset var allForms = cache.get(cacheKey)>
@@ -105,23 +105,28 @@
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
 		<cfset var campos  = createObject("java", "java.util.LinkedHashMap").init()>
 
-		<cfset var cacheKey = 'q-form-meta-#id_evento#-#sortBy#'>
+		<!--- <cfset var cacheKey = 'q-form-meta-#id_evento#-#sortBy#'> --->
 
-		<cfif cache.lookup(cacheKey)>
+		<!--- <cfif cache.lookup(cacheKey)>
 			<cfset campos = cache.get(cacheKey)>
-		<cfelse>
+		<cfelse> --->
 			<cfset var allGroups = dao.groupsByEvent(id_evento)>
 			<cfset var fields 	 = dao.allFieldsByGroup(valueList(allGroups.id_agrupacion))>
 
 			<cfif sortBy EQ 'field'>
-				<cfloop query="fields">
+
+				<cfloop query="fields">				
 					<cfif NOT structKeyExists(campos, id_campo)>
 						<cfset campos[id_campo] = obtainMetaOfField(id_campo)>
 					</cfif>
 				</cfloop>
 			
 			<cfelseif sortBy EQ 'form'>
-			
+				<cfloop query="fields">				
+					<cfif NOT structKeyExists(campos, id_campo)>
+						<cfset campos[id_campo] = obtainMetaOfField(id_campo)>
+					</cfif>
+				</cfloop>
 			<cfelseif sortBy EQ 'group'>
 				<cfloop query="fields">
 					<cfif !structKeyExists(campos, id_agrupacion)>
@@ -134,8 +139,8 @@
 				</cfloop>
 			</cfif>
 	
-			<cfset cache.set(cacheKey, campos, 60, 30)>
-		</cfif>
+			<!--- <cfset cache.set(cacheKey, campos, 60, 30)> --->
+		<!--- </cfif> --->
 		
 		<cfset s.data.records = campos>
 		<cfset s.data.total   = structCount(campos)>
@@ -226,7 +231,7 @@
 		<cfset s = { ok = true, mensaje: "", data : { "records":{},  "count": 0, "total": 0 } }>
 		<cfset var campos  = createObject("java", "java.util.LinkedHashMap").init()>
 		
-		<cfset var cacheKey = 'q-formS-bytp-#id_tipo_participante#'>
+		<!--- <cfset var cacheKey = 'q-formS-bytp-#id_tipo_participante#'> --->
 
 		<!--- <cfif cache.lookup(cacheKey)> --->
 			<!--- <cfset var allGroups = cache.get(cacheKey)> --->
@@ -291,6 +296,7 @@
 		<cfset var meta = {
 			'name'         : '',
 			'inputType'    : 'input',
+			'type'         : '',
 			'configuration': {}
 			<!---
 			'type'         : 'text',
@@ -401,6 +407,7 @@
 			<!-- CAMPO IMAGEN -->
 			<cfcase value="9" delimiters=",">
 				<cfset meta['name']                      = campo.titulo>
+				<cfset meta['type']                      = 'file'>
 				<cfset meta['inputType']                 = 'img'>
 				<cfset meta['configuration']['readonly'] = numericToBoolean(campo.solo_lectura)>
 			</cfcase>

@@ -29,10 +29,10 @@
 
 		<!--- Se valida la estructura de la respuesta --->
 		<cfif NOT structKeyExists(arguments.dataFields, 'data') OR NOT isStruct(arguments.dataFields.data)>
-			<cfthrow message="Invalida JSON Data. The key 'data' does not exists or is not a object">
+			<cfthrow message="Invalida JSON Data. The key 'data' does not exists or is not a object" errorcode="500">
 		</cfif>
 		<cfif NOT structKeyExists(arguments.dataFields.data, 'records') OR NOT isArray(dataFields.data.records)>
-			<cfthrow message="Invalida JSON Data. The key 'data.records' does not exists or is not an array">
+			<cfthrow message="Invalida JSON Data. The key 'data.records' does not exists or is not an array" errorcode="500">
 		</cfif>
 		
 		<!--- Se obtienen los campos básicos --->
@@ -48,7 +48,7 @@
 				<cfset var idtipoparticipante = record.id_tipo_participante>
 				<cfset structDelete(record, 'id_tipo_participante')>
 			<cfelse>
-				<cfthrow message="Invalida JSON Data. ID tipo participante does not exists">
+				<cfthrow message="Invalida JSON Data. ID tipo participante does not exists" errorcode="500">
 			</cfif>
 
 			<!--- Se validan campos login/password --->
@@ -59,6 +59,10 @@
 				<cfset var login = record.login>
 				<cfset structDelete(record, 'login')>
 			</cfif>
+			<cfif structKeyExists(record, 'email')>
+				<cfset var email = record.email>
+				<cfset structDelete(record, 'email')>
+			</cfif>
 			<cfif structKeyExists(record, 'password')>
 				<cfset var password = record.password>
 				<cfset structDelete(record, 'password')>
@@ -68,16 +72,16 @@
 				<cfset structDelete(record, 'inscrito')>
 			</cfif>
 
-			<!--- Validamos que al menos venga el campo correo --->
-			<cfquery name="local.findout" dbtype="query" cachedWithin="#createTimeSpan( 0, 0, dao.queryExpiration, 0 )#">
-				SELECT * 
+			<!--- Validamos que al menos venga el campo correo --->			
+			<cfquery name="local.findout" dbtype="query">
+				SELECT id_campo
 				FROM defaultFields
 				WHERE id_campo IN (#structKeyList(record)#)
-				AND (titulo LIKE '%mail%' OR titulo LIKE '%correo%')
+				AND (titulo LIKE '%correo%' OR titulo LIKE '%mail%')
 			</cfquery>
-			
+
 			<cfif local.findout.recordcount LTE 0>
-				<cfthrow message="Field 'Email' does not exists in register [#key#] ">
+				<cfthrow message="Field ID of 'Email' does not exists in register [#key#]" errorcode="500">
 			</cfif>
 
 			<!--- Renovamos variables para el proceso de guardado en BBDD --->
@@ -88,21 +92,21 @@
 				@url.force Fuerza la inserción de datos.
 			---> 
 			<cfif getHTTPRequestData().method EQ 'POST' AND (NOT structKeyExists(url, 'force') OR url.force == false)>
-				<cfquery name="local.logins" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, dao.queryExpiration, 0 )#">
+				<cfquery name="local.logins" datasource="#application.datasource#">
 					SELECT COUNT(*) AS 'exists' FROM participantes
 					WHERE login = <cfqueryparam value="#replace((structKeyExists(record, 'login') ? record.login : emailp), "'", "", 'all')#" cfsqltype="CF_SQL_VARCHAR">
 					AND id_evento IN (#session.id_evento#)
 					AND fecha_baja IS NULL
 				</cfquery>
 
-				<cfif local.logins.exists NEQ 0>
-					<cfthrow message="Invalida JSON Data. Email ['#emailp#'] can not be duplicated">
+				<cfif local.logins.recordCount GT 0 AND local.logins.exists GT 0>
+					<cfthrow message="Invalida JSON Data. Email ['#emailp#'] can not be duplicated" errorcode="500">
 				</cfif>
 			</cfif>
 
 			<!--- Se validan emails duplicados --->
 			<cfif arrayFind(validEmails, emailp) GT 0>
-				<cfthrow message="Invalida JSON Data. Email ['#emailp#'] already exists">
+				<cfthrow message="Invalida JSON Data. Email ['#emailp#'] already exists" errorcode="500">
 			</cfif>
 
 			<!--- Obtenemos las keys de los campos para continuar con el proceso. --->
@@ -231,7 +235,9 @@
 						}
 					}
 				}
-		 	} catch(any e) { if(isdefined("url.debug")) { writeDump(var="#k#", label="e"); writeDump(var="#e#", label="e"); abort; } }
+			} catch(any e) { 
+				throw(message="#e.message#", detail="#e.detail#"); 
+			} 
 		</cfscript>
 
 		<cfreturn reqFields>
@@ -239,9 +245,9 @@
 
 	<!--- TODO: Agregar extension imagen --->
 	<cffunction name="formFiles" output="false" returntype="any">
-		<cfargument name="keyList" type="array" required="true">
-		<cfargument name="fields" type="any" required="true">
-		<cfargument name="formFields" type="any" required="true">
+		<cfargument name="keyList"		type="array"	required="true">
+		<cfargument name="fields"		type="any"		required="true">
+		<cfargument name="formFields"	type="any"		required="true">
 
 		<cfset var reqFields = {}>
 
@@ -276,7 +282,7 @@
 	<cffunction name="validateText" output="false" returntype="void">
 		<cfargument name="fvalue">
 		<cfargument name="validation">
-
+		
 		<cfscript>
 			if(NOT isValid("string", fvalue)) {
 				throw(message="Error Validation");
@@ -297,7 +303,7 @@
 			}
 			if(validation.type EQ "text") {
 				if(validation.configuration.onlyAlpha AND (NOT reFindNoCase('[^\w.]', fvalue) LT 1)) {
-					throw(message="Error Validation. onlyAlpha");
+					throw(message="Error Validation. only alpha");
 				}
 			}
 		</cfscript>

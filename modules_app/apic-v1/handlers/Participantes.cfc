@@ -29,7 +29,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">	
 
-		<cfset s = service.all(arguments.event, arguments.rc)>
+		<cfset s = service.all(session.id_evento, arguments.event, arguments.rc)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -102,17 +102,15 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfthrow message ="HOLA ESTE ES UN ERROR">
-
-
 		<!--- <cftry> --->
 			<cfset s = service.create(arguments.event, arguments.rc)>
-			<cfset arguments.prc.response.setData(s.data).setError(!s.ok)> 
-		<!--- <cfcatch type = "any">
-			<cfset s.mensaje="#cfcatch.message#">
-			<cfset arguments.prc.response.setError(true)> 
-		</cfcatch> 
-		</cftry>--->
+			<cfset arguments.prc.response.setData(s.data)> 
+		<!--- <cfcatch type = "any"> --->
+			<!--- <cfset sendError(cfcatch, rc, event)> --->
+			<!--- <cfset s.mensaje="#cfcatch.message#"> --->
+			<!--- <cfset arguments.prc.response.setError(true)>  --->
+		<!--- </cfcatch>  --->
+		<!--- </cftry> --->
 		
 		<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>
 	</cffunction>
@@ -127,12 +125,13 @@
 
 		<!--- <cftry> --->
 			<cfset s = service.modify(arguments.event, arguments.rc)>
-			<cfset arguments.prc.response.setData(s.data).setError(!s.ok)> 
-		<!--- <cfcatch type = "any">
-			<cfset s.mensaje="#cfcatch.message#">
-			<cfset arguments.prc.response.setError(true)> 
-		</cfcatch>
-		</cftry>		 --->
+			<cfset arguments.prc.response.setData(s.data)> 
+		<!--- <cfcatch type = "any"> --->
+			<!--- <cfset sendError(cfcatch, rc, event)> --->
+			<!--- <cfset s.mensaje="#cfcatch.message#"> --->
+			<!--- <cfset arguments.prc.response.setError(true)>  --->
+		<!--- </cfcatch> --->
+		<!--- </cftry>		 --->
 		
 		<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>
 	</cffunction>

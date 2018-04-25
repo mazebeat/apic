@@ -7,7 +7,7 @@
 * This handler will create a Response model and prepare it for your actions to use
 * to produce RESTFul responses.
 */
-component extends="coldbox.system.EventHandler"{
+component extends="coldbox.system.EventHandler" {
 	// Inject AuthenticationService
 	property name="authService" type="any" 			inject="model:security.AuthenticationService";
 	property name="emaillogger" type="any" 			inject="logBox:logger:emaillogger"; 
@@ -125,7 +125,7 @@ component extends="coldbox.system.EventHandler"{
 		try {
 			// Start time
 			var stime    = getTickCount();
-			
+
 			// prepare our response object
 			prc.response = getModel("Response");
 
@@ -138,7 +138,7 @@ component extends="coldbox.system.EventHandler"{
 			} catch(Any e) {
 				throw(message="Invalid JSON Format!", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
 			}
-			
+
 			if (findNoCase("Echo", event.getCurrentEvent()) == 0 && 
 				findNoCase("Authenticate", event.getCurrentEvent()) == 0 && 
 				findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
@@ -156,13 +156,12 @@ component extends="coldbox.system.EventHandler"{
 			// Setup General Error Response
 			prc.response
 				.setError(true)
-				.addMessage("General application error: #e.message#")
-				.setStatusCode(STATUS.INTERNAL_ERROR)
+				.addMessage("#MESSAGES.INTERNAL_ERROR#: #e.message#")
+				.setStatusCode(empty(e.errorcode) ? STATUS.INTERNAL_ERROR : e.errorcode)
 				.setStatusText(MESSAGES.INTERNAL_ERROR);			
 			
 			// Development additions
 			if(getSetting("environment") eq "development") {
-				// TODO: Modificar el modo de mostrar errores en desarrollo.		
 				prc.response.addMessage("Detail: #e.detail#")
 							.addMessage("StackTrace: #e.stacktrace#");
 			}
@@ -184,6 +183,7 @@ component extends="coldbox.system.EventHandler"{
 			
 			// prepare argument execution
 			var args = { event = event, rc = rc, prc = prc };
+
 			structAppend(args, eventArguments);
 
 			// Incoming Format Detection
@@ -208,20 +208,19 @@ component extends="coldbox.system.EventHandler"{
 			// Setup General Error Response
 			prc.response
 				.setError(true)
-				// .addMessage("General application error: #e.message#")
-				.addMessage("General application error")
-				.setStatusCode(STATUS.INTERNAL_ERROR)
+				.addMessage("#e.message#")
+				.setStatusCode(empty(e.errorcode) ? STATUS.INTERNAL_ERROR : e.errorcode)
 				.setStatusText(MESSAGES.INTERNAL_ERROR);	
+
+			sendError(e, rc, event);
 				
 			// Development additions
 			if((getSetting("environment") eq "development") ) { 
-				// TODO: Modificar el modo de mostrar errores en desarrollo.		
 				prc.response.addMessage("Detail: #e.detail#")
 							.addMessage("StackTrace: #e.stacktrace#");
 			}
-
-			sendError(e, rc, event);
 		}
+
 		// Development additions
 		if(getSetting("environment") eq "development"){
 			prc.response.addHeader("x-current-route", event.getCurrentRoute())
@@ -290,12 +289,7 @@ component extends="coldbox.system.EventHandler"{
 	* on localized errors
 	*/
 	function onError(event, rc, prc, faultAction, exception, eventArguments){
-
-		if(isdefined("url.debug")) {
-			writeDump(var="#event#", label="event OnError");
-			abort;
-		}
-
+	
 		// Log Locally
 		log.error("Error in base handler (#faultAction#): #exception.message# #exception.detail#", exception);
 		
@@ -308,7 +302,7 @@ component extends="coldbox.system.EventHandler"{
 		prc.response
 			.setError(true)
 			.addMessage("Base Handler Application Error: #exception.message#")
-			.setStatusCode(STATUS.INTERNAL_ERROR)
+			.setStatusCode(empty(e.errorcode) ? STATUS.INTERNAL_ERROR : e.errorcode)
 			.setStatusText(MESSAGES.INTERNAL_ERROR);
 		
 		// Development additions
@@ -319,6 +313,11 @@ component extends="coldbox.system.EventHandler"{
 
 		// Send error mail
 		sendError(exception, rc, event);
+
+		if(isdefined("url.debug")) {
+			writeDump(var="#exception#", label="event OnError");
+			abort;
+		}
 		
 		// If in development, then it will show full trace error template, else render data
 		if(getSetting("environment") neq "development"){
@@ -340,8 +339,11 @@ component extends="coldbox.system.EventHandler"{
 	* on invalid http verbs
 	*/
 	function onInvalidHTTPMethod(event, rc, prc, faultAction, eventArguments){
+		
+
 		// Log Locally
 		log.warn("InvalidHTTPMethod Execution of (#faultAction#): #event.getHTTPMethod()#", getHTTPRequestData());
+		
 		// Setup Response
 		prc.response = getModel("Response")
 			.setError(true)
@@ -349,6 +351,12 @@ component extends="coldbox.system.EventHandler"{
 			.addMessage("InvalidHTTPMethod Execution: #event.getHTTPMethod()#")
 			.setStatusCode(STATUS.NOT_ALLOWED)
 			.setStatusText(MESSAGES.NOT_ALLOWED);
+
+		if(isdefined("url.debug")) {
+			writeDump(var="#event#", label="event onInvalidHTTPMethod");
+			abort;
+		}
+		
 		// Render Error Out
 		event.renderData(
 			type		= prc.response.getFormat(),
@@ -365,6 +373,11 @@ component extends="coldbox.system.EventHandler"{
 	* Invalid method execution
 	**/
 	function onMissingAction(event, rc, prc, missingAction, eventArguments){
+		if(isdefined("url.debug")) {
+			writeDump(var="#event#", label="event onMissingAction");
+			abort;
+		}
+
 		// Log Locally
 		log.warn("Invalid HTTP Method Execution of (#missingAction#): #event.getHTTPMethod()#", getHTTPRequestData());
 		// Setup Response
@@ -478,25 +491,14 @@ component extends="coldbox.system.EventHandler"{
 	private any function checkAuthenticationToken(event, rc, prc, targetAction, eventArguments, args) {
 	
 		/* Only accept application/json for content body on posts */
-			if ((event.getHTTPMethod() == "POST" || event.getHTTPMethod() == "PUT") && !prc.response.getError()) {
-				if (findNoCase("application/json", event.getHTTPHeader("Content-Type")) == 0) {
-					prc.response.setError(true)
-								.addMessage("Content-Type application/json is required!")
-								.setStatusCode(STATUS.BAD_REQUEST)
-								.setStatusText(MESSAGES.BAD_REQUEST);
-				}
-
-				// try {
-				// 	if (isJSON(request._body)) {
-				// 		structAppend( rc, deserializeJSON(request._body), true );
-				// 	} else if( isJSON( event.getHTTPContent() ) ){
-				// 		structAppend( rc, event.getHTTPContent( json=true ), true );
-				// 	}
-				// } catch(Any e) {
-				// 	throw(message="Invalid JSON Format!", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
-				// }
-
+		if ((event.getHTTPMethod() == "POST" || event.getHTTPMethod() == "PUT") && !prc.response.getError()) {
+			if (findNoCase("application/json", event.getHTTPHeader("Content-Type")) == 0) {
+				prc.response.setError(true)
+							.addMessage("Content-Type application/json is required!")
+							.setStatusCode(STATUS.BAD_REQUEST)
+							.setStatusText(MESSAGES.BAD_REQUEST);
 			}
+		}
 
 		/* Do not check authentication for the authenticate handler */
 		if (findNoCase("Echo", event.getCurrentEvent()) == 0 && 
@@ -521,10 +523,10 @@ component extends="coldbox.system.EventHandler"{
 				/* Validate token and store token data in prc scope */
 				prc.token = authService.decodeToken(rc.token);
 			} else {
-				// sessionInvalidate();
 				throw(message="The access token is not valid!", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
 			}
 		}
+
 	}
 	
 	/**

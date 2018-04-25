@@ -27,12 +27,13 @@
 		@rc
 	 --->
 	<cffunction name="all" hint="Todos los participantes" output="false" returntype="struct">
+		<cfargument name="id_evento" required="true">
 		<cfargument name="event">
 		<cfargument name="rc">
 		
 		<cfset s = { ok = true, mensaje= "", data = { "records"={},  "count"= 0, "total"= 0, "pages"= "1 of 1" } }>
 
-		<cfset var records = dao.all(arguments.event, arguments.rc)>
+		<cfset var records = dao.all(arguments.id_evento, arguments.event, arguments.rc)>
 		
 		<cfif queryColumnExists(records, 'id_tipo_participante')>
 			<cfset var tipoParticipantes = tpDAO.all(arguments.event, arguments.rc)>
@@ -135,84 +136,82 @@
 		<cfargument name="event">
 		<cfargument name="rc">
 
-		<cfset s = { ok= true, mensaje= "", data= { "records"={}} }>
+		<cfset s = { mensaje= "", data= { "records"={}} }>
 		<cfset out = ''>
 		
-		<cfset datas = event.getHTTPContent(json=true)>
+		<cfset dataFields = valS.validateCreateDataFields(arguments.rc)>
+		<cfset vList = { a = [], b = [], c = [] }>
 		
-		<cfif isStruct(datas)>
-			<cfset dataFields = valS.validateCreateDataFields(datas)>
-			<cfset vList = { a = [], b = [], c = [] }>
-			
-			<cfloop collection="#dataFields.data.records#" item="key">
-				<cfset record = dataFields.data.records[key]>
-				<cfset result = dao.genCreate(event, rc, record, key)>
+		<cfloop collection="#dataFields.data.records#" item="key">
+			<cfset record = dataFields.data.records[key]>
+			<cfset result = dao.genCreate(event, rc, record, key)>
 
-				<cfset arrayAppend(vList.a, result.a)>
-				<cfset vList.b = arrayMerge(vList.b, result.b)>
-				<cfset arrayAppend(vList.c, result.c)>
-			</cfloop>
+			<cfset arrayAppend(vList.a, result.a)>
 
-			<cftransaction> 
-				<cftry> 				
-					<cfset var out = dao.doCreate(event, rc, vList)>
-					<cftransaction action="commit" /> 
-				<cfcatch type="any"> 
-					<!--- <cftransaction action="rollback" /> 					 --->
-					<cfthrow message="#cfcatch.message#" detail="#cfcatch.detail#" extendedinfo="API Participante-create">
-				</cfcatch> 
-				</cftry> 
-			</cftransaction>
-		</cfif>
+			<cfset vList.b = arrayMerge(vList.b, result.b)>
 
-		<cfset s.data.records = out>		
-		<cfset s.mensaje      = "Participantes have been created successfuly">
+			<cfset arrayAppend(vList.c, result.c)>
+		</cfloop>
+
+		<cftransaction> 
+			<cftry> 				
+				<cfset var out = dao.doCreate(event, rc, vList)>
+				
+				<cfset s.data.records = out>		
+				<cfset s.mensaje      = "Participantes have been created successfuly">
+
+				<cftransaction action="commit" /> 
+			<cfcatch type="any"> 
+				<cftransaction action="rollback" />						
+				<cfrethrow>
+			</cfcatch> 
+			</cftry> 
+		</cftransaction>
 		
 		<cfreturn s>
 	</cffunction>
 
 	<!--- 
 		Modifica un participante
-		@event
+		@modify
 		@rc
 	 --->
 	<cffunction name="modify" hint="" output="false" returntype="struct">
 		<cfargument name="event">
 		<cfargument name="rc">
 
-		<cfset s = { ok= true, mensaje= "", data= { "records"={}} }>
+		<cfset s = { mensaje= "", data= { "records"={}} }>
 		<cfset out = ''>
 
-		<cfset datas = event.getHTTPContent(json=true)>
+		<cfset dataFields = valS.validateCreateDataFields(arguments.rc)>
+		<cfset vList = { a = [], b = [], c = [], d = [] }>
+		
+		<cfloop collection="#dataFields.data.records#" item="key">
+			<cfset record = dataFields.data.records[key]>
+			<cfset result = dao.genCreate(event, rc, record, key)>
 
-		<cfif isStruct(datas)>
-			<cfset dataFields = valS.validateCreateDataFields(datas)>
-			<cfset vList = { a = [], b = [], c = [], d = [] }>
+			<cfset arrayAppend(vList.a, result.a)>
 			
-			<cfloop collection="#dataFields.data.records#" item="key">
-				<cfset record = dataFields.data.records[key]>
-				<cfset result = dao.genCreate(event, rc, record, key)>
+			<cfset vList.b = arrayMerge(vList.b, result.b)>
 
-				<cfset arrayAppend(vList.a, result.a)>
-				<cfset vList.b = arrayMerge(vList.b, result.b)>
-				<cfset arrayAppend(vList.c, result.c)>
-				<cfset arrayAppend(vList.d, record.email)>
-			</cfloop>
+			<cfset arrayAppend(vList.c, result.c)>
+			<cfset arrayAppend(vList.d, record.email)>
+		</cfloop>
 
-			<cftransaction> 
-				<cftry> 
-					<cfset out = dao.doUpdate(event, rc, vList)>
-					<cftransaction action="commit" /> 
-				<cfcatch type="any"> 
-					<cftransaction action="rollback" /> 					
-					<cfthrow message="#cfcatch.message#" detail="#cfcatch.detail#" extendedinfo="API Participante-modify">
-				</cfcatch> 
-				</cftry> 
-			</cftransaction>
-		</cfif>
+		<cftransaction> 
+			<cftry> 
+				<cfset out = dao.doUpdate(event, rc, vList)>
+				
+				<cfset s.data.records = out>
+				<cfset s.mensaje      = "Participantes have been updated successfuly">
 
-		<cfset s.data.records = out>		
-		<cfset s.mensaje      = "Participantes have been updated successfuly">
+				<cftransaction action="commit" /> 					
+			<cfcatch type="any"> 
+				<cftransaction action="rollback" /> 					
+				<cfrethrow>
+			</cfcatch> 
+			</cftry> 
+		</cftransaction>
 
 		<cfreturn s>
 	</cffunction>

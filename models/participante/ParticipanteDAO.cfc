@@ -72,7 +72,7 @@
 			</cfsavecontent>
 		</cfoutput>
 
-		<cfquery name="local.qParticipantes" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
+		<cfquery name="local.qParticipantes" datasource="#application.datasource#">
 			#consulta#
 		</cfquery>
 
@@ -115,7 +115,7 @@
 			</cfsavecontent>
 		</cfoutput>
 	
-		<cfquery name="local.participantesByID" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
+		<cfquery name="local.participantesByID" datasource="#application.datasource#">
 			#consulta#
 		</cfquery>
 
@@ -162,7 +162,7 @@
 
 		<!--- TODO: Agregar ids de filtro campos para esta consulta. --->
 
-		<cfquery name="local.participantesByTipo" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
+		<cfquery name="local.participantesByTipo" datasource="#application.datasource#">
 			SELECT nombre, apellidos, email_participante, nombre_empresa,
 			CONCAT("#link#/participantes/", id_participante) AS _link
 			FROM vParticipantes
@@ -178,7 +178,7 @@
 		<cfargument name="filtered" type="boolean" default="false" required="false">
 
 		<cfset var campos = formS.camposPorEvento(filtered)>
-	
+
 		<cfreturn campos>
 	</cffunction>
 
@@ -533,7 +533,7 @@
 	<cffunction name="listadoCamposFijosFormulario" access="public" returntype="query" output="false">
 		<cfargument name="id_formulario" required="true" type="string">
 
-		<cfquery name="local.QCamposFijos" datasource="#application.datasource#" cachedwithin="#createTimeSpan(0,0,10,0)#">
+		<cfquery name="local.QCamposFijos" datasource="#application.datasource#">
 			SELECT
 				c.id_campos,
 				c.tiposCamposFijos_id_tipo_campo_fijo AS campoFijo,
@@ -594,7 +594,7 @@
 	<cffunction name="getByLogin" returntype="query">
 		<cfargument name="login" type="any" required="true">
 
-		<cfquery name="local.bylogin" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
+		<cfquery name="local.bylogin" datasource="#application.datasource#">
 			SELECT login, password FROM participantes
 			WHERE login = <cfqueryparam value="#login#" cfsqltype="CF_SQL_VARCHAR">
 			AND fecha_baja IS NULL
@@ -687,16 +687,9 @@
 
 		<cfset doUpdateDatos(vList.b)>
 		<cfset doUpdateExtension(ids)>
-
-		<!--- <cfloop array="#vList.c#" item="upd2" index="i">
-			<cfquery name="local.update" result="rupdp" datasource="#application.datasource#">
-				#upd2#
-			</cfquery>
-		</cfloop> --->
-
 		<cfset doUpdateParticipante(vList.c)>
 
-		<cfreturn { "modif_id_participante" : ids }>
+		<cfreturn { "modif_id_participante" : arrayToList(ids) }>
 	</cffunction>
 
 	<!--- TODO: Terminar método de actualizar datos --->
