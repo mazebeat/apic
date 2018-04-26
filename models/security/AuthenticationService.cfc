@@ -1,6 +1,6 @@
 /**
  * AuthenticationService
- */
+	*/
 	component accessors="true" extends="models.BaseModel" {
 	
 	// Dependency Injection
@@ -29,6 +29,7 @@
 		var data   = passwordToStruct(password);
 		var result = {};
 
+	
 		if(data.id != 0 && data.type EQ "c") {
 			result = clienteTokenService.validate(data.id, password);
 		} else if(data.id != 0 && data.type EQ "e"){

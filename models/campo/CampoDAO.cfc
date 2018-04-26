@@ -2,10 +2,10 @@
 
 	<!--- Properties --->
 	<cfproperty name="formularioDAO" inject="model:formulario.FormularioDAO">
+	<cfproperty name="imgDAO" inject="model:campo.CampoFormularioImagen">
 
 <!------------------------------------------- CONSTRUCTOR ------------------------------------------->
-
-	<cffunction name="init" access="public" returntype="CampoDAO" output="false" hint="constructor">
+	<cffunction name="init"returntype="campoDAO">
 		<cfscript>
 			return this;
 		</cfscript>
@@ -50,7 +50,7 @@
 	</cffunction>
 
 	<cffunction name = "tablaSeleccionAgrupaciones">
-		<cfset var formIds = formularioDAO.byEvento(1)>		
+		<cfset var formIds = imgDAO.byEvento(1)>		
 	</cffunction>
 
 	<cffunction name="agrupacionDeCampos">
@@ -72,7 +72,7 @@
 		<cfargument name="id_campo" type="any" required="true">
 
 		<cfquery name="qValoresCamposGruposFormulario" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
-			select *
+			SELECT *
 			FROM vValoresCamposLista
 			WHERE id_campo = <cfqueryparam value="#arguments.id_campo#" cfsqltype="CF_SQL_INTEGER">
 		</cfquery>
@@ -87,17 +87,13 @@
 			SELECT
 				id_campo,
 				obligatorio,
-				id_agrupacion,
 				id_encapsulado,
 				titulo,
-				descripcion,
-				id_tipo_campo,
 				id_tipo_campo_fijo,
 				IFNULL(min_chars, 0) AS min_chars,
 				IFNULL(max_chars, 1000) AS max_chars,
 				desplegable,
-				solo_lectura,
-				id_idioma
+				solo_lectura
 			FROM vCampos
 			WHERE id_campo = <cfqueryparam value="#arguments.id_campo#" cfsqltype="CF_SQL_INTEGER">
 			<cfif arguments.id_agrupacion GT 0>
@@ -109,5 +105,39 @@
 		<cfreturn local.qUnCampo>
 	</cffunction>
 
+	<cffunction name="uploadFile" access="public" returntype="string" output="false">
+		<cfargument name="file" type="string" required="true">
+
+		<cfset var nombreFichero = ''>
+		<cfif isValid('URL', arguments.file)>
+			<cftry>
+				<cfquery name="local.web" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
+					SELECT id_web FROM sige.webs
+					WHERE eventos_id_evento IN (#session.id_evento#)
+					AND tiposWebs_id_tipo_web = 1
+					AND activa = 1
+					AND fecha_baja IS NULL
+				</cfquery>
+
+				<cfif local.web.recordCount IS 1>
+					<cfset var rutaDescargaDocumentos = "/web/sitios/default/admin/uploads/#local.web.id_web#/docs/descargas">
+					
+					<cfinclude template="/default/admin/helpers/dirs.cfm">
+				
+					<cfset testAndCreateDir(rutaDescargaDocumentos)>
+
+					<cfset var nuevoNombreFichero = "#01#_#local.web.id_web#_api_#getTickCount()#_#(getTickCount()*4/2)#">
+
+					<cfset nombreFichero = imgDAO.uploadImage(arguments.file, nuevoNombreFichero, rutaDescargaDocumentos)>
+				</cfif>
+			<cfcatch type="any">
+				<cfinclude template="/default/admin/helpers/funciones.cfm">
+				<cfset enviarCorreoError('uploadFile subiendo fichero', cfcatch)>
+			</cfcatch>
+			</cftry>
+		</cfif>
+
+		<cfreturn nombreFichero>
+	</cffunction>
 
 </cfcomponent>

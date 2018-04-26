@@ -9,10 +9,8 @@
 */
 component extends="coldbox.system.EventHandler" {
 	// Inject AuthenticationService
-	property name="authService" type="any" 			inject="model:security.AuthenticationService";
-	property name="emaillogger" type="any" 			inject="logBox:logger:emaillogger"; 
-	property name="maxRequest"	type="numeric" 		inject="coldbox:setting:maxUserRequest";
-	property name="waitTimeRequest"	type="numeric" 	inject="coldbox:setting:waitTimeRequest";
+	property name="authService" type="any" 	inject="model:security.AuthenticationService";
+	property name="emaillogger" type="any" 	inject="logBox:logger:emaillogger"; 
 
 	// Pseudo "constants" used in API Response/Method parsing
 	property name="METHODS";
@@ -138,30 +136,19 @@ component extends="coldbox.system.EventHandler" {
 			} catch(Any e) {
 				throw(message="Invalid JSON Format!", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
 			}
-
-			if (findNoCase("Echo", event.getCurrentEvent()) == 0 && 
-				findNoCase("Authenticate", event.getCurrentEvent()) == 0 && 
-				findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
-
-				// Limiter
-				limiterByTime(maxRequest, waitTimeRequest, prc, event);
-				
-				// Validat user actions
-				validateActions(event, rc, prc);	
-			}				
 		} catch(Any e){
 			// Log Locally
 			log.error("[PreHandler] Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
 
 			// Setup General Error Response
-			var code    = empty(e.errorcode) ? STATUS.INTERNAL_ERROR: e.errorcode;
-			var message = findStatusMessage(code);
+			var code = empty(e.errorcode) ? STATUS.INTERNAL_ERROR: e.errorcode;
+			var msg  = findStatusMessage(code);
 		
 			prc.response
 				.setError(true)
 				.addMessage(e.message)
 				.setStatusCode(code)
-				.setStatusText(message);
+				.setStatusText(msg);
 			
 			// Development additions
 			if(getSetting("environment") eq "development") {
@@ -194,6 +181,16 @@ component extends="coldbox.system.EventHandler" {
 				prc.response.setFormat(rc.format);
 			}
 
+			if (findNoCase("Echo", event.getCurrentEvent()) == 0 && 
+				findNoCase("Authenticate", event.getCurrentEvent()) == 0 && 
+				findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
+
+				limiterByTime(getSetting('maxUserRequest'), getSetting('waitTimeRequest'), prc, rc, event);
+				
+				// Validat user actions
+				validateActions(event, rc, prc);	
+			}		
+
 			// Check APIc Token
 			checkAuthenticationToken(event, rc, prc, targetAction, eventArguments, args);
 
@@ -210,13 +207,13 @@ component extends="coldbox.system.EventHandler" {
 
 			// Setup General Error Response
 			var code    = empty(e.errorcode) ? STATUS.INTERNAL_ERROR: e.errorcode;
-			var message = findStatusMessage(code);
+			var msg = findStatusMessage(code);
 		
 			prc.response
 				.setError(true)
 				.addMessage(e.message)
 				.setStatusCode(code)
-				.setStatusText(message);
+				.setStatusText(msg);
 
 			sendError(e, rc, event);
 				
@@ -305,19 +302,18 @@ component extends="coldbox.system.EventHandler" {
 		}
 
 		// Setup General Error Response
-		var code    = empty(e.errorcode) ? STATUS.INTERNAL_ERROR: e.errorcode;
-		var message = findStatusMessage(code);
+		var code    = empty(exception.errorcode) ? STATUS.INTERNAL_ERROR: exception.errorcode;
+		var msg = findStatusMessage(code);
 	
 		prc.response
 			.setError(true)
-			.addMessage(e.message)
+			.addMessage(exception.message)
 			.setStatusCode(code)
-			.setStatusText(message);
+			.setStatusText(msg);
 		
 		// Development additions
 		if(getSetting("environment") eq "development"){
-			prc.response.addMessage("Detail: #exception.detail#")
-				.addMessage("StackTrace: #exception.stacktrace#");
+			prc.response.addMessage("Detail: #exception.detail#").addMessage("StackTrace: #exception.stacktrace#");
 		}
 
 		// Send error mail
@@ -532,7 +528,7 @@ component extends="coldbox.system.EventHandler" {
 				/* Validate token and store token data in prc scope */
 				prc.token = authService.decodeToken(rc.token);
 			} else {
-				throw(message="The access token is not valid!", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
+				throw(message="Unfortunately I have to mention that your token is not valid", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
 			}
 		}
 
@@ -567,10 +563,11 @@ component extends="coldbox.system.EventHandler" {
 	 * @prc 
 	 */
 	private void function validateActions(event, rc, prc) {
+		var error    = false;
 		
 		if(structKeyExists(session, 'usersession')) {
-			try {
-				if (structKeyExists(session.usersession, 'auth')) {
+			if (structKeyExists(session.usersession, 'auth')) {
+				try {
 					var usr  = {};
 					var temp = {};
 					
@@ -580,11 +577,11 @@ component extends="coldbox.system.EventHandler" {
 						usr = wirebox.getInstance("EventosToken");
 					}
 
-					var temp = DeserializeJSON(decrypt(session.usersession.auth, "WTq8zYcZfaWVvMncigHqwQ==", "AES", "Base64"));
+					var temp = DeserializeJSON(decrypt(session.usersession.auth, getSetting('authSecretKey'), "AES", "Base64"));
 					
 					var id       = temp.id_permisosToken;
 					var permisos = usr.permisosById(id);
-					var error    = false;
+				
 
 					switch (event.getHTTPMethod()) {
 						case "GET":
@@ -608,23 +605,35 @@ component extends="coldbox.system.EventHandler" {
 							break;
 						default:								
 					}
-
-					if(error) {
-						throw(message="Action not allowed [#event.getHTTPMethod()#]", errorcode=STATUS.NOT_AUTHORIZED, detail=MESSAGES.NOT_AUTHORIZED);
-					}
+				} catch (Any e) {
+					throw(message="Validation HTTTP action has failed", detail=e);
 				}
-			} catch(Any e){
-				rethrow();
-			}
+
+				if(error) {
+					throw(message="Action not allowed", errorcode=STATUS.NOT_AUTHORIZED, detail="#MESSAGES.NOT_AUTHORIZED#: Action not allowed [#event.getHTTPMethod()#]");
+				}
+			}	
+				
 		}
 	}
 
 	private string function findStatusMessage(errorcode) {
-		var code = empty(arguments.errorcode) ? STATUS.INTERNAL_ERROR : arguments.errorcode;
-		var keys = StructFindValue(STATUS, code, "one");
+		var keys = [];
 
-		for(msgs in keys) {
-			return MESSAGES[msgs.key];
+		try {
+			if(!isempty(errorcode)) {
+				keys = StructFindValue(STATUS, arguments.errorcode, "one");
+			}
+			
+			for(msgs in keys) {
+				return MESSAGES[msgs.key];
+			}
+		} catch(Any e) {
+			log.error("Error: #e.message#", e);
+
+			sendError(e, rc, event);
 		}
+
+		return MESSAGES.INTERNAL_ERROR;
 	}
 }

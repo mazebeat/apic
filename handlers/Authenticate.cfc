@@ -3,9 +3,11 @@
  */
 component extends="Base" {
 
-	property name="prmToken" type="any"	inject="model:security.PermisosTokenService";
-	property name="cService" type="any"	inject="model:security.ClientesTokenService";
-	property name="eService" type="any"	inject="model:security.EventosTokenService";
+	property name="prmToken" 		type="any"	inject="model:security.PermisosTokenService";
+	property name="cService" 		type="any"	inject="model:security.ClientesTokenService";
+	property name="eService" 		type="any"	inject="model:security.EventosTokenService";
+	property name="authSecretKey"  	type="any"	inject="coldbox:setting:authSecretKey";
+
 
 	// OPTIONAL HANDLER PROPERTIES
 	this.prehandler_only 	  = "";
@@ -23,6 +25,7 @@ component extends="Base" {
 		"activateDesactivate" = METHODS.POST,
 		"permissionsUser"     = METHODS.POST,
 		"savePermissionsUser" = METHODS.POST,
+		"tokenInformation"    = METHODS.POST
 	};
 
 	/**
@@ -43,96 +46,65 @@ component extends="Base" {
 		event.paramValue("password", "");
 
 		try {
-			var jsonData = event.getHTTPContent(json=true);
+			if(structKeyExists(rc, "password")) {
+				var authuser = authservice.validate(rc.password);
 
-			if(isStruct(jsonData) && !structIsEmpty(jsonData)) {
-				
-				if(jsonData.keyExists('password')) {
-					rc.password = jsonData.password;
+				if (!isNull(authuser)) {
+					var token = authuser.token;
+					var id = '';
+					var type = '';
 
-					var authuser = authservice.validate(rc.password);
+					if(structkeyexists(authuser, 'id_cliente')) {
+						id    = authuser.getId_cliente();
+						type  = "cliente";
+					} else if(structkeyexists(authuser, 'id_evento')) {
+						id    = authuser.getId_evento();
+						type  = "evento";
+					} 
 
-					if (!isNull(authuser)) {
-						var token = authuser.token;
-						var id = '';
-						var type = '';
-
-						if(structkeyexists(authuser, 'id_cliente')) {
-							id    = authuser.getId_cliente();
-							type  = "cliente";
-						} elseif(structkeyexists(authuser, 'id_evento')) {
-							id    = authuser.getId_evento();
-							type  = "evento";
-						} 
-
-						if(isdefined('token') && !authservice.validateToken(token)) {
-							if(type EQ 'cliente') {
-								token = authservice.grantToken(authuser.getId_cliente(), "c");
-							} elseif(type EQ 'evento') {
-								token = authservice.grantToken(authuser.getId_evento(), "e");
-							} else {
-								prc.response.setError(true)
-									.addMessage("Client validation failed!")
-									.setStatusCode(STATUS.NOT_AUTHENTICATED)
-									.setStatusText(MESSAGES.NOT_AUTHENTICATED);
-							}
+					if(isdefined('token') && !authservice.validateToken(token)) {
+						if(type EQ 'cliente') {
+							token = authservice.grantToken(authuser.getId_cliente(), "c");
+						} else if(type EQ 'evento') {
+							token = authservice.grantToken(authuser.getId_evento(), "e");
+						} else {
+							throw(message="Error: We truly sorry but client validation has failed", errorcode=STATUS.NOT_AUTHENTICATED);
 						}
-
-						if(isNull(token)) {
-							prc.response
-							.setError(true)
-							.addMessage("Password or Token doesn't exists")
-							.setStatusCode(STATUS.NOT_AUTHENTICATED)
-							.setStatusText(MESSAGES.NOT_AUTHENTICATED);		
-						}
-						
-						aut = encrypt(serializeJSON(authuser), "WTq8zYcZfaWVvMncigHqwQ==", "AES", "Base64");
-						
-						session["usersession"] = { 
-							"type"     = type, 
-							"auth"     = aut,
-							"defaults" = {
-									"form" = {
-										"fields" = ""
-								}
-							}
-						};
-					
-						session["id_evento"] = authuser.getId_evento();
-							
-						rc.token = token;
-						prc.response.setData({"token" = token});
-					} else {
-						prc.response.setError(true)
-									.addMessage("Client validation failed!")
-									.setStatusCode(STATUS.NOT_AUTHENTICATED)
-									.setStatusText(MESSAGES.NOT_AUTHENTICATED);
 					}
+
+					if(isNull(token)) {
+						throw(message="Error: Password or Token does not exists", errorcode=STATUS.NOT_AUTHENTICATED);					
+					}
+
+					aut = encrypt(serializeJSON(authuser), getSetting('authSecretKey'), "AES", "Base64");
+					
+					session["usersession"] = { 
+						"type"     = type, 
+						"auth"     = aut,
+						"defaults" = {
+								"form" = {
+									"fields" = ""
+							}
+						}
+					};
+				
+					session["id_evento"] = authuser.getId_evento();
+						
+					rc.token = token;
+					var data = {"token" = token};
+					
+					if(type == "cliente") {
+						structInsert(data, 'eventos', '');
+					}
+					prc.response.setData(data);
 				} else {
-					prc.response.setError(true)
-								.addMessage("Parameters username or password incorrect/empty")
-								.setStatusCode(STATUS.NOT_AUTHENTICATED)
-								.setStatusText(MESSAGES.NOT_AUTHENTICATED);
+					throw(message="Error: Client validation has failed", errorcode=STATUS.NOT_AUTHENTICATED);
 				}
 			} else {
-				prc.response.setError(true)
-							.addMessage("Parameters are empty")
-							.setStatusCode(STATUS.NOT_AUTHENTICATED)
-							.setStatusText(MESSAGES.NOT_AUTHENTICATED);
+				throw(message="Error: Parameters are empty", errorcode=STATUS.NOT_AUTHENTICATED);
 			}
 		} catch(Any e) {
-			prc.response
-				.setError(true)
-				.addMessage("General application error: #e.message#")
-				.setStatusCode(STATUS.NOT_AUTHENTICATED)
-				.setStatusText(MESSAGES.NOT_AUTHENTICATED);			
-			
-			// Development additions
-			if(getSetting("environment") eq "development") {
-				// TODO: Modificar el modo de mostrar errores en desarrollo.		
-				prc.response.addMessage("Detail: #e.detail#")
-							.addMessage("StackTrace: #e.stacktrace#");
-			}
+			throw(message="Error: Generating token", errorcode=e.errorcode, detail=e);
 		}
 	}
 
@@ -145,60 +117,46 @@ component extends="Base" {
 	 *
 	 * @returnType model:Response
 	 */
-	any function generatePassword( event, rc, prc ) {
+	any function generatePassword(event, rc, prc) {
 		var jsonData = event.getHTTPContent( json=true );
 		var isevent = false;
 
-		if(isStruct(jsonData) && !structIsEmpty(jsonData)) {
-			if(NOT jsonData.keyExists('password') && (NOT jsonData.password EQ authservice.secretWord)) {
-				prc.response.setError(true)
-						.addMessage("Parameters password incorrect/empty")
-						.setStatusCode(STATUS.BAD_REQUEST)
-						.setStatusText(MESSAGES.BAD_REQUEST);
-				return;
-			} 
+		if(NOT structKeyExists(rc, 'password') && (NOT rc.password EQ getSetting('secretWord'))) {
+			throw(message="Parameters password incorrect/empty", errorcode=STATUS.BAD_REQUEST);
+		} 
 
-			if(NOT jsonData.keyExists('id')) {
-				prc.response.setError(true)
-		 					.addMessage("Parameters ID incorrect/empty")
-		 					.setStatusCode(STATUS.BAD_REQUEST)
-		 					.setStatusText(MESSAGES.BAD_REQUEST);
-				return;
-			}
+		if(NOT structkeyExists(rc, 'id')) {
+			throw(message="Parameters ID incorrect/empty", errorcode=STATUS.BAD_REQUEST);
+			return;
+		}
 
-			id = jsonData.id;
+		var id = rc.id;
 
-			if(jsonData.keyExists('isevent')) {
-				isevent  = jsonData.isevent;
-			}
+		if(structkeyExists(rc, 'isevent')) {
+			isevent  = rc.isevent;
+		}
 
-			try {
-				rsp = authservice.generatePassword(id, isevent);
+		try {
+			rsp = authservice.generatePassword(id, isevent);
 
-				prc.response.setData({ 
-					"id"       = id, 
-					"password" = rsp
-				});
-			} catch(any e) {
-				prc.response.setData({ 
-					"id"       = id, 
-					"password" = 'No existe contraseña, por favor generar.'
-				});
-				prc.response.setError(true)
-								.addMessage("Error when was trying to generate password")
-								.setStatusCode(STATUS.BAD_REQUEST)
-								.setStatusText(MESSAGES.BAD_REQUEST);
-							
-				
-				if(getSetting("environment") eq "development") {
-					prc.response.addMessage(e.message);
-				}
-			}
-		} else {
+			prc.response.setData({ 
+				"id"       = id, 
+				"password" = rsp
+			});
+		} catch(any e) {
+			prc.response.setData({ 
+				"id"       = id, 
+				"password" = 'No existe contraseña, por favor generar.'
+			});
 			prc.response.setError(true)
-								.addMessage("JSON POST Data incorrect")
-								.setStatusCode(STATUS.BAD_REQUEST)
-								.setStatusText(MESSAGES.BAD_REQUEST);
+							.addMessage("Error when was trying to generate password")
+							.setStatusCode(STATUS.BAD_REQUEST)
+							.setStatusText(MESSAGES.BAD_REQUEST);
+						
+			
+			if(getSetting("environment") eq "development") {
+				prc.response.addMessage(e.message);
+			}
 		}
 	}
 
@@ -211,59 +169,41 @@ component extends="Base" {
 	 *
 	 * @returnType model:Response
 	 */
-	any function obtainPassword( event, rc, prc ) {
-		jsonData = event.getHTTPContent( json=true );
-		isevent = false;
+	any function obtainPassword(event, rc, prc) {
 
-		if(isStruct(jsonData) && !structIsEmpty(jsonData)) {
-			if(NOT jsonData.keyExists('password') && (NOT jsonData.password EQ authservice.secretWord)) {
-				prc.response.setError(true)
-						.addMessage("Parameters password incorrect/empty")
-						.setStatusCode(STATUS.BAD_REQUEST)
-						.setStatusText(MESSAGES.BAD_REQUEST);
-				return;
-			} 
+		var isevent = false;
+	
+		if(NOT structkeyExists(rc, 'password') && (NOT rc.password EQ getSetting('secretWord'))) {
+			throw(message="Parameters password incorrect/empty", errorcode=STATUS.BAD_REQUEST)
+		} 
 
-			if(NOT jsonData.keyExists('id')) {
-				prc.response.setError(true)
-		 					.addMessage("Parameters ID incorrect/empty")
-		 					.setStatusCode(STATUS.BAD_REQUEST)
-		 					.setStatusText(MESSAGES.BAD_REQUEST);
-				return;
+		if(NOT structkeyExists(rc, 'id')) {
+			throw(message="Parameters ID incorrect/empty", errorcode=STATUS.BAD_REQUEST)
+		}
+
+		var id = rc.id;
+
+		if (structkeyExists(rc, 'isevent')) {
+			isevent  = rc.isevent;
+		}
+
+		try {
+			rsp = authservice.obtainPassword(id, isevent);
+
+			if(isEmpty(rsp.password)) {
+				var message = "Client does not have an assigned password";
+				// if(session.language IS 'ES') {
+				// 	message = "El cliente no tiene contraseña asiganada.";
+				// }
+				prc.response.addMessage(message).setError(true);
 			}
-
-			id = jsonData.id;
-
-			if(jsonData.keyExists('isevent')) {
-				isevent  = jsonData.isevent;
-			}
-
-			try {
-				rsp = authservice.obtainPassword(id, isevent);
-
-				if(isEmpty(rsp.password)) {
-					prc.response.addMessage("El cliente no tiene contraseña asiganada.");
-				}
-				prc.response.setData({ 
-					"id"         = id, 
-					"password"   = rsp.password,
-					"fecha_baja" = (!isnull(rsp.fecha_baja) && rsp.fecha_baja != '' )? getIsoTimeString(rsp.fecha_baja) : rsp.fecha_baja
-				});				
-			} catch(any e) {
-				prc.response.setError(true)
-								.addMessage("Error when was trying to get password")
-								.setStatusCode(STATUS.BAD_REQUEST)
-								.setStatusText(MESSAGES.BAD_REQUEST);
-							
-				if(getSetting("environment") eq "development") {
-					prc.response.addMessage(e.message);
-				}
-			}
-		} else {
-			prc.response.setError(true)
-								.addMessage("JSON POST Data incorrect")
-								.setStatusCode(STATUS.BAD_REQUEST)
-								.setStatusText(MESSAGES.BAD_REQUEST);
+			prc.response.setData({ 
+				"id"         = id, 
+				"password"   = rsp.password,
+				"fecha_baja" = (!isnull(rsp.fecha_baja) && rsp.fecha_baja != '' )? getIsoTimeString(rsp.fecha_baja) : rsp.fecha_baja
+			});				
+		} catch(any e) {
+			throw(message="Error when was trying to get password", errorcode=STATUS.BAD_REQUEST, detail=e)
 		}
 	}
 
@@ -274,17 +214,21 @@ component extends="Base" {
 	 * @rc 
 	 * @prc 
 	 */
-	any function activateDesactivate( event, rc, prc ) {
+	any function activateDesactivate(event, rc, prc) {
 		var jsonData = event.getHTTPContent( json=true );
 		var isevent = false;
 
-		var rsp = authservice.activateDesactivate(jsonData.id, jsonData.isevent);
+		var rsp = authservice.activateDesactivate(rc.id, rc.isevent);
 
-		prc.response.setData({ 
-			"id"         = jsonData.id,
-			"fecha_baja" = (!isnull(rsp.fecha_baja) && rsp.fecha_baja != '' )? getIsoTimeString(rsp.fecha_baja) : rsp.fecha_baja
-		})
-		.addMessage('Fecha baja actualizada');
+		try {
+			prc.response.setData({ 
+				"id"         = rc.id,
+				"fecha_baja" = (!isnull(rsp.fecha_baja) && rsp.fecha_baja != '' )? getIsoTimeString(rsp.fecha_baja) : rsp.fecha_baja
+			})
+			.addMessage('Date of low updated');
+		} catch (Any e) { 
+			throw(message="Activate/Deactivate failed", detail=e);
+		}
 	}
 
 	/**
@@ -293,7 +237,6 @@ component extends="Base" {
 	 * @authuser ApiClienteToken|ApiEventoToken
 	 */
 	private any function createSessionEvento(required any authuser) {
-		
 	}
 
 	/**
@@ -303,13 +246,11 @@ component extends="Base" {
 	 * @rc 
 	 * @prc 
 	 */
-	any function permissionsUser( event, rc, prc ) {
-		var jsonData = event.getHTTPContent( json=true );
-
-		if(!jsonData.isevent){
-			var usr = cService.get(jsonData.id);
+	any function permissionsUser(event, rc, prc) {
+		if(!rc.isevent){
+			var usr = cService.get(rc.id);
 		} else {
-			var usr = eService.get(jsonData.id);
+			var usr = eService.get(rc.id);
 		}
 
 		if(isnull(usr.getId_permisosToken())) {
@@ -332,16 +273,14 @@ component extends="Base" {
 	 * @rc 
 	 * @prc 
 	 */
-	any function savePermissionsUser( event, rc, prc ) {
-		var jsonData = event.getHTTPContent( json=true );
-
-		if(!jsonData.isevent){
-			var usr = cService.get(jsonData.id);
+	any function savePermissionsUser(event, rc, prc) {
+		if(!rc.isevent){
+			var usr = cService.get(rc.id);
 		} else {
-			var usr = eService.get(jsonData.id);
+			var usr = eService.get(rc.id);
 		}
 
-		if(arrayLen(jsonData.permissions) < 3) {
+		if(arrayLen(rc.permissions) < 3) {
 			throw(message = "Error: Permissions count incorrect.", errorcode = 500);
 		}
 
@@ -351,8 +290,8 @@ component extends="Base" {
 			
 		var permisos = usr.permisos();
 
-		for (i = 1; i <= arrayLen(jsonData.permissions); i++) {
-			var value = jsonData.permissions[i];
+		for (i = 1; i <= arrayLen(rc.permissions); i++) {
+			var value = rc.permissions[i];
 
 			if(i == 1) {
 				permisos.setLectura(value);
@@ -364,9 +303,20 @@ component extends="Base" {
 		}
 		
 		try {
-			permisos.updateModel()
+			permisos.updateModel();
+			prc.response.addMessage("User permissions changed");
 		} catch(Any e) {
-			throw(e);
+			throw(message="Error when were saving user permissions", errorcode=e.errorcode, detail=e);
+		}
+	}
+
+	any function tokenInformation(event, rc, prc) {		
+		try {
+			if(isdefined('url.tfe') && url.tfe == getSetting('secretWord')) {
+				prc.response.setData(authservice.decodeToken(arguments.rc.token));	
+			}
+		} catch(Any e) {
+			throw(message="Error getting token information", errorcode=e.errorcode, detail=e);
 		}
 	}
 }	

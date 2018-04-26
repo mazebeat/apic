@@ -3,7 +3,6 @@
  */
 component extends="Base"{
 	// Properties	
-	// property name="dsn" inject="coldbox:datasource:sigo_dsn";
 	property name="srv" inject="model:security.EventosTokenService";
 	property name="dao" inject="model:security.ClientesTokenDAO";
 	 
@@ -17,8 +16,8 @@ component extends="Base"{
 
 	// REST Allowed HTTP Methods Ex: this.allowedMethods = {delete='POST,DELETE',index='GET'}
 	this.allowedMethods = {
-		"index"   = METHODS.GET
-		// "savelog" = METHODS.POST
+		"index" = METHODS.GET,
+		"test" = METHODS.GET
 	};
 	
 	/**
@@ -27,21 +26,5 @@ component extends="Base"{
 	 */
 	any function index(event, rc, prc) {
 		prc.response.addMessage("Bienvenido a tufabricadeventos.com API RESTFul");						
-	}
-
-	// any function savelog(event, rc, prc) {
-	// 	// myfile = FileRead("/logs/android.log");
-	// 	// try {
-	// 	if(structKeyExist(rc, 'data')) {
-	// 		logBox.getLogger("myLog").info(rc.data);
-	// 	} else {
-	// 		log.info(rc)
-	// 	}
-
-	// 	// } catch (any err) {}
-	// }
-
-	any function test(event, rc, prc) {
-		
 	}
 }

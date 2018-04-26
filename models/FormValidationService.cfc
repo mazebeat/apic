@@ -553,12 +553,6 @@
 						}				
 					} else {
 					}
-
-					if(isdefined("url.debug")) {
-						writeDump(var="#record#", label="record");
-						abort;
-					}
-
 				}
 			}
 			if(getHTTPRequestData().method == 'PUT') {

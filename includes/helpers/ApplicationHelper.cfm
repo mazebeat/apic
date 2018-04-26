@@ -15,7 +15,10 @@
     <cfargument name="maxRequest"       type="numeric">
     <cfargument name="waitTimeRequest"  type="numeric">
     <cfargument name="prc">
+    <cfargument name="rc">
     <cfargument name="event">
+
+    <cfparam name="arguments.rc.token" default="">
 
     <!--- <cfset var userRequest = checkIPUser()> --->
 
@@ -43,9 +46,7 @@
         // ip2 &= (ip[i] + randRange(1, 127, "SHA1PRNG" )) & "";
     </cfscript>
 
-    
-    <cfif (NOT IsDefined("application.rate_limiter") OR structIsEmpty(application.rate_limiter)) 
-        OR (NOT structKeyExists(application.rate_limiter, cgi.remote_addr))>
+    <cfif (NOT IsDefined("application.rate_limiter") OR structIsEmpty(application.rate_limiter))  OR (NOT structKeyExists(application.rate_limiter, cgi.remote_addr))>
         <cfif NOT IsDefined("application.rate_limiter")>
             <cfset application.rate_limiter = StructNew()>
         </cfif>
@@ -55,17 +56,18 @@
     <cfelse>        
         <cfif NOT cgi.HTTP_COOKIE IS "">
             <cfif StructKeyExists(application.rate_limiter, cgi.remote_addr)>
-               
                 <cfif DateDiff("s", application.rate_limiter[cgi.remote_addr].last_attempt, NOW()) LT arguments.waitTimeRequest>
                     <cfif application.rate_limiter[cgi.remote_addr].attempts GTE arguments.maxRequest>                    
-                        <cfset logBox.getLogger("fileLogger").info("limiter invoked for: '#cgi.remote_addr#', #application.rate_limiter[cgi.remote_addr].attempts#, #cgi.request_method#, '#cgi.SCRIPT_NAME#', '#cgi.QUERY_STRING#', '#cgi.http_user_agent#', '#application.rate_limiter[cgi.remote_addr].last_attempt#', #listlen(cgi.http_cookie,";")#")>
+                        <cfset logBox.getLogger("fileLogger").info("limiter invoked for: '#cgi.remote_addr#', #application.rate_limiter[cgi.remote_addr].attempts#, #cgi.request_method#, '#cgi.SCRIPT_NAME#', '#cgi.QUERY_STRING#', '#cgi.http_user_agent#', '#application.rate_limiter[cgi.remote_addr].last_attempt#', #listlen(cgi.http_cookie,";")#, #arguments.rc.token#")>
+                        
                         <cfset prc.response.addHeader("Retry-After", arguments.waitTimeRequest)
-                                            .setError(true)
-                                            .addMessage("You are making too many requests too fast, please slow down and wait #arguments.waitTimeRequest# seconds (#cgi.remote_addr#)")
-                                            .setStatusText("Service Unavailable")
-                                            .setStatusCode(503)>
+                                    .setError(true)
+                                    .addMessage("You are making too many requests too fast, please slow down and wait #arguments.waitTimeRequest# seconds (#cgi.remote_addr#)")
+                                    .setStatusText("Service Unavailable")
+                                    .setStatusCode(503)>
+                        <cfabort>
                     </cfif>
-                    
+                
                     <cfset application.rate_limiter[cgi.remote_addr].attempts     = application.rate_limiter[cgi.remote_addr].attempts + 1>
                     <cfset application.rate_limiter[cgi.remote_addr].last_attempt = NOW()>
                 <cfelse>
@@ -77,7 +79,7 @@
         </cfif>
     </cfif>
 
-    <cfset addIPUser(prc, event)>
+    <cfset addIPUser(prc, rc, event)>
 </cffunction>
 
 <cffunction name="cleanIPUser" access="public">
@@ -128,7 +130,10 @@
 
 <cffunction name="addIPUser" access="public">
     <cfargument name="prc">
+    <cfargument name="rc">
     <cfargument name="event">
+
+    <cfparam name="arguments.rc.token" default="">
 
     <cfif structKeyExists(session, 'cfid')>
         <cfquery name="local.qIPCheck" datasource="#application.datasource#">
@@ -140,6 +145,7 @@
                 last_attempt,
                 last_event,
                 http_user_agent,
+                token,
                 created_at
             )
             VALUES  
@@ -148,8 +154,9 @@
                 <cfqueryparam value="#application.rate_limiter[cgi.remote_addr].attempts#" cfsqltype="CF_SQL_INTEGER" />,
                 <cfqueryparam value="#session.cfid#-#session.cftoken#" cfsqltype="CF_SQL_VARCHAR" />,
                 <cfqueryparam value="#application.rate_limiter[cgi.remote_addr].last_attempt#" cfsqltype="CF_SQL_TIMESTAMP" />,
-                <cfqueryparam value="#event.getCurrentEvent()#" cfsqltype="CF_SQL_VARCHAR" />,
+                <cfqueryparam value="#arguments.event.getCurrentEvent()#" cfsqltype="CF_SQL_VARCHAR" />,
                 <cfqueryparam value="#cgi.HTTP_USER_AGENT#" cfsqltype="CF_SQL_VARCHAR" />,
+                <cfqueryparam value="#arguments.rc.token#" cfsqltype="CF_SQL_VARCHAR" />,
                 <cfqueryparam value="#NOW()#" cfsqltype="CF_SQL_TIMESTAMP" />
             )
             <!--- 
