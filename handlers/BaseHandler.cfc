@@ -154,11 +154,14 @@ component extends="coldbox.system.EventHandler" {
 			log.error("[PreHandler] Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
 
 			// Setup General Error Response
+			var code    = empty(e.errorcode) ? STATUS.INTERNAL_ERROR: e.errorcode;
+			var message = findStatusMessage(code);
+		
 			prc.response
 				.setError(true)
-				.addMessage("#MESSAGES.INTERNAL_ERROR#: #e.message#")
-				.setStatusCode(empty(e.errorcode) ? STATUS.INTERNAL_ERROR : e.errorcode)
-				.setStatusText(MESSAGES.INTERNAL_ERROR);			
+				.addMessage(e.message)
+				.setStatusCode(code)
+				.setStatusText(message);
 			
 			// Development additions
 			if(getSetting("environment") eq "development") {
@@ -206,11 +209,14 @@ component extends="coldbox.system.EventHandler" {
 			log.error("[AroundHandler] Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
 
 			// Setup General Error Response
+			var code    = empty(e.errorcode) ? STATUS.INTERNAL_ERROR: e.errorcode;
+			var message = findStatusMessage(code);
+		
 			prc.response
 				.setError(true)
-				.addMessage("#e.message#")
-				.setStatusCode(empty(e.errorcode) ? STATUS.INTERNAL_ERROR : e.errorcode)
-				.setStatusText(MESSAGES.INTERNAL_ERROR);	
+				.addMessage(e.message)
+				.setStatusCode(code)
+				.setStatusText(message);
 
 			sendError(e, rc, event);
 				
@@ -299,11 +305,14 @@ component extends="coldbox.system.EventHandler" {
 		}
 
 		// Setup General Error Response
+		var code    = empty(e.errorcode) ? STATUS.INTERNAL_ERROR: e.errorcode;
+		var message = findStatusMessage(code);
+	
 		prc.response
 			.setError(true)
-			.addMessage("Base Handler Application Error: #exception.message#")
-			.setStatusCode(empty(e.errorcode) ? STATUS.INTERNAL_ERROR : e.errorcode)
-			.setStatusText(MESSAGES.INTERNAL_ERROR);
+			.addMessage(e.message)
+			.setStatusCode(code)
+			.setStatusText(message);
 		
 		// Development additions
 		if(getSetting("environment") eq "development"){
@@ -607,6 +616,15 @@ component extends="coldbox.system.EventHandler" {
 			} catch(Any e){
 				rethrow();
 			}
+		}
+	}
+
+	private string function findStatusMessage(errorcode) {
+		var code = empty(arguments.errorcode) ? STATUS.INTERNAL_ERROR : arguments.errorcode;
+		var keys = StructFindValue(STATUS, code, "one");
+
+		for(msgs in keys) {
+			return MESSAGES[msgs.key];
 		}
 	}
 }

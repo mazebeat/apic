@@ -1,7 +1,7 @@
 <!--
   Participante Service
  -->
-<cfcomponent output="false" accessors="true" hint="ParticipanteService">
+	<cfcomponent output="false" accessors="true" hint="ParticipanteService">
 	<cftimer label= "models/ParticipanteService"></cftimer>
 
 	<!--- Properties --->

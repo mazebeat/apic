@@ -171,7 +171,7 @@
   
     <cfscript>
         if (convertToUTC) {
-            datetime = dateConvert( "local2utc", datetime );
+            datetime = dateConvert("local2utc", datetime );
         }
         return(dateFormat( datetime, "yyyy-mm-dd" ) & "T" & timeFormat( datetime, "HH:mm:ss" ) & "Z");
     </cfscript>
@@ -186,7 +186,7 @@
     <cfreturn arguments.Date.ReplaceFirst("^.*?(\d{4})-?(\d{2})-?(\d{2})T([\d:]+).*$", "$1-$2-$3 $4") />
 </cffunction>
 
-<<cffunction name="sendErrorMail" output="false" returntype="void">
+<cffunction name="sendErrorMail" output="false" returntype="void">
 	<cfargument name="donde" required="true" default="DESCONOCIDO">
 	<cfargument name="contenido" required="true">
     <cfargument name="argumentos" required="false">
@@ -263,29 +263,6 @@
                 <cfcatch type="any">
                 </cfcatch>
                 </cftry>
-
-
- <!--- <table class="row full-width-demo">
-    <tr>
-        <td>
-            <table class="container">
-                <tr>
-                    <td class="wrapper last">
-                        <table class="twelve columns">
-                            <tr>
-                                <td>
-                                    I'm full width!
-                                </td>
-                                <td class="expander"></td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table> --->
-
             </cfsavecontent>
         </cfoutput>
 
@@ -341,3 +318,57 @@
 			#arguments.contenidoEmail#
 	</cfmail>
 </cffunction>
+
+<cffunction name="sendError" access="public">
+    <cfargument name="exception" type="any" required="true">
+    <cfargument name="rc" required="true">
+    <cfargument name="event" required="true">
+
+    <cfscript>
+        savecontent variable="errortext" {
+            var oException = new coldbox.system.web.context.ExceptionBean( arguments.exception );
+
+            var requestBody = toString( getHttpRequestData().content );
+            requestBody = deserializeJSON(requestBody, false);
+
+            var EventValues = isJson(event.getHTTPContent()) ? deserializeJson(event.getHTTPContent(), true) : event.getHTTPContent();	
+            var HeadersValues = GetHttpRequestData();			
+           
+            include template="/views/bugreport.cfm";
+        }
+
+        enviarElError("subject" = "API Error #rc.event#", "contenidoEmail" = errortext);
+    </cfscript>
+</cffunction>
+
+<cfscript>
+/**
+ * Combines structFindKey() and structFindValue()
+ * v1.0 by Adam Cameron
+ * v1.01 by Adam Cameron (fixing logic error in scope-handling)
+ * 
+ * @param struct      Struct to check (Required)
+ * @param key      Key to find (Required)
+ * @param value      Value to find for key (Required)
+ * @param scope      Whether to find ONE (default) or ALL matches (Optional)
+ * @return Returns an array as per structFindValue() 
+ * @author Adam Cameron (dac.cfml@gmail.com) 
+ * @version 1.01, September 9, 2013 
+ */
+public array function structFindKeyWithValue(required struct struct, required string key, required string value, string scope="ONE"){
+    if (!isValid("regex", arguments.scope, "(?i)one|all")){
+        throw(type="InvalidArgumentException", message="Search scope #arguments.scope# must be ""one"" or ""all"".");
+    }
+    var keyResult = structFindKey(struct, key, "all");
+    var valueResult = [];
+    for (var i=1; i <= arrayLen(keyResult); i++){
+        if (keyResult[i].value == value){
+            arrayAppend(valueResult, keyResult[i]);
+            if (scope == "one"){
+                break;
+            }
+        }
+    }
+    return valueResult;
+}
+</cfscript>

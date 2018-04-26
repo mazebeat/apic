@@ -1,7 +1,7 @@
 <!-- 
 	Validation Service
  -->
-<cfcomponent hint="Validation Service" output="false" accessors="true">
+	<cfcomponent hint="Validation Service" output="false" accessors="true">
 
 	<!--- Properties --->
 	<cfproperty name="formS"	inject="model:formulario.FormularioService">
@@ -29,10 +29,10 @@
 
 		<!--- Se valida la estructura de la respuesta --->
 		<cfif NOT structKeyExists(arguments.dataFields, 'data') OR NOT isStruct(arguments.dataFields.data)>
-			<cfthrow message="Invalida JSON Data. The key 'data' does not exists or is not a object" errorcode="500">
+			<cfthrow message="Invalid data: The key 'data' does not exists or is not a object" errorcode="400">
 		</cfif>
 		<cfif NOT structKeyExists(arguments.dataFields.data, 'records') OR NOT isArray(dataFields.data.records)>
-			<cfthrow message="Invalida JSON Data. The key 'data.records' does not exists or is not an array" errorcode="500">
+			<cfthrow message="Invalid data: The key 'data.records' does not exists or is not an array" errorcode="400">
 		</cfif>
 		
 		<!--- Se obtienen los campos básicos --->
@@ -48,11 +48,11 @@
 				<cfset var idtipoparticipante = record.id_tipo_participante>
 				<cfset structDelete(record, 'id_tipo_participante')>
 			<cfelse>
-				<cfthrow message="Invalida JSON Data. ID tipo participante does not exists" errorcode="500">
+				<cfthrow message="Invalid data: ID tipo participante does not exists" errorcode="400">
 			</cfif>
 
 			<!--- Se validan campos login/password --->
-			<cfset validateLoginPassword(record)>
+			<!--- <cfset validateLoginPassword(record)> --->
 
 			<!--- Validamos si existe el campo "login-password" --->
 			<cfif structKeyExists(record, 'login')>
@@ -81,7 +81,7 @@
 			</cfquery>
 
 			<cfif local.findout.recordcount LTE 0>
-				<cfthrow message="Field ID of 'Email' does not exists in register [#key#]" errorcode="500">
+				<cfthrow message="Field ID of 'Email' does not exists in register [#key#]" errorcode="400">
 			</cfif>
 
 			<!--- Renovamos variables para el proceso de guardado en BBDD --->
@@ -89,24 +89,15 @@
 
 			<!--- 
 				Comprobamos que el participante no exista en BBDD, pero solo cuando es una nueva inserción. 
-				@url.force Fuerza la inserción de datos.
+				@url.allow_duplicate Fuerza la inserción de datos.
 			---> 
-			<cfif getHTTPRequestData().method EQ 'POST' AND (NOT structKeyExists(url, 'force') OR url.force == false)>
-				<cfquery name="local.logins" datasource="#application.datasource#">
-					SELECT COUNT(*) AS 'exists' FROM participantes
-					WHERE login = <cfqueryparam value="#replace((structKeyExists(record, 'login') ? record.login : emailp), "'", "", 'all')#" cfsqltype="CF_SQL_VARCHAR">
-					AND id_evento IN (#session.id_evento#)
-					AND fecha_baja IS NULL
-				</cfquery>
-
-				<cfif local.logins.recordCount GT 0 AND local.logins.exists GT 0>
-					<cfthrow message="Invalida JSON Data. Email ['#emailp#'] can not be duplicated" errorcode="500">
-				</cfif>
+			<cfif getHTTPRequestData().method EQ 'POST' AND (NOT structKeyExists(url, 'allow_duplicate') OR url.allow_duplicate == false)>
+				<cfset existsParticipant(record)>
 			</cfif>
 
 			<!--- Se validan emails duplicados --->
 			<cfif arrayFind(validEmails, emailp) GT 0>
-				<cfthrow message="Invalida JSON Data. Email ['#emailp#'] already exists" errorcode="500">
+				<cfthrow message="Invalid data: Email ['#emailp#'] already exists" errorcode="400">
 			</cfif>
 
 			<!--- Obtenemos las keys de los campos para continuar con el proceso. --->
@@ -140,7 +131,7 @@
 		</cfloop>
 
 		<cfset var formFields = formS.formFields()>
-		
+
 		<!--- Validamos campos obligatorios --->
 		<cfset requiredFields(keyList, dataFields.data.records, formFields)>
 
@@ -532,73 +523,73 @@
 
 		<cfscript>	
 			if(getHTTPRequestData().method == 'POST') {
-				// if(structKeyExists(record, 'login') OR structKeyExists(record, 'password')) {
-				// 	// if(structKeyExists(record, 'login') AND NOT structKeyExists(record, 'password')) {
-				// 	// 	throw(message="Error Validation. It has not been found login or password");
-				// 	// }
+				if(structKeyExists(record, 'login') OR structKeyExists(record, 'password')) {
+					// if(structKeyExists(record, 'login') AND NOT structKeyExists(record, 'password')) {
+					// 	throw(message="Error Validation. It has not been found login or password");
+					// }
 
-				// 	// if(structKeyExists(record, 'password') AND NOT structKeyExists(record, 'login')) {
-				// 	// 	throw(message="Error Validation. It has not been found login or password");
-				// 	// }
+					// if(structKeyExists(record, 'password') AND NOT structKeyExists(record, 'login')) {
+					// 	throw(message="Error Validation. It has not been found login or password");
+					// }
 
 					
-				// 	if(structKeyExists(record, 'login') AND isEmpty(record.login)) {
-				// 		throw(message="Error Validation. Login's empty ");
-				// 	} 
+					if(structKeyExists(record, 'login') AND isEmpty(record.login)) {
+						throw(message="Error Validation. Login's empty ");
+					} 
 
-				// 	if(structKeyExists(record, 'password') AND isEmpty(record.password)) {
-				// 		throw(message="Error Validation. Password's empty ");
-				// 	} 
+					if(structKeyExists(record, 'password') AND isEmpty(record.password)) {
+						throw(message="Error Validation. Password's empty ");
+					} 
 
-				// 	var us = dao.getByLogin(record.login);
+					var us = dao.getByLogin(record.login);
 
-				// 	if(us.recordcount GT 0) {
-				// 		for(u in us) {
-				// 			if(dao.desEncriptar(u.password) EQ record.password) {
-				// 				throw(message="Error Validation. Participante already exists");
-				// 			} 
-				// 			if(dao.desEncriptar(u.password) NEQ record.password) { 
-				// 			}
-				// 		}				
-				// 	} else {
-				// 	}
+					if(us.recordcount GT 0) {
+						for(u in us) {
+							if(dao.desEncriptar(u.password) EQ record.password) {
+								throw(message="Error Validation. Participante already exists");
+							} 
+							if(dao.desEncriptar(u.password) NEQ record.password) { 
+							}
+						}				
+					} else {
+					}
 
-				// 	if(isdefined("url.debug")) {
-				// 		writeDump(var="#record#", label="record");
-				// 		abort;
-				// 	}
+					if(isdefined("url.debug")) {
+						writeDump(var="#record#", label="record");
+						abort;
+					}
 
-				// }
+				}
 			}
 			if(getHTTPRequestData().method == 'PUT') {
-			// 	if(structKeyExists(record, 'email') AND structKeyExists(record, 'login')) {
-			// 		if(NOT structKeyExists(record, 'login')) {
-			// 			throw(message="Error Validation. It has not been found login");
-			// 		}
+				if(structKeyExists(record, 'email') AND structKeyExists(record, 'login')) {
+					if(NOT structKeyExists(record, 'login')) {
+						throw(message="Error Validation. It has not been found login");
+					}
 
-			// 		if(structKeyExists(record, 'login') AND isEmpty(record.login)) {
-			// 			throw(message="Error Validation. Login's empty ");
-			// 		} 
+					if(structKeyExists(record, 'login') AND isEmpty(record.login)) {
+						throw(message="Error Validation. Login's empty ");
+					} 
 
-			// 		var us = dao.getByLogin(record.login);
+					var us = dao.getByLogin(record.login);
 
-			// 		if(us.recordcount LTE 0) {
-			// 			var us = dao.getByLogin(record.email);
-			// 			if(us.recordcount GT 0) {
-			// 				throw(message="Error Validation. Participante does not exists [#record.email#].");
-			// 			}
-			// 		}
-			// 	} 
-			// 	if(structKeyExists(record, 'email') AND NOT structKeyExists(record, 'login')) {
-			// 		var us = dao.getByLogin(record.email);
+					if(us.recordcount LTE 0) {
+						var us = dao.getByLogin(record.email);
+						if(us.recordcount GT 0) {
+							throw(message="Error Validation. Participante does not exists [#record.email#].");
+						}
+					}
+				} 
+				if(structKeyExists(record, 'email') AND NOT structKeyExists(record, 'login')) {
+					var us = dao.getByLogin(record.email);
 
-			// 		if(us.recordcount LTE 0) {
-			// 			var us = dao.getByLogin(record.email);
-			// 			if(us.recordcount GT 0) {
-			// 				throw(message="Error Validation. Participante does not exists [#record.login#].");
-			// 			}
-			// 		}
-			// 	}
+					if(us.recordcount LTE 0) {
+						var us = dao.getByLogin(record.email);
+						if(us.recordcount GT 0) {
+							throw(message="Error Validation. Participante does not exists [#record.login#].");
+						}
+					}
+				}
 			}
 		</cfscript>
 	</cffunction>
@@ -621,4 +612,34 @@
 		</cfscript>
 	</cffunction>
 
+	<!--- 
+		Valida si existe un participante
+	 --->
+	<cffunction name="existsParticipant" output="false" returntype="void">
+		<cfargument name="record">
+
+		<cfset local.valFieldBasic = formS.defaultFields(session.id_evento, session.language)>
+		<cfset validation = {}>
+	
+		<cfif local.valFieldBasic.recordCount GT 0>
+			<cfset fieldList = structKeyList(arguments.record)>
+
+			<cfloop query="#local.valFieldBasic#">
+				<cfif NOT listFind(fieldList, id_campo)>
+					<cfthrow message="Invalid data: Basic field [#id_campo#] does not exits" errorcode="400">		
+				</cfif>
+
+				<cfset local.valFieldBasic.val[currentRow] = arguments.record[id_campo]>
+				<cfset structInsert(validation, descripcion, arguments.record[id_campo])>
+			</cfloop>
+		<cfelse>
+			<cfthrow message="Invalid data: Basic fields are not recognized" errorcode="400">
+		</cfif>
+
+		<cfset var exists = dao.exists(validation)>
+
+		<cfif exists>
+			<cfthrow message="Invalid data: Participant already exists, can not be duplicated." errorcode="400">
+		</cfif>
+	</cffunction>
 </cfcomponent>

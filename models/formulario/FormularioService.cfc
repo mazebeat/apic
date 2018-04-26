@@ -11,7 +11,7 @@
 	<cfproperty name="cache" 	inject="cachebox:default">
 	
 
-<!------------------------------------------ CONSTRUCTOR ------------------------------------------>
+	<!------------------------------------------ CONSTRUCTOR ------------------------------------------>
 
 	<cffunction name="init" access="public" returntype="FormularioService" output="false" hint="constructor">
 		<cfscript>
@@ -518,5 +518,12 @@
 		<cfset var formFields = this.meta(session.id_evento)>
 
 		<cfreturn formFields.data.records>
+	</cffunction>
+
+	<cffunction name="defaultFields">
+		<cfargument name="id_evento" type="any" required="true">
+		<cfargument name="language" type="any" required="true">
+
+		<cfreturn dao.defaultFields(arguments.id_evento, arguments.language)>
 	</cffunction>
 </cfcomponent>

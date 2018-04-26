@@ -837,3 +837,24 @@ copying /config/Coldbox.cfc
 copying /modules_app/apic-v1/handlers/Participantes.cfc
 End finding
 .
+BACKUP 2018-04-26 13:45:12 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/BaseHandler.cfc
+copying /logs/system.log
+copying /logs/access.log
+copying /interceptors/ClientSessionInterceptor.cfc
+copying /Application.cfc
+copying /models/formulario/FormularioDAO.cfc
+copying /models/formulario/FormularioService.cfc
+copying /models/QueryService.cfc
+copying /models/participante/ParticipanteDAO.cfc
+copying /models/participante/ParticipanteService.cfc
+copying /models/FormValidationService.cfc
+copying /models/Response.cfc
+copying /config/Coldbox.cfc
+copying /modules_app/apic-v1/handlers/Participantes.cfc
+copying /includes/helpers/ApplicationHelper.cfm
+copying /includes/helpers/QuerysHelper.cfm
+End finding
+.

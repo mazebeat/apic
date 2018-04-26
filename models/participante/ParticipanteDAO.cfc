@@ -11,7 +11,7 @@
 	<cfproperty name="SECRET_KEY" default='zTHCdTeo782ox5QBtpu1q8d2gwKe8fHp'>
 
 
-<!------------------------------------------- CONSTRUCTOR ------------------------------------------->
+	<!------------------------------------------- CONSTRUCTOR ------------------------------------------->
 	<cffunction name="init" access="public" returntype="ParticipanteDAO" output="false" hint="constructor">
 		<cfscript>	
 			return this;
@@ -406,7 +406,10 @@
 		<cfset var idsDE = doCreateExtension(ids)>
 		<cfset doUpdateParticipante(vList.c)>
 
-		<cfreturn { "new_id_participante" : ids, "new_id_participantesDatos" : idsD }>
+		<cfreturn { 
+			"new_id_participante" : ids, 
+			<!--- "new_id_participantesDatos" : idsD  --->
+		}>
 	</cffunction>
 	
 	<cffunction name="doCreateDatos" returntype="any">
@@ -701,7 +704,6 @@
 		<cfset doUpdateParticipante(queries)>
 	</cffunction>
 
-
 	<cffunction name="getTipoParticipante" access="public" returntype="Query" output="false">
 		<cfargument name="sidx" required="false" default="id_tipo_participante">
 		<cfargument name="sord" required="true" default="ASC">
@@ -718,4 +720,26 @@
 		<cfreturn valueList(local.qTiposDeParticipantesPorNombre.id_tipo_participante)>
 	</cffunction>
 
+	<!--- 
+		Valida la existencia de un participante según los tres campos básicos del formulario; Nombre, Apellido, Email
+	 --->
+	<cffunction name="exists" access="public" returntype="boolean" output="false">
+		<cfargument name="fields" type="struct" required="true">
+
+		<cfset var exists = false>
+	
+		<cfquery name="local.allFields" datasource="#application.datasource#">
+			SELECT COUNT(id_participante) AS 'exists'
+			FROM participantes
+			WHERE cf_nombre_participante = <cfqueryparam value="#arguments.fields['nombre_participante']#" cfsqltype="CF_SQL_VARCHAR">
+			AND cf_apellidos_participante = <cfqueryparam value="#arguments.fields['apellidos_participante']#" cfsqltype="CF_SQL_VARCHAR">
+			AND cf_email_participante = <cfqueryparam value="#arguments.fields['email_participante']#" cfsqltype="CF_SQL_VARCHAR">
+		</cfquery>
+
+		<cfif local.allFields.recordcount GT 0>
+			<cfset exists = local.allFields.exists GT 0 ? true : false>
+		</cfif>
+
+		<cfreturn exists>
+	</cffunction>
 </cfcomponent>

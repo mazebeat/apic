@@ -12,3 +12,5 @@
 /z/apic/models/Response.cfc
 /z/apic/config/Coldbox.cfc
 /z/apic/modules_app/apic-v1/handlers/Participantes.cfc
+/z/apic/includes/helpers/ApplicationHelper.cfm
+/z/apic/includes/helpers/QuerysHelper.cfm
