@@ -214,7 +214,6 @@
 	<cfdefaultcase>
 		<cfset i++>
 		<cfset sColumnas[i] = generarUnaColumna(id_agrupacion, id_campo, id_tipo_campo_fijo)>
-		<cfdump var="#sColumnas#"><cfabort>
 		
 		<cfif structKeyExists(arguments.rc, 'CAMPO_#id_campo#')>
 			<cfset valor = evaluate('arguments.rc.CAMPO_#id_campo#')>

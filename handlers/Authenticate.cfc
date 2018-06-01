@@ -45,7 +45,7 @@ component extends="Base" {
 
 		event.paramValue("password", "");
 
-		try {
+		// try {
 			if(structKeyExists(rc, "password")) {
 				var authuser = authservice.validate(rc.password);
 
@@ -72,12 +72,12 @@ component extends="Base" {
 						}
 					}
 
-					if(isNull(token)) {
-						throw(message="Error: Password or Token does not exists", errorcode=STATUS.NOT_AUTHENTICATED);					
+					if(isNull(token) OR isEmpty(token)) {
+						throw(message="Error: API Key or API Token does not exists", errorcode=STATUS.NOT_AUTHENTICATED);					
 					}
 
-					aut = encrypt(serializeJSON(authuser), getSetting('authSecretKey'), "AES", "Base64");
-					
+					var aut = encrypt(serializeJSON(authuser), getSetting('authSecretKey'), "AES", "Base64");
+
 					session["usersession"] = { 
 						"type"     = type, 
 						"auth"     = aut,
@@ -87,7 +87,7 @@ component extends="Base" {
 							}
 						}
 					};
-				
+
 					session["id_evento"] = authuser.getId_evento();
 						
 					rc.token = token;
@@ -103,9 +103,9 @@ component extends="Base" {
 			} else {
 				throw(message="Error: Parameters are empty", errorcode=STATUS.NOT_AUTHENTICATED);
 			}
-		} catch(Any e) {
-			throw(message="Error: Generating token", errorcode=e.errorcode, detail=e);
-		}
+		// } catch(Any e) {
+		// 	throw(message="Error: API Key are not correct", errorcode=e.errorcode, detail=e);
+		// }
 	}
 
 	/**

@@ -18,7 +18,7 @@ component{
 	this.clientStorage          = 'cookie';
 	this.setClientCookies       = true;
 
-	this.datasource             = "sige"; // sige_up | sige 
+	this.datasource             = "sige"; // sige_up -> production | sige -> development 
 	
 	this.secureJSON             = true;
 	this.compression            = true;
@@ -36,6 +36,7 @@ component{
 		'/adminmodels' = getDirectoryFromPath(getCurrentTemplatePath()) & '../default/admin/model',
 		'/adminutils'  = getDirectoryFromPath(getCurrentTemplatePath()) & '../default/admin/helpers'
 	};
+	this.mappings[ "/testbox" ] = expandPath( "../apic/testbox/" );
 
 	// this.ormsettings.search.indexDir = getDirectoryFromPath(getCurrentTemplatePath()) & "/ormindex";
 

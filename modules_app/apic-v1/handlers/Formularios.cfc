@@ -10,16 +10,14 @@
 		this.posthandler_except 	= "";
 		this.aroundHandler_only 	= "";
 		this.aroundHandler_except 	= "";		
-		// REST HTTP Methods Allowed for actions.
-		// Ex: this.allowedMethods = {delete='POST,DELETE',index='GET'} */
 		this.allowedMethods 	= {
 			index= METHODS.GET,
-			get  = METHODS.GET
+			get  = METHODS.GET,
+			meta = METHODS.GET,
+			getByTipoParticipante = METHODS.GET
 		};
 	</cfscript>
-
-
-<!------------------------------------------- PUBLIC EVENTS ------------------------------------------>
+	
 	<cffunction name="index" output="false" hint="index">
 		<cfargument name="event">
 		<cfargument name="rc">
@@ -46,31 +44,37 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfif isdefined('rc.id_evento')>
-			<cfset var cacheKey = 'q-formH-meta-#rc.id_evento#'>
-		<cfelse>
-			<cfset var cacheKey = 'q-formH-meta-#session.id_evento#'>
-		</cfif>
-		
-		<cfif cache.lookup(cacheKey)>
-			<cfset var s = cache.get(cacheKey)>
-		<cfelse>
+		<cftry>
 			<cfif isdefined('rc.id_evento')>
-				<cfset var s = service.meta(rc.id_evento, event, rc)>
+				<cfset var cacheKey = 'q-formH-meta-#rc.id_evento#'>
 			<cfelse>
-				<cfset var s = service.meta(session.id_evento, event, rc)>
+				<cfset var cacheKey = 'q-formH-meta-#session.id_evento#'>
 			</cfif>
 
-			<cfif NOT structIsEmpty(s.data.records) AND isQuery(s.data.records)>
-				<cfset s.data.records = QueryToStruct(s.data.records)>
-			</cfif>
-			<cfset cache.set(cacheKey, s, 60, 30)>
-		</cfif>
+			<cfif cache.lookup(cacheKey)>
+				<cfset var s = cache.get(cacheKey)>
+				<cfset prc.response.setCachedResponse(true)>
+			<cfelse>
+				<cfif isdefined('rc.id_evento')>
+					<cfset var s = service.meta(rc.id_evento)>
+				<cfelse>
+					<cfset var s = service.meta(session.id_evento)>
+				</cfif>
 
-		<cfset prc.response.setData(s.data).setError(!s.ok)> 
-		<cfif NOT isEmpty(s.mensaje)>
-			<cfset prc.response.addMessage(s.mensaje)>
-		</cfif>	
+				<cfif NOT structIsEmpty(s.data.records) AND isQuery(s.data.records)>
+					<cfset s.data.records = QueryToStruct(s.data.records)>
+				</cfif>
+				<cfset cache.set(cacheKey, s, 60, 30)>
+			</cfif>
+
+			<cfset prc.response.setData(s.data).setError(!s.ok)> 
+			<cfif NOT isEmpty(s.mensaje)>
+				<cfset prc.response.addMessage(s.mensaje)>
+			</cfif>			
+		<cfcatch type="any">
+			<cfthrow type="any" message="Error getting form metadata" detail="#cfcatch.detail#">
+		</cfcatch>
+		</cftry> 
 	</cffunction>
 
 	<cffunction name="get" output="false" hint="get">
@@ -82,6 +86,7 @@
 		
 		<cfif cache.lookup(cacheKey)>
 			<cfset var s = cache.get(cacheKey)>
+			<cfset prc.response.setCachedResponse(true)>
 		<cfelse>
 			<cfset var s = service.get(rc.id_formulario, event, rc)>
 
@@ -114,7 +119,4 @@
 		</cfif>	
 	</cffunction>
 
-<!------------------------------------------- PRIVATE EVENTS ------------------------------------------>
-
 </cfcomponent>
-

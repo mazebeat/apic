@@ -1,354 +1,424 @@
-<cfoutput>
-    <cfscript>
-        // Detect Session Scope 
-        local.sessionScopeExists = true; try { structKeyExists( session ,'x' ); } catch ( any e ) { local.sessionScopeExists = false; } try{ local.thisInetHost = createObject( "java", "java.net.InetAddress" ).getLocalHost().getHostName();
-        } catch( any e ){ local.thisInetHost = "localhost"; }
-    </cfscript>
-    <!--- Param Form Scope --->
-    <cfparam name="form" default="#structnew()#">
-        <!--- StyleSheets --->
-        <style type="text/css">
-            <cfinclude template="/coldbox/system/includes/css/cbox-debugger.css.cfm">
-        </style>
-        <div class="cb-container">
-            <h1>
-                <cfif oException.geterrorCode() neq "" AND oException.getErrorCode() neq 0>
-                    #oException.getErrorCode()# :
-                </cfif>
-                Oopsy! Something went wrong!</h1>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<style> .jumbotron { font-weight: 300; } table th { font-size: 14px } table td { font-size: 12px } table th.{ font-weight: normal; color: #ffffff; } #details { font-size: 18px; } 
+samp.stacktrace{ font-family: Courier; font-size:14px; } 
+samp.stacktrace .highlight{ font-weight: bold; background-color: #F0F7FE !important; padding:2px 0px; } 
+samp.stacktrace .method{ font-weight: bold; color:red !important; } 
+div.col-md-12 { word-wrap: break-word; }</style>
+<div class="container-fluid">
+    <cfoutput>
+        <cfscript>
+            // Detect Session Scope 
+            local.sessionScopeExists = true; try { structKeyExists( session ,'x' ); } catch ( any e ) { local.sessionScopeExists = false; } try{ local.thisInetHost = createObject( "java", "java.net.InetAddress" ).getLocalHost().getHostName();
+            } catch( any e ){ local.thisInetHost = "localhost"; }
+        </cfscript>
 
-            <div class="notice">
+        <!--- Param Form Scope --->                
+        <cfparam name="form" default="#structnew()#">
+        
+        <div class="jumbotron bg-danger"  style="color: ##ffffff">
+            <h3>Oops! Houston we have a problem</h3>
+            <h1 class="display-3">
+                #HeadersValues.method# <cfif oException.geterrorCode() neq "" AND oException.getErrorCode() neq 0>#oException.getErrorCode()#: </cfif>#oException.getmessage()#
+            </h1>
+            <h2 >
+                <cfif oException.getExtendedInfo() neq ""> #oException.getExtendedInfo()# <br></cfif>
+                <cfif len( oException.getDetail() ) neq 0>#oException.getDetail()# </cfif>
                 <cfif oException.getExtraMessage() neq "">
                     <!--- CUSTOM SET MESSAGE --->
                     <h3>#oException.getExtramessage()#</h3>
                 </cfif>
+            </h2>
+        </div>
 
+        <div class="row justify-content-md-center">
+            <div class="col-xs-12 col-md-12" style="font-size: 16px; word-wrap: break-word;">
                 <!--- Event --->
-                <strong>Event: </strong>
-                <cfif event.getCurrentEvent() neq "">#event.getCurrentEvent()#
-                    <cfelse>N/A</cfif>
-                <br>
-                <strong>Routed URL: </strong>
-                <cfif event.getCurrentRoutedURL() neq "">#event.getCurrentRoutedURL()#
-                    <cfelse>N/A</cfif>
-                <br>
-                <strong>Layout: </strong>
-                <cfif Event.getCurrentLayout() neq "">#Event.getCurrentLayout()#
-                    <cfelse>N/A</cfif> (Module: #event.getCurrentLayoutModule()#)
-                <br>
-                <strong>View: </strong>
-                <cfif Event.getCurrentView() neq "">#Event.getCurrentView()#
-                    <cfelse>N/A</cfif>
-                <br>
-                <strong>Timestamp: </strong>#dateformat(now(), "MM/DD/YYYY")# #timeformat(now(),"hh:MM:SS TT")#
-				 
-				(Module: #event.getCurrentLayoutModule()#)
-				
-                <hr>
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <strong>Event:</strong>
+                        <div class="float-right"><cfif event.getCurrentEvent() neq "">#event.getCurrentEvent()# <cfelse>N/A</cfif></div>
+                    </li>
 
-                <!--- ERROR TYPE --->
-                <cfif oException.getType() neq "">
-                    <strong>Type: </strong> #oException.gettype()# <br>
-                </cfif>
+                    <li class="list-group-item" >
+                        <strong>Routed URL:</strong>
+                        <div class="float-right; word-wrap: break-word;" ><cfif event.getCurrentRoutedURL() neq "">#event.getCurrentRoutedURL()# <cfelse>N/A</cfif></div>
+                    </li>
 
+                    <li class="list-group-item">
+                        <strong>Layout:</strong>
+                        <div class="float-right"><cfif Event.getCurrentLayout() neq "">#Event.getCurrentLayout()# <cfelse>N/A</cfif> (Module: #event.getCurrentLayoutModule()#)</div>
+                    </li>
 
-                <!--- Message + Details --->
-                <strong>Messages:</strong> #oException.getmessage()#
-                <cfif oException.getExtendedInfo() neq "">
-                    #oException.getExtendedInfo()#<br />
-                </cfif>
+                    <li class="list-group-item">
+                        <strong>View:</strong>
+                        <div class="float-right"><cfif Event.getCurrentView() neq "">#Event.getCurrentView()# <cfelse>N/A</cfif></div>
+                    </li>
 
-                <cfif len( oException.getDetail() ) neq 0>
-                    #oException.getDetail()#
-                </cfif>
+                    <li class="list-group-item">
+                        <strong>Timestamp:</strong>
+                        <div class="float-right">#dateformat(now(), "MM/DD/YYYY")# #timeformat(now(),"hh:MM:SS TT")#</div>
+                    </li>
 
+                    <!--- ERROR TYPE --->
+                    <cfif oException.getType() neq "">
+                        <li class="list-group-item">
+                            <strong>Type: </strong> <div class="float-right">#oException.gettype()#</div>
+                        </li>
+                    </cfif>
+                </ul>
             </div>
+        </div>
 
-            <div class="extended">
-                <!--- TAG CONTEXT --->
+        <div class="row">
+            <div class="col-xs-12 col-md-12">
                 <h2>Tag Context:</h2>
-                <table class="table" align="center" cellspacing="0">
+                
+                <table class="table table-hover table-sm">
                     <cfif ArrayLen( oException.getTagContext() )>
                         <cfset local.arrayTagContext= oException.getTagContext()>
-                            <cfloop from="1" to="#arrayLen( local.arrayTagContext )#" index="local.i">
-                                <!--- Don't clutter the screen with this information unless it's actually useful --->
-                                <cfif structKeyExists( local.arrayTagContext[ local.i ], "ID" ) and len( local.arrayTagContext[ local.i ].ID ) and local.arrayTagContext[ local.i ].ID neq "??">
-                                    <tr>
-                                        <td align="right" class="info">Tag:</td>
-                                        <td>#local.arrayTagContext[ local.i ].ID#</td>
-                                    </tr>
-                                </cfif>
+                        
+                        <cfloop from="1" to="#arrayLen( local.arrayTagContext )#" index="local.i">
+                            <!--- Don't clutter the screen with this information unless it's actually useful --->
+                            <cfif structKeyExists( local.arrayTagContext[ local.i ], "ID" ) and len( local.arrayTagContext[ local.i ].ID ) and local.arrayTagContext[ local.i ].ID neq "??">
                                 <tr>
-                                    <td align="right" class="info">Template:</td>
-                                    <td style="color:green;"><strong>#local.arrayTagContext[ local.i ].Template#</strong></td>
+                                    <th scope="row">Tag:</th>
+                                    <td>#local.arrayTagContext[ local.i ].ID#</td>
                                 </tr>
-                                <cfif structKeyExists( local.arrayTagContext[ local.i ], "codePrintHTML" )>
-                                    <tr class="tablebreak">
-                                        <td align="right" class="info">LINE:</td>
-                                        <td>#local.arrayTagContext[ local.i ].codePrintHTML#</td>
-                                    </tr>
-                                    <cfelse>
-                                        <tr class="tablebreak">
-                                            <td align="right" class="info">Line:</td>
-                                            <td><strong>#local.arrayTagContext[ local.i ].LINE#</strong></td>
-                                        </tr>
-                                </cfif>
-                            </cfloop>
+                            </cfif>
+                            <tr>
+                                <th scope="row">Template:</th>
+                                <td style="color:green;"><strong>#local.arrayTagContext[ local.i ].Template#</strong></td>
+                            </tr>
+                            <cfif structKeyExists( local.arrayTagContext[ local.i ], "codePrintHTML" )>
+                                <tr class="tablebreak">
+                                    <th scope="row">Line:</th>
+                                    <td>#local.arrayTagContext[ local.i ].codePrintHTML#</td>
+                                </tr>
+                            <cfelse>
+                                <tr class="tablebreak">
+                                    <th scope="row">Line:</th>
+                                    <td><strong>#local.arrayTagContext[ local.i ].LINE#</strong></td>
+                                </tr>
+                            </cfif>
+                        </cfloop>
                     </cfif>
                 </table>
+            </div>
 
+            <div class="col-xs-12 col-md-12">
                 <h2>Stack Trace:</h2>
-                <div class="stacktrace">#oException.getstackTrace()#</div>
-
+                
+                <samp class="stacktrace">#oException.getstackTrace()#</samp>
+            </div>
+            
+            <div class="col-xs-12 col-md-12">
                 <!--- FRAMEWORK SNAPSHOT --->
-                <h2>FRAMEWORK SNAPSHOT:</h2>
-                <table class="table" align="center">
+                <h2>Framework Snapshot:</h2>
+                
+                <table class="table table-hover table-sm">                
                     <tr>
-                        <td align="right" class="info">Bug Date:</td>
+                        <th scope="row">Bug Date:</th>
                         <td>#dateformat(now(), "MM/DD/YYYY")# #timeformat(now(),"hh:MM:SS TT")#</td>
                     </tr>
 
                     <tr>
-                        <td align="right" class="info">Coldfusion ID: </td>
+                        <th scope="row">Coldfusion ID: </th>
                         <td>
                             <cfif local.sessionScopeExists>
-                                <cfif isDefined( "session") and structkeyExists(session, "cfid")>
-                                    CFID=#session.CFID# ;
-                                    <cfelseif isDefined( "client") and structkeyExists(client, "cfid")>
-                                        CFID=#client.CFID# ;
-                                </cfif>
-                                <cfif isDefined( "session") and structkeyExists(session, "CFToken")>
-                                    CFToken=#session.CFToken# ;
-                                    <cfelseif isDefined( "client") and structkeyExists(client, "CFToken")>
-                                        CFToken=#client.CFToken# ;
-                                </cfif>
-                                <cfif isDefined( "session") and structkeyExists(session, "sessionID")>
-                                    JSessionID=#session.sessionID#
-                                </cfif>
-                                <cfelse>
-                                    Session Scope Not Enabled
+                                <cfif isDefined( "session") and structkeyExists(session, "cfid")> CFID=#session.CFID# ; <cfelseif isDefined( "client") and structkeyExists(client, "cfid")> CFID=#client.CFID# ; </cfif>
+                                <cfif isDefined( "session") and structkeyExists(session, "CFToken")> CFToken=#session.CFToken# ; <cfelseif isDefined( "client") and structkeyExists(client, "CFToken")> CFToken=#client.CFToken# ; </cfif>
+                                <cfif isDefined( "session") and structkeyExists(session, "sessionID")> JSessionID=#session.sessionID# </cfif>
+                            <cfelse>
+                                Session Scope Not Enabled
                             </cfif>
                         </td>
-										</tr>
-										
-								
+                    </tr>                                            
+                                
                     <tr>
-                        <td align="right" class="info">Template Path : </td>
+                        <th scope="row">Template Path : </th>
                         <td>#htmlEditFormat(CGI.CF_TEMPLATE_PATH)#</td>
                     </tr>
                     <tr>
-                        <td align="right" class="info">Path Info : </td>
+                        <th scope="row">Path Info : </th>
                         <td>#htmlEditFormat(CGI.PATH_INFO)#</td>
                     </tr>
                     <tr>
-                        <td align="right" class="info"> Host &amp; Server: </td>
+                        <th scope="row"> Host &amp; Server: </th>
                         <td>#htmlEditFormat(cgi.http_host)# #local.thisInetHost#</td>
                     </tr>
                     <tr>
-                        <td align="right" class="info">Query String: </td>
+                        <th scope="row">Query String: </th>
                         <td>#htmlEditFormat(cgi.QUERY_STRING)#</td>
                     </tr>
 
                     <cfif len(cgi.HTTP_REFERER)>
                         <tr>
-                            <td align="right" class="info">Referrer:</td>
+                            <th scope="row">Referrer:</th>
                             <td>#htmlEditFormat(cgi.HTTP_REFERER)#</td>
                         </tr>
-										</cfif>
-												
+                    </cfif>
+                                                
                     <tr>
-                        <td align="right" class="info">Browser:</td>
+                        <th scope="row">Browser:</th>
                         <td>#htmlEditFormat(cgi.HTTP_USER_AGENT)#</td>
                     </tr>
+
                     <tr>
-                        <td align="right" class="info"> Remote Address: </td>
+                        <th scope="row">Remote Address: </th>
                         <td>#htmlEditFormat(cgi.remote_addr)#</td>
-										</tr>
-										
-										
-                    <cfif isStruct(oException.getExceptionStruct())>
-
-                        <cfif findnocase( "database", oException.getType() )>
-                            <tr>
-                                <th colspan="2">Database oException Information:</th>
-                            </tr>
-                            <tr>
-                                <td colspan="2" class="info">NativeErrorCode & SQL State:</td>
-                            </tr>
-                            <tr>
-                                <td colspan="2">#oException.getNativeErrorCode()# : #oException.getSQLState()#</td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" class="info">SQL Sent:</td>
-                            </tr>
-                            <tr>
-                                <td colspan="2">#oException.getSQL()#</td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" class="info">Database Driver Error Message:</td>
-                            </tr>
-                            <tr>
-                                <td colspan="2">#oException.getqueryError()#</td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" class="info">Name-Value Pairs:</td>
-                            </tr>
-                            <tr>
-                                <td colspan="2">#oException.getWhere()#</td>
-                            </tr>
-                        </cfif>
-					</cfif>
-
-					<tr>
-                        <th colspan="2">JSON Data </th>
-					</tr>
-					<tr>
-						<cfset myStruct = {}>
-						<cfif isStruct(EventValues) && isdefined('EventValues') && structKeyExists(EventValues, 'data') && structKeyExists(EventValues.data, 'records')>
-							<cfset consignmentDetailArray =  EventValues.data.records>
-							<cfloop array="#consignmentDetailArray#" item="value">
-								<td>
-									<cfset myStruct = value>
-									
-									<cfif isStruct(myStruct)>
-										<cfloop collection="#myStruct#" index="k">
-											<tr>
-												<td align="right" class="info"> #k#: </td>
-												<td>
-													<cfif isSimpleValue( myStruct[ k ] )>
-														#htmlEditFormat( myStruct[ k ] )#									
-													<cfelse>
-														#k# <cfdump var="#SerializeJSON(myStruct[ k ])#" />
-													</cfif>
-												</td>
-											</tr>
-										</cfloop>
-									<cfelseif isArray(myStruct)>
-										<cfloop array="#myStruct#" index="k">
-											<tr>
-												<td align="right" class="info"> #k#: </td>
-												<td>
-													<cfif isSimpleValue( myStruct[ k ] )>
-														#htmlEditFormat( myStruct[ k ] )#									
-													<cfelse>
-														#k# <cfdump var="#SerializeJSON(myStruct[ k ])#" />
-													</cfif>
-												</td>
-											</tr>
-										</cfloop>
-									<cfelse>
-										<tr>#key#: #myStruct#</tr>
-									</cfif>	
-								</td>
-							</cfloop>
-						</cfif>
-					</tr>
-
-										 
-                    <tr>
-                        <th colspan="2">Form variables:</th>
-                    </tr>
-                    <cfloop collection="#form#" item="key">
-                        <cfif key neq "fieldnames">
-                            <tr>
-                                <td align="right" class="info">#htmlEditFormat( key )#:</td>
-                                <cfif isSimpleValue( form[ key ] )>
-                                    <td>#htmlEditFormat( form[ key ] )#</td>
-                                    <cfelse>
-                                        <td>
-                                            <cfdump var="#form[ key ]#">
-                                        </td>
-                                </cfif>
-                            </tr>
-                        </cfif>
-					</cfloop>										
-								
-                    <tr>
-                        <th colspan="2">Session Storage:</th>
-                    </tr>
-                    <cfif local.sessionScopeExists>
-                        <cfloop collection="#session#" item="key">
-                            <tr>
-                                <td align="right" class="info"> #key#: </td>
-                                <td>
-									<cfif isSimpleValue( session[ key ] )>
-											#htmlEditFormat( session[ key ] )#									
-									<cfelse>
-										#key# <cfdump var="#SerializeJSON(session[ key ])#" />
-                                   </cfif>
-                                </td>
-                            </tr>
-                        </cfloop>
-					<cfelse>
-							<tr>
-								<td align="right" class="info"> N/A </td>
-								<td>Session Scope Not Enabled</td>
-							</tr>
-					</cfif>
-										
-											
-
-                    <tr>
-                        <th colspan="2">Cookies:</th>
-                    </tr>
-                    <cfloop collection="#cookie#" item="key">
-                        <tr>
-                            <td align="right" class="info"> #key#: </td>
-                            <td>#htmlEditFormat( cookie[ key ] )#</td>
-                        </tr>
-                    </cfloop>
-
-
-                    <tr>
-                        <th colspan="2">Extra Information Dump </th>
-                    </tr>
-                    <tr>
-                        <td colspan="2">
-                            <cfif isSimpleValue( oException.getExtraInfo() )>
-                                <cfif not len(oException.getExtraInfo())>[N/A]
-                                    <cfelse>#oException.getExtraInfo()#</cfif>
-                                <cfelse>
-                                    <cfdump var="#oException.getExtraInfo()#" expand="false">
-							</cfif>
-							
-						
-                        </td>
-					</tr>
-					
-			<!--- <cfif local.sessionScopeExists>
-                        <cfloop collection="#rc#" item="key">
-                            <tr>
-                                <td align="right" class="info"> #key#: </td>
-                                <td>
-									<cfif isSimpleValue( rc[ key ] )>
-										#htmlEditFormat( rc[ key ] )#									
-									<cfelse>										
-										<cfif isStruct( rc[ key ] )>
-											<cfloop collection="#rc[ key ]#" item="j" index="k">
-												<tr>
-													<td align="right" class="info"> #j#: </td>
-													<td>
-														<cfif isSimpleValue( j[ k ] )>
-															#htmlEditFormat( j[ k ] )#									
-														<cfelse>	
-															#j# <cfdump var="#SerializeJSON(j[k])#" />
-														</cfif>
-													</td>
-												</tr>
-											</cfloop>
-										</cfif>
-                                   </cfif>
-                                </td>
-                            </tr>
-                        </cfloop>
-					<cfelse>
-						<tr>
-							<td align="right" class="info"> N/A </td>
-							<td>RC Scope Not Enabled</td>
-						</tr>
-					</cfif> --->
-                </table> 
+                    </tr> 
+                </table>
+            </div>
+            
+            <div class="col-xs-12 col-md-12">
+                <cfif isStruct(oException.getExceptionStruct())>
+                    <cfif findnocase( "database", oException.getType() )>
+                        <table class="table table-hover table-sm">
+                            <thead class="thead-dark">
+                                <th colspan="2" class="text-center">Database oException Information:</th>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="2" scope="row">NativeErrorCode & SQL State</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">#oException.getNativeErrorCode()#: #oException.getSQLState()#</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2" scope="row">SQL Sent</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">#oException.getSQL()#</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2" scope="row">Database Driver Error Message</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">#oException.getqueryError()#</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2" scope="row">Name-Value Pairs</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">#oException.getWhere()#</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </cfif>
+                </cfif>
             </div>
 
-        </div>
-</cfoutput>
+            <div class="col-xs-12 col-md-12">
+                <table class="table table-hover table-sm">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th colspan="2" class="text-center">Request Data</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <cfset myStruct = {}>
+                        <cfif isdefined('EventValues') && isStruct(EventValues) && structKeyExists(EventValues, 'data') && structKeyExists(EventValues.data, 'records')>
+                            <cfset consignmentDetailArray =  EventValues.data.records>
+                            
+                            <cfloop array="#consignmentDetailArray#" item="value">
+                                <cfset myStruct = value>
+                                
+                                <cfif isStruct(myStruct)>
+                                    <cfloop collection="#myStruct#" index="k">
+                                        <tr>
+                                            <th scope="row">#k#</th>
+                                            <td>
+                                                <cfif isSimpleValue( myStruct[ k ] )>
+                                                    #htmlEditFormat( myStruct[ k ] )#									
+                                                <cfelse>
+                                                    <cfdump var="#SerializeJSON(myStruct[ k ])#" />
+                                                </cfif>
+                                            </td>
+                                        </tr>
+                                    </cfloop>
+                                <cfelseif isArray(myStruct)>
+                                    <cfloop array="#myStruct#" index="k">
+                                        <tr>
+                                            <th scope="row"> #k# </th>
+                                            <td>
+                                                <cfif isSimpleValue( myStruct[ k ] )>
+                                                    #htmlEditFormat( myStruct[ k ] )#									
+                                                <cfelse>
+                                                    <cfdump var="#SerializeJSON(myStruct[ k ])#" />
+                                                </cfif>
+                                            </td>
+                                        </tr>
+                                    </cfloop>
+                                <cfelse>
+                                    <tr>
+                                        <th scope="row">#key#</th>
+                                        <td>#myStruct#</td>                                            
+                                    </tr>
+                                </cfif>
+                            </cfloop>
+                        </cfif>
+                    </tbody>
+                </table>
+            </div>
+
+              <div class="col-xs-12 col-md-12">
+                <table class="table table-hover table-sm">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th colspan="2" class="text-center">Headers</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <cfset myStruct = {}>
+                        <cfif isdefined('HeadersValues') && isStruct(HeadersValues)>
+                            <cfset consignmentDetailArray =  HeadersValues.headers>
+                            
+                            <cfloop collection="#consignmentDetailArray#" item="value" index="i">
+                                <cfset myStruct = value>
+                                
+                                <!--- <cfif isdefined("url.debugg")>
+                                    <cfdump var="#i#" label="myStruct">
+                                    <cfdump var="#myStruct#" label="myStruct">
+                                    <cfabort>
+                                </cfif> --->
+
+                                <cfif isStruct(myStruct)>
+                                    <cfloop collection="#myStruct#" index="k">
+                                        <tr>
+                                            <th scope="row">#k#</th>
+                                            <td>
+                                                <cfif isSimpleValue( myStruct[ k ] )>
+                                                    #htmlEditFormat( myStruct[ k ] )#									
+                                                <cfelse>
+                                                    <cfdump var="#SerializeJSON(myStruct[ k ])#" />
+                                                </cfif>
+                                            </td>
+                                        </tr>
+                                    </cfloop>
+                                <cfelseif isArray(myStruct)>
+                                    <cfloop array="#myStruct#" index="k">
+                                        <tr>
+                                            <th scope="row"> #k# </th>
+                                            <td>
+                                                <cfif isSimpleValue( myStruct[ k ] )>
+                                                    #htmlEditFormat( myStruct[ k ] )#									
+                                                <cfelse>
+                                                    <cfdump var="#SerializeJSON(myStruct[ k ])#" />
+                                                </cfif>
+                                            </td>
+                                        </tr>
+                                    </cfloop>
+                                <cfelse>
+                                    <tr>
+                                        <th scope="row">#i#</th>
+                                        <td>#myStruct#</td>                                            
+                                    </tr>
+                                </cfif>
+                            </cfloop>
+                        </cfif>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col-xs-12 col-md-12">
+                <table class="table table-hover table-sm">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th colspan="2" class="text-center">Form variables</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <cfloop collection="#form#" item="key">
+                            <cfif key neq "fieldnames">
+                                <tr>
+                                    <th scope="row">#htmlEditFormat( key )#</th>
+                                    <td>
+                                        <cfif isSimpleValue( form[ key ] )>
+                                            #htmlEditFormat( form[ key ] )#
+                                        <cfelse>
+                                            <cfdump var="#form[ key ]#">
+                                        </cfif>
+                                    </td>
+                                </tr>
+                            </cfif>
+                        </cfloop>	
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col-xs-12 col-md-12">
+                <table class="table table-hover table-sm">									
+                    <thead class="thead-dark">
+                        <th colspan="2" class="text-center">Session Storage</th>
+                    </thead>
+                    
+                    <tbody>
+                        <cfif local.sessionScopeExists>
+                            <cfloop collection="#session#" item="key">
+                                <tr>
+                                    <th scope="row">#key#</th>
+                                    <td>
+                                        <cfif isSimpleValue( session[ key ] )>
+                                            #htmlEditFormat( session[ key ] )#									
+                                        <cfelse>
+                                            <cfdump var="#SerializeJSON(session[ key ])#" />
+                                        </cfif>
+                                    </td>
+                                </tr>
+                            </cfloop>
+                        <cfelse>
+                            <tr>
+                                <th scope="row">N/A</th>
+                                <td>Session Scope Not Enabled</td>
+                            </tr>
+                        </cfif>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col-xs-12 col-md-12">
+                <table class="table table-hover table-sm">									
+                    <thead class="thead-dark">
+                        <tr>
+                            <th colspan="2" class="text-center">Cookies</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <cfloop collection="#cookie#" item="key">
+                            <tr>
+                                <th scope="row"> #key#: </th>
+                                <td>#htmlEditFormat( cookie[ key ] )#</td>
+                            </tr>
+                        </cfloop>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col-xs-12 col-md-12">
+                <table class="table table-hover table-sm">	
+                    <thead class="thead-dark">
+                        <tr>
+                            <th colspan="2" class="text-center">Extra Information Dump</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td colspan="2">
+                                <cfif isSimpleValue( oException.getExtraInfo() )>
+                                    <cfif not len(oException.getExtraInfo())>[N/A]
+                                        <cfelse>#oException.getExtraInfo()#</cfif>
+                                    <cfelse>
+                                        <cfdump var="#oException.getExtraInfo()#" expand="false">
+                                </cfif>                                                    
+                            </td>
+                        </tr>
+                    </tbody>
+                </table> 
+            </div>
+    </cfoutput>
+</div>

@@ -86,7 +86,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var s = service.all()>
+		<cfset var s = service.all(session.id_evento)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -96,9 +96,6 @@
 		<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>	
 	</cffunction>
 
-
-
 <!------------------------------------------- PRIVATE EVENTS ------------------------------------------>
 
 </cfcomponent>
-

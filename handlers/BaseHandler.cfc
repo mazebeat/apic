@@ -511,13 +511,14 @@ component extends="coldbox.system.EventHandler" {
 			findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
 
 			event.paramValue("token", "");
+			event.paramValue("rc.token", "");
 
-			if(getSetting("environment") == "development" && 
-				(rc.token EQ "TOKEN" || !len(rc.token)) && isdefined('url.debug')) {
-				session.id_evento   = 1;
-				rc.contraints.token = "";
-				rc.token            = authService.grantToken(session.id_evento);
-			}	
+			// if(getSetting("environment") == "development" && 
+			// 	(rc.token EQ "TOKEN" || !len(rc.token)) && isdefined('url.debug')) {
+			// 	session.id_evento   = 1;
+			// 	rc.contraints.token = "";
+			// 	rc.token            = authService.grantToken(session.id_evento);
+			// }	
 
 			/* Extract the token from the authorization header */
 			if (!len(rc.token) && structKeyExists(getHTTPRequestData().headers, "authorization")) {
@@ -528,7 +529,7 @@ component extends="coldbox.system.EventHandler" {
 				/* Validate token and store token data in prc scope */
 				prc.token = authService.decodeToken(rc.token);
 			} else {
-				throw(message="Unfortunately I have to mention that your token is not valid", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
+				throw(message="Unfortunately your token is not valid", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
 			}
 		}
 
@@ -538,21 +539,21 @@ component extends="coldbox.system.EventHandler" {
 	 * Valida session del cliente, buscando por ID session.
 	 */
 	private void function validateSession(event, rc, prc) {
-		if (findNoCase("authenticate", event.getCurrentEvent()) == 0 &&
-			findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
+		// if (findNoCase("authenticate", event.getCurrentEvent()) == 0 &&
+		// 	findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
 
-			if(NOT StructKeyExists(session, 'id_evento')) {
-				if(structkeyexists(session, 'token')) {
-					if(structkeyexists(session.token, 'isvalid')) {
-						if (StructKeyExists(session, 'usersession') AND StructKeyExists(session.usersession, 'auth')) {
-							session.id_evento = session.usersession.auth.id_evento;  
-						} else {
-							throw("Has not been found a client authenticated");
-						}         
-					}
-				}
-			}
-		}
+		// 	if(NOT StructKeyExists(session, 'id_evento')) {
+		// 		if(structkeyexists(session, 'token')) {
+		// 			if(structkeyexists(session.token, 'isvalid')) {
+		// 				if (StructKeyExists(session, 'usersession') AND StructKeyExists(session.usersession, 'auth')) {
+		// 					session.id_evento = session.usersession.auth.id_evento;  
+		// 				} else {
+		// 					throw("Has not been found a client authenticated");
+		// 				}         
+		// 			}
+		// 		}
+		// 	}
+		// }
 	}
 
 	/**
@@ -617,6 +618,11 @@ component extends="coldbox.system.EventHandler" {
 		}
 	}
 
+	/**
+	 * Retorna mensaje según código de error
+	 *
+	 * @errorcode 
+	 */
 	private string function findStatusMessage(errorcode) {
 		var keys = [];
 

@@ -21,21 +21,29 @@
         
     ],
     "devDependencies":{
-        "testbox":"^2.4.0",
+        "testbox":"^2.7.0+167",
         "relax":"^2.2.0+00032"
     },
     "installPaths":{
+        "cf-jwt-simple":"cf-jwt-simple\\",
         "coldbox":"coldbox\\",
-        "testbox":"testbox",
         "relax":"modules/relax",
-        "cf-jwt-simple":"cf-jwt-simple\\"
+        "testbox":"testbox"
     },
     "dependencies":{
-        "coldbox":"coldbox\\",
-        "cf-jwt-simple":"cf-jwt-simple\\"
+        "cf-jwt-simple":"cf-jwt-simple\\",
+        "coldbox":"coldbox\\"
     },
     "scripts":{
-        "postVersion":"package set location='https://github.com/coldbox-templates/rest/archive/v`package version`.zip'",
-        "postPublish":"!git push --follow-tags"
+        "postPublish":"!git push --follow-tags",
+        "postVersion":"package set location='https://github.com/coldbox-templates/rest/archive/v`package version`.zip'"
+    },
+    "testbox":{
+        "runner":"http://localhost:49616/tests/runner.cfm",
+        "watchers":[
+            "system/**.cfc",
+            "tests/**.cfc"
+        ],
+        "watchDelay":"250"
     }
 }

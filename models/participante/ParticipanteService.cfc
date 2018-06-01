@@ -71,6 +71,7 @@
 	<cffunction name="get" hint="Obtiene participante por ID" output="false" returntype="struct">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="id_evento">
 		<cfargument name="id_participante" type="numeric" required="true">
 
 		<cfset s = { ok =true, mensaje="", data ={ "records"={},  "count"=0 } }>
@@ -81,7 +82,7 @@
 			<cfif cache.lookup(cacheKey)>
 				<cfset var records = cache.get(cacheKey)>
 			<cfelse> --->
-				<cfset var records = dao.get(event, rc, id_participante)>
+				<cfset var records = dao.get(arguments.event, arguments.rc, arguments.id_evento, arguments.id_participante)>
 
 				<!--- <cfset cache.set(cacheKey, records, 60, 30)> --->
 			<!--- </cfif> --->
@@ -135,11 +136,12 @@
 	<cffunction name="create" hint="" output="false" returntype="struct">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="id_evento">
 
 		<cfset s = { mensaje= "", data= { "records"={}} }>
 		<cfset out = ''>
 		
-		<cfset dataFields = valS.validateCreateDataFields(arguments.rc)>
+		<cfset dataFields = valS.validateCreateDataFields(arguments.rc, arguments.id_evento)>
 		<cfset vList = { a = [], b = [], c = [] }>
 		
 		<cfloop collection="#dataFields.data.records#" item="key">
@@ -179,11 +181,12 @@
 	<cffunction name="modify" hint="" output="false" returntype="struct">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="id_evento">
 
 		<cfset s = { mensaje= "", data= { "records"={}} }>
 		<cfset out = ''>
 
-		<cfset dataFields = valS.validateCreateDataFields(arguments.rc)>
+		<cfset dataFields = valS.validateCreateDataFields(arguments.rc, arguments.id_evento)>
 		<cfset vList = { a = [], b = [], c = [], d = [] }>
 		
 		<cfloop collection="#dataFields.data.records#" item="key">

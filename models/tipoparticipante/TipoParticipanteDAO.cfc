@@ -22,6 +22,7 @@
 	<cffunction name="all" hint="Todos los tipos de participantes" output="false" returntype="Query">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="id_evento">
 
 		<cfset var link = getURLLink(arguments.rc.token)>
 
@@ -30,7 +31,7 @@
 				SELECT id_tipo_participante, nombre, codigo,
 				CONCAT("#link#/tiposparticipantes/", id_tipo_participante) AS _link
 				FROM vTiposDeParticipantes
-				WHERE eventos_id_evento = <cfqueryparam value="#session.id_evento#" CFSQLType="CF_SQL_INTEGER">;
+				WHERE eventos_id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">);
 			</cfquery>
 
 			<cfreturn local.configEventos>
@@ -48,13 +49,14 @@
 	<cffunction name="get" hint="Retorna un tipo de participante especifico por ID" output="false" returntype="Query">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="id_evento" type="any" required="true">
 		<cfargument name="id_tipo_participante" type="numeric" required="true">
 
 		<cftry>
 			<cfquery name="local.configEventos" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, variables.queryExpiration, 0 )#">
 				SELECT id_tipo_participante, nombre, codigo, cantidad_limite_reuniones, max_inscritos, max_comunicaciones
 				FROM vTiposDeParticipantes
-				WHERE eventos_id_evento = <cfqueryparam value="#session.id_evento#" CFSQLType="CF_SQL_INTEGER">
+				WHERE eventos_id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 				AND id_tipo_participante = <cfqueryparam value = "#arguments.id_tipo_participante#" CFSQLType="CF_SQL_INTEGER">;
 			</cfquery>
 

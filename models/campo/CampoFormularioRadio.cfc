@@ -1,6 +1,6 @@
 <cfcomponent output="false" extends="models.campo.CampoFormulario">
+	
 	<cffunction name="init" returntype="campoFormulario">
-		<cfset super.init()>
 		<cfreturn this>
 	</cffunction>
 	

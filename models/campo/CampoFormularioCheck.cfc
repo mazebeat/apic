@@ -1,12 +1,11 @@
 <cfcomponent output="false" extends="models.campo.CampoFormularioList">
 
 	<cffunction name="init" returntype="campoFormulario">
-		<cfset super.init()>
 		<cfreturn this>
 	</cffunction>
 	
 	
-	<cffunction name="getConfiguracion" access="public" returntype="struct" output="false">
+	<cffunction name="getConfiguracion" access="public" returntype="Query" output="false">
 <!--- 	
 		<cfquery name="local.qConfig" datasource="#application.datasource#" cachedwithin="#createtimespan(0,0,1,0)#">
 			<!---select solo_lectura

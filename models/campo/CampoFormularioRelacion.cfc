@@ -1,10 +1,10 @@
 <cfcomponent output="false" extends="models.campo.CampoFormulario">
+
 	<cffunction name="init" returntype="campoFormulario">
-		<cfset super.init()>
 		<cfreturn this>
 	</cffunction>
 
-	<cffunction name="getConfiguracion" access="public" returntype="struct" output="false">
+	<cffunction name="getConfiguracion" access="public" returntype="Query" output="false">
 		<!--- <cfquery name="local.qConfig" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 			SELECT solo_lectura
 			FROM vCampos

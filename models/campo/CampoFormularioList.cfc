@@ -1,7 +1,6 @@
 <cfcomponent output="false" extends="models.campo.CampoFormulario">
 	
 	<cffunction name="init" returntype="campoFormulario">
-		<cfset super.init()>
 		<cfreturn this>
 	</cffunction>
 
@@ -11,15 +10,15 @@
 		<cfset variables.instancia.listaOrdenes = {}>
 		
 		<cfquery name="local.qDistintosValores" dbtype="query">
-			select distinct(id_valor)
-			from arguments.qListaValores
+			SELECT DISTINCT(id_valor)
+			FROM qListaValores
 		</cfquery>
 		<cfif local.qDistintosValores.recordCount gt 0>
 			<cfloop query="local.qDistintosValores">
 				<cfquery name="local.qUnValor" dbtype="query">
-					select *
-					from arguments.qListaValores
-					where id_valor = '#id_valor#'
+					SELECT *
+					FROM arguments.qListaValores
+					WHERE id_valor = '#id_valor#'
 				</cfquery>
 				<cfset variables.instancia.listaValores[id_valor] = {}>
 				<cfset variables.instancia.listaOrdenes[id_valor] = {}>
@@ -32,7 +31,7 @@
 		</cfif>
 	</cffunction>
 
-	<cffunction name="getConfiguracion" access="public" returntype="struct" output="false">
+	<cffunction name="getConfiguracion" access="public" returntype="Query" output="false">
 		<cfargument name="campo" type="query"> 
 		<cfquery name="local.qConfig" datasource="#application.datasource#" cachedwithin="#createtimespan(0,0,1,0)#">
 			SELECT solo_lectura
@@ -42,12 +41,12 @@
 		</cfquery>
 	
 		<cfif local.qConfig.recordCount gt 0>
-			<cfset arguments.campo.solo_lectura= local.qConfig.solo_lectura>
+			<cfset campo.solo_lectura= local.qConfig.solo_lectura>
 		<cfelse>
-			<cfset arguments.campo.solo_lectura = 0>
+			<cfset campo.solo_lectura = 0>
 		</cfif>
 	
-		<cfreturn arguments.campo>
+		<cfreturn campo>
 	</cffunction>
 
 </cfcomponent>

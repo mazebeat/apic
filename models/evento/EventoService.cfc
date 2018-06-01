@@ -19,11 +19,13 @@
 
 <!------------------------------------------- PUBLIC ------------------------------------------->
 	<cffunction name="all" hint="Todos los eventos" output="false" returntype="struct">
+		<cfargument name="id_evento">
+
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
 		<cftry>
-			<cfset var records = dao.all()>	
-
+			<cfset var records = dao.all(arguments.id_evento)>	
+		
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>
 		<cfcatch type = "any">

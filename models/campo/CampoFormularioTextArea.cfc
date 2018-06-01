@@ -1,13 +1,6 @@
 <cfcomponent output="false" extends="models.campo.CampoFormulario">
 
 	<cffunction name="init" returntype="campoFormulario">
-		<cfargument name="q" type="query">
-		
-		<cfif structkeyexists(arguments, "q")>
-			<cfset super.init(arguments.q)>
-		<cfelse>
-			<cfset super.init()>
-		</cfif>
 		<cfreturn this>
 	</cffunction>
 	

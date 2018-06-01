@@ -508,7 +508,7 @@
 							wia.nombre AS titulo
 						FROM vWebsIdiomasActivos wia 
 						INNER JOIN webs w ON w.id_web = wia.id_web
-						AND w.eventos_id_evento IN (#session.id_evento#)
+						AND w.eventos_id_evento IN (<cfqueryparam value="#session.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 						AND w.tiposWebs_id_tipo_web = 1
 						ORDER BY wia.nombre
 					</cfquery>
@@ -1906,7 +1906,7 @@
 			<cfquery name="local.qDatosParticipantes" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 				SELECT id_participante, valor, id_campo
 				FROM vParticipantesDatos
-				WHERE id_evento IN (#session.id_evento#)
+				WHERE id_evento IN (<cfqueryparam value="#session.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 				AND id_participante IN (<cfqueryparam value="#arguments.listaIds#" cfsqltype="CF_SQL_INTEGER" list="true">)
 				AND id_campo = <cfqueryparam value="#id_campo#" cfsqltype="CF_SQL_INTEGER">
 			</cfquery>

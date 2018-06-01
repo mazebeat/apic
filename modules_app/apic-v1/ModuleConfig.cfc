@@ -51,9 +51,9 @@ Optional Methods
 	this.description 		= "APIc para consumo de clientes";
 	this.version			= "1.0.0";
 	// If true, looks for views in the parent first, if not found, then in the module. Else vice-versa
-	this.viewParentLookup 	= true;
+	this.viewParentLookup 	= false;
 	// If true, looks for layouts in the parent first, if not found, then in module. Else vice-versa
-	this.layoutParentLookup = true;
+	this.layoutParentLookup = false;
 	// Module Entry Point
 	this.entryPoint			= "apic/v1";
 	// Model Namespace
@@ -83,6 +83,10 @@ Optional Methods
 
 		// SES Routes
 		routes = [	
+			// Documentation
+			{ pattern="/:lang-alpha/doc", handler="home", action="doc", noLayout=true },
+
+			// Agenda
 			{ pattern="/:lang-alpha/:token/agenda/:id_participante-numeric", handler="Agenda", action={ GET="get" } },
 			{ pattern="/:lang-alpha/:token/agenda", handler="Agenda", action={ GET="index" } },
 
@@ -95,16 +99,12 @@ Optional Methods
 			{ pattern="/:lang-alpha/:token/actividades/:id_participante-numeric", handler="Actividades", action={ GET="byParticipante" } },
 			{ pattern="/:lang-alpha/:token/actividades", handler="Actividades", action={ GET="index" } },
 			
-			
 			// Meetings
 			{ pattern="/:lang-alpha/:token/reuniones/:id_participante-numeric", handler="Reuniones", action={ GET="get" } },
 			{ pattern="/:lang-alpha/:token/reuniones", handler="Reuniones", action={ GET="all" } },
 			
 			// Statics
 			{ pattern="/:lang-alpha/:token/estadisticas", handler="Estadisticas", action={ GET="index" } },
-
-			// Documentation
-			{ pattern="/:lang-alpha/doc", handler="home", action="doc", noLayout=true },
 
 			// Participantes
 			{ pattern="/:lang-alpha/:token/participantes/page/:page-numeric/rows/:rows-numeric?", handler="Participantes", action="index" },
@@ -132,7 +132,7 @@ Optional Methods
 
 			// Formularios
 			{ pattern="/:lang-alpha/:token/formularios/meta", handler="Formularios", action="meta" },
-			// { pattern="/:lang-alpha/:token/formularios/tipoparticipante/:id_tipo_participante-numeric", handler="Formularios", action="getByTipoParticipante" },
+			{ pattern="/:lang-alpha/:token/formularios/tipoparticipante/:id_tipo_participante-numeric", handler="Formularios", action="getByTipoParticipante" },
 			{ pattern="/:lang-alpha/:token/formularios/:id_formulario-numeric", handler="Formularios", action="get" },
 			{ pattern="/:lang-alpha/:token/formularios", handler="Formularios", action="index" },
 

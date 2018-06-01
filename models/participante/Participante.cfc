@@ -53,7 +53,6 @@
 
 <!------------------------------------------- PUBLIC ------------------------------------------->
 
-
 	<cffunction name="generateEmail">
 		<cfset part_email = this.getEmail_participante()>
 
@@ -71,6 +70,5 @@
 			<cfset this.setPassword(listFirst(part_email, '@') & '_' & right(gettickcount(), 5))>
 		</cfif>
 	</cffunction>
-
 
 </cfcomponent>

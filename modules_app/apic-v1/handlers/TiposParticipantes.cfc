@@ -93,7 +93,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">		
 
-		<cfset s = service.all(arguments.event, arguments.rc)>
+		<cfset s = service.all(arguments.event, arguments.rc, session.id_evento)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -113,7 +113,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset s = service.get(arguments.event, arguments.rc, arguments.rc.id_tipo_participante)>
+		<cfset s = service.get(arguments.event, arguments.rc, session.id_evento, arguments.rc.id_tipo_participante)>
 		
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>

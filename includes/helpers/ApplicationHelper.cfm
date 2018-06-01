@@ -65,7 +65,6 @@
                                     .addMessage("You are making too many requests too fast, please slow down and wait #arguments.waitTimeRequest# seconds (#cgi.remote_addr#)")
                                     .setStatusText("Service Unavailable")
                                     .setStatusCode(503)>
-                        <cfabort>
                     </cfif>
                 
                     <cfset application.rate_limiter[cgi.remote_addr].attempts     = application.rate_limiter[cgi.remote_addr].attempts + 1>
@@ -210,9 +209,9 @@
                     <table>
                     ID_EVENTO: #session.id_evento#<br>
                     <cfquery name="qNombreEvento" datasource="#application.datasource#" cachedwithin="#createtimespan(1,0,0,0)#">
-                        select nombre
+                        select GROUP_CONCAT(nombre) AS 'nombre'
                         from vEventos
-                        where id_evento = #session.ID_EVENTO#
+                        where id_evento IN (<cfqueryparam value="#session.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
                     </cfquery>
                     NOMBRE: #qNombreEvento.nombre#<br>
 

@@ -6328,13 +6328,6 @@
 				<cfset arrayAppend(aAux, 'p.id_participante')>
 			</cfif>
 
-			<!--- <cfif isdefined("url.debug")>
-				<cfdump var="#sColumnas#" label="sColumnas">
-			</cfif> --->
-
-			<cfdump var="#sColumnas#"><cfabort>
-			
-
 			<cfloop collection="#sColumnas#" item="id_columna">
 				<cfset aAux.append(detectarNombreColumnaDuplicado(aAux, sColumnas[id_columna]))>
 			</cfloop>
@@ -6771,10 +6764,7 @@
 							<!--- NO COINCIDEN --->
 						</cfif>
 					<cfelse>
-						<!--- <cfif isdefined("url.debug")>
-							<cfdump var="#aColumnas#">
-							<cfabort>
-						</cfif> --->
+						
 					</cfif>
 				</cfif>
 			</cfif>

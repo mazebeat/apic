@@ -113,7 +113,7 @@
 			<cftry>
 				<cfquery name="local.web" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 					SELECT id_web FROM sige.webs
-					WHERE eventos_id_evento IN (#session.id_evento#)
+					WHERE eventos_id_evento IN (<cfqueryparam value="#session.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 					AND tiposWebs_id_tipo_web = 1
 					AND activa = 1
 					AND fecha_baja IS NULL

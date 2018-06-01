@@ -12,11 +12,13 @@
 	</cffunction>
 
 <!------------------------------------------- PUBLIC ------------------------------------------->
-	// BUG: Cambiar id_evento por uno dinámico.
+	<!--- // BUG: Cambiar id_evento por uno dinámico. --->
 	<!-- 
 		Obtiene todos los eventos asociados al cliente.
 	 -->
 	<cffunction name="all" hint="Todos los eventos" output="false" returntype="Query">
+		<cfargument name="id_evento">
+
 		<cftry>
 			<cfquery name="local.configEventos" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 				SELECT -- id_evento_configuracion,
@@ -43,7 +45,7 @@
 					-- notificaciones_push,
 					id_moneda
 				FROM vConfiguracionEventos
-				WHERE eventos_id_evento = <cfqueryparam value="#session.id_evento#" CFSQLType="CF_SQL_INTEGER">
+				WHERE eventos_id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 			</cfquery>
 
 			<cfif queryColumnExists(local.configEventos, 'id_moneda')>
@@ -72,7 +74,7 @@
 					-- texto_EN,
 					-- id_gestor
 				FROM vEventos
-				WHERE id_evento = <cfqueryparam value="#session.id_evento#" CFSQLType="CF_SQL_INTEGER">
+				WHERE id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 			</cfquery>
 
 			<cfinclude template = "/includes/helpers/QuerysHelper.cfm">		
@@ -91,7 +93,7 @@
 
 		<cftry>
 			<cfquery name="local.eventoByIdCliente" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
-				SELECT id_evento, id_tipo_evento, clientes_id_cliente, activo, id_gestor FROM sige.vEventos
+				SELECT GROUP_CONCAT(id_evento) AS id_evento, id_tipo_evento, clientes_id_cliente, activo, id_gestor FROM sige.vEventos
 				WHERE clientes_id_cliente = <cfqueryparam value="#arguments.id_cliente#" CFSQLType="CF_SQL_INTEGER">
 			</cfquery>
 
@@ -101,5 +103,7 @@
 		</cfcatch>
 		</cftry> 
 	</cffunction>
+
+	
 
 </cfcomponent>

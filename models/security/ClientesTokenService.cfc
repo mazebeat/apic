@@ -37,9 +37,13 @@ component accessors="true"{
 
         if(idcliente EQ 0 OR query.recordcount EQ 0) {
             return wirebox.getInstance("ClientesToken");
-        }
+		}
+		
+		var c = populator.populateFromQuery(wirebox.getInstance("ClientesToken"), query, 1);
 
-        return populator.populateFromQuery(wirebox.getInstance("ClientesToken"), query, 1);
+		c = this.getAllEvents(c);
+
+        return c;
 	}
 
 	/**
@@ -107,5 +111,19 @@ component accessors="true"{
         }
 
         return populator.populateFromQuery(wirebox.getInstance("ClientesToken"), query, 1);
+	}
+
+	any function getAllEvents(required ClientesToken clienteToken) {
+		var idcliente = arguments.clienteToken.getId_cliente();
+
+		var query = dao.getAllEvents(idcliente);
+
+		if(idcliente EQ 0 OR query.recordcount EQ 0) {
+            return "";
+		}
+
+		arguments.clienteToken.id_evento = query.id_evento;
+
+		return arguments.clienteToken;
 	}
 }

@@ -889,3 +889,12 @@ copying /includes/helpers/ApplicationHelper.cfm
 copying /includes/helpers/QuerysHelper.cfm
 End finding
 .
+BACKUP 2018-06-01 10:23:34 -----------
+Finding modified or new files...
+Init copy...
+copying /logs/system.log
+copying /logs/access.log
+copying /Application.cfc
+copying /models/FormValidationService.cfc
+End finding
+.

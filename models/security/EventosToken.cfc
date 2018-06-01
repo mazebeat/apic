@@ -1,7 +1,7 @@
 /**
  * EventosTokenDAO
  */
-component accessors="true" extends="models.BaseModel" table="apic_eventosToken" {
+component output="false" accessors="true" extends="models.BaseModel" table="apic_eventosToken" {
 	
 	// Properties
 	property name="id" 							ormtype="int"			column="id"	fieldtype="id" generator="increment";						;
@@ -14,7 +14,7 @@ component accessors="true" extends="models.BaseModel" table="apic_eventosToken" 
 	property name="fecha_baja" 					ormtype="timestamp"		column="fecha_baja";
 	property name="id_permisosToken" 			ormtype="int"			column="id_permisosToken";
 
-	property name="wirebox"	inject="wirebox" setter="false" getter="false";
+	property name="wirebox"	inject="wirebox";
 	
 	/**
 	 * Validation

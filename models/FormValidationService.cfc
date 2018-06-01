@@ -23,6 +23,7 @@
 	 --->
 	<cffunction name="validateCreateDataFields" returntype="struct">
 		<cfargument name="dataFields" type="struct" required="true">
+		<cfargument name="id_evento" required="true">
 
 		<cfset var keyList     = []>
 		<cfset var validEmails = []>
@@ -34,14 +35,14 @@
 		<cfif NOT structKeyExists(arguments.dataFields.data, 'records') OR NOT isArray(dataFields.data.records)>
 			<cfthrow message="Invalid data: The key 'data.records' does not exists or is not an array" errorcode="400">
 		</cfif>
-		
+
 		<!--- Se obtienen los campos básicos --->
-		<cfset var defaultFields = dao.defaultValues(filtered = false)>
+		<cfset var defaultFields = dao.defaultValues(arguments.id_evento, false)>
 
 		<!--- Se recorre cada uno de los registros entregados --->
-		<cfloop collection="#dataFields.data.records#" item="key">
+		<cfloop collection="#arguments.dataFields.data.records#" item="key">
 		
-			<cfset record = dataFields.data.records[key]>
+			<cfset record = arguments.dataFields.data.records[key]>
 
 			<!--- Validamos si existe el campo "id_tipo_participante" --->
 			<cfif structKeyExists(record, 'id_tipo_participante')>
@@ -127,19 +128,19 @@
 				<cfset idtipoparticipante = JavaCast( "null", 0 ) >
 			</cfif>
 
-			<cfset dataFields.data.records[key] = record>
+			<cfset arguments.dataFields.data.records[key] = record>
 		</cfloop>
 
 		<cfset var formFields = formS.formFields()>
 
 		<!--- Validamos campos obligatorios --->
-		<cfset requiredFields(keyList, dataFields.data.records, formFields)>
+		<cfset requiredFields(keyList, arguments.dataFields.data.records, formFields)>
 
 		<!--- Validamos por tipo de campo - configuración --->
-		<cfset configFields(keyList, dataFields.data.records, formFields)>
+		<cfset configFields(keyList, arguments.dataFields.data.records, formFields)>
 
-		<cfset formFiles(keyList, dataFields.data.records, formFields)>
-		
+		<cfset formFiles(keyList, arguments.dataFields.data.records, formFields)>
+
 		<cfreturn arguments.dataFields>
 	</cffunction>
 
@@ -611,12 +612,17 @@
 	 --->
 	<cffunction name="existsParticipant" output="false" returntype="void">
 		<cfargument name="record">
-
+		
 		<cfset local.valFieldBasic = formS.defaultFields(session.id_evento, session.language)>
 		<cfset validation = {}>
 	
 		<cfif local.valFieldBasic.recordCount GT 0>
 			<cfset fieldList = structKeyList(arguments.record)>
+
+			<cfif isdefined("url.debug")>
+				<cfdump var="#fieldList#" label="var">
+				<cfabort>
+			</cfif>
 
 			<cfloop query="#local.valFieldBasic#">
 				<cfif NOT listFind(fieldList, id_campo)>

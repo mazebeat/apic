@@ -51,12 +51,13 @@
 	<cffunction name="get" hint="Obtiene un tipo de participante en concreto por ID" output="false" returntype="struct">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="id_evento" required="true">
 		<cfargument name="id_tipo_participante" type="numeric" required="true">
 		
 		<cfset s = { ok = true, mensaje= "", data = { "records"={},  "count"= 0 } }>
 
 		<cftry>
-			<cfset var records = dao.get(arguments.event, arguments.rc, arguments.id_tipo_participante)>
+			<cfset var records = dao.get(arguments.event, arguments.rc, arguments.id_evento, arguments.id_tipo_participante)>
 
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>

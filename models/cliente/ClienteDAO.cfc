@@ -21,7 +21,5 @@ component accessors="true"{
 			clientSession = session.clientSession;
 		}
 
-		writeDump(clientSessions); abort;
-		
 	}
 }

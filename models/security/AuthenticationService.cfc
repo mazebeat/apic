@@ -190,17 +190,13 @@
 
 		try {
 			temp = ListToArray(decryptPassword(password), "_");
-			
-			if(NOT arrayLen(temp) GTE 3) {
-				throw(message="Wrong password");
-			}
 
 			result.type   = temp[1];
 			result.id     = temp[2];
 			result.secret = temp[3];
 		} catch(any e) {
 			if(isdefined('url.debug')) {
-				throw(e);	
+				throw(e);
 			}
 		}
 

@@ -41,11 +41,11 @@
 			<!--- TELEFONO --->
 			<!--- <cfquery name="local.qConfig" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 				<!---SELECT solo_lectura
-				from vCamposTipoTelefonoConfiguracion
-				where id_campo = <cfqueryparam value="#campo.id_campo#" cfsqltype="CF_SQL_INTEGER">--->
+				FROM vCamposTipoTelefonoConfiguracion
+				WHERE id_campo = <cfqueryparam value="#campo.id_campo#" cfsqltype="CF_SQL_INTEGER">--->
 				SELECT solo_lectura
-				from vCampos
-				where id_campo = <cfqueryparam value="#campo.id_campo#" cfsqltype="CF_SQL_INTEGER">
+				FROM vCampos
+				WHERE id_campo = <cfqueryparam value="#campo.id_campo#" cfsqltype="CF_SQL_INTEGER">
 				and id_idioma = <cfqueryparam value="#session.language#" cfsqltype="cf_sql_char">
 			</cfquery>
 
@@ -59,12 +59,12 @@
 			<!--- URL --->
 			<cfquery name="local.qConfig" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 				<!---SELECT solo_lectura
-				from vCamposTipoUrlConfiguracion
-				where id_campo = <cfqueryparam value="#campo.id_campo#" cfsqltype="CF_SQL_INTEGER">--->
+				FROM vCamposTipoUrlConfiguracion
+				WHERE id_campo = <cfqueryparam value="#campo.id_campo#" cfsqltype="CF_SQL_INTEGER">--->
 				SELECT solo_lectura
-				from vCampos
-				where id_campo = <cfqueryparam value="#campo.id_campo#" cfsqltype="CF_SQL_INTEGER">
-					and id_idioma = <cfqueryparam value="#session.language#" cfsqltype="cf_sql_char">
+				FROM vCampos
+				WHERE id_campo = <cfqueryparam value="#campo.id_campo#" cfsqltype="CF_SQL_INTEGER">
+				AND id_idioma = <cfqueryparam value="#session.language#" cfsqltype="cf_sql_char">
 			</cfquery>
 
 			<cfif local.qConfig.recordCount gt 0>
@@ -77,8 +77,8 @@
 			<!--- CUPON DESCUENTO --->
 			<!--- <cfquery name="local.qConfig" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 				<!---SELECT solo_lectura
-				from vCamposTipoCuponConfiguracion
-				where id_campo = <cfqueryparam value="#campo.id_campo#" cfsqltype="CF_SQL_INTEGER">--->
+				FROM vCamposTipoCuponConfiguracion
+				WHERE id_campo = <cfqueryparam value="#campo.id_campo#" cfsqltype="CF_SQL_INTEGER">--->
 				SELECT solo_lectura
 				FROM vCampos
 				WHERE id_campo = <cfqueryparam value="#campo.id_campo#" cfsqltype="CF_SQL_INTEGER">

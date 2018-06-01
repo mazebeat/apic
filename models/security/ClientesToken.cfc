@@ -1,7 +1,7 @@
 /**
  * ClientesToken
  */
-component accessors="true" extends="models.BaseModel" table="apic_clientesToken" {
+component output="false" accessors="true" extends="models.BaseModel" table="apic_clientesToken" {
 	
 	// Properties
 	property name="id" 							ormtype="int"		column="id"	fieldtype="id"	generator="increment";
@@ -9,13 +9,13 @@ component accessors="true" extends="models.BaseModel" table="apic_clientesToken"
 	property name="id_evento";
 	property name="password" 					ormtype="string"	column="password";
 	property name="token" 						ormtype="text"		column="token";
-	property name="token_expiration" 			ormtype="int"		column="token_expiration"			;
-	property name="fecha_modificacion_token"	ormtype="timestamp"	column="fecha_modificacion_token" 	;
-	property name="fecha_alta" 					ormtype="timestamp"	column="fecha_alta"					;
-	property name="fecha_baja" 					ormtype="timestamp"	column="fecha_baja"					;
-	property name="id_permisosToken" 			ormtype="int"		column="id_permisosToken";
+	property name="token_expiration" 			ormtype="int"		column="token_expiration";
+	property name="fecha_modificacion_token"	ormtype="timestamp"	column="fecha_modificacion_token";
+	property name="fecha_alta" 					ormtype="timestamp"	column="fecha_alta";
+	property name="fecha_baja" 					ormtype="timestamp"	column="fecha_baja";
+	property name="id_permisosToken" 			ormtype="int"		column="id_permisosToken" ;
 
-	 property name="wirebox" inject="wirebox"  setter="false" getter="false";
+	property name="wirebox"	inject="wirebox";
 
 	/**
 	 * Validation
@@ -55,6 +55,12 @@ component accessors="true" extends="models.BaseModel" table="apic_clientesToken"
 		}
 
 		return this.getId_permisosToken();
+	}
+
+	public function getEvents() {
+		this = wirebox.getInstance('ClientesTokenService').getAllEvents(this);
+
+		return this;
 	}
 
 } 	

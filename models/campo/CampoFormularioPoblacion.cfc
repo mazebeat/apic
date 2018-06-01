@@ -1,12 +1,11 @@
 <cfcomponent output="false" extends="models.campo.CampoFormularioList">
 
 	<cffunction name="init" returntype="campoFormulario">
-		<cfset super.init()>
 		<cfreturn this>
 	</cffunction>
 		
-	<cffunction name="getConfiguracion" access="public" returntype="struct" output="false">
-		<cfreturn variables.instancia.configuracion>
+	<cffunction name="getConfiguracion" access="public" returntype="Query" output="false">
+		<cfreturn variables.configuracion>
 	</cffunction>
 
 	<cffunction name="cargarPoblaciones" access="public" returntype="query">

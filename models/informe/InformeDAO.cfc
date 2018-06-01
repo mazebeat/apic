@@ -43,7 +43,7 @@
 					INNER JOIN vCamposAgrupacionesAutomaticas ci 
 					ON ic.id_campo = ci.id_campo
 					WHERE id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_CHAR">
-						AND id_informe = <cfqueryparam value="#arguments.rc.id_informe#" cfsqltype="CF_SQL_INTEGER">
+					AND id_informe = <cfqueryparam value="#arguments.rc.id_informe#" cfsqltype="CF_SQL_INTEGER">
 				) a
 				ORDER BY orden, id_campo
 			</cfquery>
@@ -55,7 +55,7 @@
 		</cftry> 
 	</cffunction>
 
-	<!--- 
+	<!--- <!--- 
 		Obtiene participante por ID
 		@event 
 		@rc 
@@ -71,7 +71,7 @@
 				SELECT nombre, apellidos, email_participante AS email, nombre_empresa, id_tipo_participante, id_sala
 				FROM vParticipantes
 				WHERE id_participante = <cfqueryparam value="#arguments.id_participante#" CFSQLType="CF_SQL_INTEGER">
-				AND id_evento = 1
+				AND id_evento IN (<cfqueryparam value="#session.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 			</cfquery>
 			
 			<cfif queryColumnExists(local.participantesByID, 'id_tipo_participante')>
@@ -123,7 +123,7 @@
 				SELECT id_tipo_participante 
 				FROM vTiposDeParticipantes 
 				WHERE LOWER(nombre) = <cfqueryparam value="#arguments.tipo_participante#" CFSQLType="CF_SQL_VARCHAR">
-				AND eventos_id_evento = 1
+				AND eventos_id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 			</cfquery>
 
 			<cfif arguments.rc.total EQ ''>
@@ -131,7 +131,7 @@
 					SELECT COUNT(*) AS cantidad
 					FROM vParticipantes
 					WHERE id_tipo_participante = <cfqueryparam value="#local.tipoParticipante.id_tipo_participante#" CFSQLType="CF_SQL_INTEGER">
-					AND id_evento = 1
+					AND id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 				</cfquery>
 				<cfset arguments.event.setValue('total', local.qTotal.cantidad)>
 			</cfif>
@@ -145,7 +145,7 @@
 				CONCAT("#link#/participantes/", id_participante) AS _link
 				FROM vParticipantes
 				WHERE id_tipo_participante = <cfqueryparam value="#local.tipoParticipante.id_tipo_participante#" CFSQLType="CF_SQL_INTEGER">
-				AND id_evento = 1
+				AND id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 				LIMIT #arguments.rc.rows# OFFSET #pagination.inicio#
 			</cfquery>
 			
@@ -154,7 +154,7 @@
 			<cfthrow type="any" message="#cfcatch.Message#">
 		</cfcatch>
 		</cftry> 
-	</cffunction>
+	</cffunction> --->
 
 
 </cfcomponent>

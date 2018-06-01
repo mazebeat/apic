@@ -189,5 +189,14 @@ component accessors="true" {
 		.addParam(name = "password", value = arguments.password, cfsqltype = "CF_SQL_VARCHAR");
 		
 		return query.execute().getResult();
-    }
+	}
+	
+	query function getAllEvents(required numeric idcliente) {
+		var queryS = "SELECT GROUP_CONCAT(id_evento) AS 'id_evento' FROM vEventos
+					  WHERE clientes_id_cliente = :idcliente";
+		var query = new Query(datasource = "#application.datasource#", sql = "#queryS#")
+		.addParam(name = "idcliente", value = arguments.idcliente, cfsqltype = "CF_SQL_INTEGER");
+		
+		return query.execute().getResult();
+	}
 }

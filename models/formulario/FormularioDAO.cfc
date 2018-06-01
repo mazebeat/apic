@@ -43,7 +43,7 @@
 		@id_idioma
 	--> 
 	<cffunction name="byEvento" returnType="query" hint="Obtiene todos los formularios según ID de un evento e idioma">
-		<cfargument name="id_evento" type="numeric" required="true" default="#session.id_evento#" hint="">
+		<cfargument name="id_evento" type="any" required="true" hint="">
 		<cfargument name="event">
 		<cfargument name="rc">
 
@@ -56,7 +56,7 @@
 			'' AS 'fields', --->
 			CONCAT("#link#/formularios/", id_formulario) AS '_link'
 			FROM sige.vFormularios
-			WHERE id_evento IN (<cfqueryparam value="#arguments.id_evento#" CFSQLType="CF_SQL_INTEGER">)
+			WHERE id_evento IN (<cfqueryparam value="#arguments.id_evento#" CFSQLType="CF_SQL_INTEGER" list="true">)
 			AND id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_CHAR">;
 		</cfquery>
 	
@@ -83,12 +83,12 @@
 	</cffunction>
 
 	<cffunction name="groupsByEvent" returnType="query" hint="Obtiene todos los formularios según ID de un evento e idioma">
-		<cfargument name="id_evento" type="numeric" required="false"  default="#session.id_evento#" displayname="" hint="">
+		<cfargument name="id_evento" type="any" required="false" displayname="" hint="">
 
 		<cfquery name="local.agrupacion" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 			SELECT DISTINCT(id_agrupacion), titulo
 			FROM vAgrupacionesDeCampos
-			WHERE id_evento IN (<cfqueryparam value="#arguments.id_evento#" CFSQLType="CF_SQL_INTEGER">)
+			WHERE id_evento IN (<cfqueryparam value="#arguments.id_evento#" CFSQLType="CF_SQL_INTEGER" list="true">)
 			AND id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_CHAR">			
 		</cfquery>
 
@@ -172,7 +172,7 @@
 			FROM vCampos c
 			INNER JOIN tiposCamposFijos tf
 			ON c.id_tipo_campo_fijo = tf.id_tipo_campo_fijo
-			WHERE c.campos_id_evento IN (#arguments.id_evento#)
+			WHERE c.campos_id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 			AND c.id_idioma = '#arguments.language#'
 			AND c.id_tipo_campo_fijo IN (4,6,9)
 		</cfquery>

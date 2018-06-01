@@ -20,6 +20,8 @@
 		<cfset variables.issuer           = arguments.issuer>
 		<cfset variables.audience         = arguments.audience>
 
+		<cfset variables.separadorToken = "|">
+
 		<!--- Supported algorithms --->
 		<cfset variables.algorithmMap = {
 			"HS256"="HmacSHA256",
@@ -37,14 +39,14 @@
 		<cfargument name="token" required="true">
 
 		<!--- Token should contain 3 segments --->
-		<cfif listLen(arguments.token, ".") neq 3>
+		<cfif listLen(arguments.token, variables.separadorToken) neq 3>
 			<cfthrow type="Invalid Token" message="Token should contain 3 segments">
 		</cfif>
 
 		<!--- Get  --->
-		<cfset var header = deserializeJSON(base64UrlDecode(listGetAt(arguments.token,1, ".")))>
-		<cfset var payload = deserializeJSON(base64UrlDecode(listGetAt(arguments.token,2, ".")))>
-		<cfset var signiture = listGetAt(arguments.token,3, ".")>
+		<cfset var header = deserializeJSON(base64UrlDecode(listGetAt(arguments.token,1, variables.separadorToken)))>
+		<cfset var payload = deserializeJSON(base64UrlDecode(listGetAt(arguments.token,2, variables.separadorToken)))>
+		<cfset var signiture = listGetAt(arguments.token,3, variables.separadorToken)>
 		
 		<!--- Make sure the algorithm listed in the header is supported --->
 		<cfif listFindNoCase(structKeyList(algorithmMap), header.alg) eq false>
@@ -68,7 +70,7 @@
 		</cfif>
 
 		<!--- Verify signature --->
-		<cfset var signInput = listGetAt(arguments.token,1,".") & "." & listGetAt(arguments.token,2,".")>
+		<cfset var signInput = listGetAt(arguments.token,1,variables.separadorToken) & variables.separadorToken & listGetAt(arguments.token,2,variables.separadorToken)>
 		<cfif signiture neq sign(signInput,algorithmMap[header.alg])>
 			<cfthrow type="Invalid Token" message="Signature verification failed: Invalid key">
 		</cfif>
@@ -93,10 +95,10 @@
 		</cfif>
 
 		<!--- Add Header - typ and alg fields--->
-		<cfset segments = listAppend(segments, base64UrlEscape(toBase64(serializeJSON({ "typ" =  "JWT", "alg" = hashAlgorithm }))),".")>
+		<cfset segments = listAppend(segments, base64UrlEscape(toBase64(serializeJSON({ "typ" =  "JWT", "alg" = hashAlgorithm }))),variables.separadorToken)>
 		<!--- Add payload --->
-		<cfset segments = listAppend(segments, base64UrlEscape(toBase64(serializeJSON(arguments.payload))),".")>
-		<cfset segments = listAppend(segments, sign(segments,algorithmMap[hashAlgorithm]),".")>
+		<cfset segments = listAppend(segments, base64UrlEscape(toBase64(serializeJSON(arguments.payload))),variables.separadorToken)>
+		<cfset segments = listAppend(segments, sign(segments,algorithmMap[hashAlgorithm]),variables.separadorToken)>
 
 		<cfreturn segments>
 	</cffunction>

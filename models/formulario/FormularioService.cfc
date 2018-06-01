@@ -27,7 +27,7 @@
 		* @id_idioma
 	--> 
 	<cffunction name="all" returnType="struct" hint="Obtiene todos los formularios según ID de un evento e idioma">
-		<cfargument name="id_evento" type="numeric" required="true" hint="">
+		<cfargument name="id_evento" type="any" required="true" hint="">
 		<cfargument name="event">
 		<cfargument name="rc">
 		
@@ -83,10 +83,6 @@
 			<cfset querySetCell(frm, 'id_campo', dao.allFieldsByGroup(valueList(groups.id_agrupacion)), frm.CurrentRow)>
 		</cfloop>
 		<!--- </cfif> --->
-		<!--- <cfif isdefined("url.debug")>
-			<cfdump var="#frm#" label="fmr">
-			<cfabort>
-		</cfif> --->
 
 		<cfset s.data.records = frm>
 		<cfset s.data.total   = frm.recordCount>
@@ -99,7 +95,7 @@
 		* @id_idioma
 	--> 
 	<cffunction name="meta" returnType="struct" hint="Obtiene todos los formularios según ID de un evento e idioma">
-		<cfargument name="id_evento" type="numeric" required="true" hint="">
+		<cfargument name="id_evento" type="any" required="true" hint="">
 		<cfargument name="sortBy" type="string" required="false" default="field" hint="Could be by 'field', 'form', 'group'">
 		
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
@@ -110,10 +106,10 @@
 		<!--- <cfif cache.lookup(cacheKey)>
 			<cfset campos = cache.get(cacheKey)>
 		<cfelse> --->
-			<cfset var allGroups = dao.groupsByEvent(id_evento)>
+			<cfset var allGroups = dao.groupsByEvent(arguments.id_evento)>
 			<cfset var fields 	 = dao.allFieldsByGroup(valueList(allGroups.id_agrupacion))>
 
-			<cfif sortBy EQ 'field'>
+			<cfif arguments.sortBy EQ 'field'>
 
 				<cfloop query="fields">				
 					<cfif NOT structKeyExists(campos, id_campo)>
@@ -121,13 +117,13 @@
 					</cfif>
 				</cfloop>
 			
-			<cfelseif sortBy EQ 'form'>
+			<cfelseif arguments.sortBy EQ 'form'>
 				<cfloop query="fields">				
 					<cfif NOT structKeyExists(campos, id_campo)>
 						<cfset campos[id_campo] = obtainMetaOfField(id_campo)>
 					</cfif>
 				</cfloop>
-			<cfelseif sortBy EQ 'group'>
+			<cfelseif arguments.sortBy EQ 'group'>
 				<cfloop query="fields">
 					<cfif !structKeyExists(campos, id_agrupacion)>
 						<cfquery name="local.title" dbtype="query" cachedWithin="#createTimeSpan( 0, 0, 1, 0 )#">
@@ -154,9 +150,13 @@
 		* @id_idioma
 	--> 
 	<cffunction name="byEvento" returnType="struct" hint="Obtiene todos los formularios según ID de un evento e idioma">
-		<cfargument name="id_evento" type="numeric" required="true" hint="">
+		<cfargument name="id_evento" type="any" required="true" hint="">
 		<cfargument name="event">
 		<cfargument name="rc">
+
+		<cfif isdefined('arguments.id_evento')>
+			<cfthrow message="Unknown event" errorcode=400>
+		</cfif>
 		
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
 		<cfset var campos  = createObject("java", "java.util.LinkedHashMap").init()>
@@ -188,19 +188,19 @@
 		* @id_idioma
 	--> 
 	<cffunction name="fieldsByEvento" returnType="struct" hint="Obtiene todos los formularios según ID de un evento e idioma">
-		<cfargument name="id_evento" type="numeric" required="true" hint="">
+		<cfargument name="id_evento" type="any" required="true" hint="">
 		<cfargument name="event">
 		<cfargument name="rc">
 		
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
 		<cfset var campos  = createObject("java", "java.util.LinkedHashMap").init()>
 
-		<cfset var cacheKey = 'q-form-fieldsByEvento-#id_evento#'>
+		<cfset var cacheKey = 'q-form-fieldsByEvento-#arguments.id_evento#'>
 
 		<cfif cache.lookup(cacheKey)>
 			<cfset campos = cache.get(cacheKey)>
 		<cfelse>
-			<cfset var allGroups = dao.groupsByEvent()>
+			<cfset var allGroups = dao.groupsByEvent(arguments.id_evento)>
 			<cfset var fields 	 = dao.allFieldsByGroup(valueList(allGroups.id_agrupacion))>
 
 			<cfloop query="fields">
@@ -502,9 +502,10 @@
 	</cffunction>
 
 	<cffunction name="camposPorEvento" returnType="any" output="false"  hint="">
+		<cfargument name="id_evento" type="any" required="true" hint="">
 		<cfargument name="filtered" type="any" required="false" default="true">
 
-		<cfset var allGroups = dao.groupsByEvent()>
+		<cfset var allGroups = dao.groupsByEvent(arguments.id_evento)>
 		<cfset var fields 	 = dao.allFieldsByGroupDefault(valueList(allGroups.id_agrupacion))>
 		
 		<cfif filtered>
