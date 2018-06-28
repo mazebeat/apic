@@ -71,7 +71,7 @@
 				SELECT nombre, apellidos, email_participante AS email, nombre_empresa, id_tipo_participante, id_sala
 				FROM vParticipantes
 				WHERE id_participante = <cfqueryparam value="#arguments.id_participante#" CFSQLType="CF_SQL_INTEGER">
-				AND id_evento IN (<cfqueryparam value="#session.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
+				AND id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 			</cfquery>
 			
 			<cfif queryColumnExists(local.participantesByID, 'id_tipo_participante')>

@@ -158,12 +158,10 @@
                 <cfqueryparam value="#arguments.rc.token#" cfsqltype="CF_SQL_VARCHAR" />,
                 <cfqueryparam value="#NOW()#" cfsqltype="CF_SQL_TIMESTAMP" />
             )
-            <!--- 
-            ON DUPLICATE KEY 
+            /* ON DUPLICATE KEY 
             UPDATE 
             user_request_count = <cfqueryparam value="#application.rate_limiter[cgi.remote_addr].attempts#" cfsqltype="CF_SQL_INTEGER" />,
-            last_attempt = <cfqueryparam value="#application.rate_limiter[cgi.remote_addr].last_attempt#" cfsqltype="CF_SQL_TIMESTAMP" />
-            --->
+            last_attempt = <cfqueryparam value="#application.rate_limiter[cgi.remote_addr].last_attempt#" cfsqltype="CF_SQL_TIMESTAMP" /> */
         </cfquery>    
     </cfif>
 </cffunction>
@@ -176,9 +174,7 @@
     <cfargument name="convertToUTC" default="true">
   
     <cfscript>
-        if (convertToUTC) {
-            datetime = dateConvert("local2utc", datetime );
-        }
+        if (convertToUTC) datetime = dateConvert("local2utc", datetime );
         return(dateFormat( datetime, "yyyy-mm-dd" ) & "T" & timeFormat( datetime, "HH:mm:ss" ) & "Z");
     </cfscript>
 </cffunction>
@@ -200,6 +196,8 @@
     <cfargument name="rc" required="false">
     <cfargument name="prc" required="false">
 
+    <cfparam name="arguments.rc.id_evento" default="NONE">
+
     <cfoutput>
     <cfinclude template="/default/maquina.cfm">
         <cfoutput>
@@ -207,28 +205,28 @@
                     #queMaquina#
                     <br>
                     <table>
-                    ID_EVENTO: #session.id_evento#<br>
+                    ID_EVENTO: #id_evento#<br>
                     <cfquery name="qNombreEvento" datasource="#application.datasource#" cachedwithin="#createtimespan(1,0,0,0)#">
                         select GROUP_CONCAT(nombre) AS 'nombre'
                         from vEventos
-                        where id_evento IN (<cfqueryparam value="#session.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
+                        where id_evento IN (<cfqueryparam value="#id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
                     </cfquery>
                     NOMBRE: #qNombreEvento.nombre#<br>
 
-                    <cfdump var="IP REMOTA: #CGI.REMOTE_ADDR#">
-                    <cfdump var="ES LOCALHOST: #isLocalHost(CGI.REMOTE_ADDR)#">
-                    <cfdump var="LOCALHOST IP: #getLocalHostIP()#">
-                    <cfdump var="FECHA Y HORA: #now()#">
+                    <cfdump var="IP Remota: #CGI.REMOTE_ADDR#" format="html">
+                    <cfdump var="Localhost: #isLocalHost(CGI.REMOTE_ADDR)#" format="html">
+                    <cfdump var="IP Localhost: #getLocalHostIP()#" format="html">
+                    <cfdump var="Fecha/Hora: #now()#" format="html">
                 
-                    MESSAGE: <cfdump var="#arguments.contenido#"><br>
+                    MESSAGE: <cfdump var="#arguments.contenido#" format="html"><br>
 
                     <cfif isdefined("arguments.contenido.StackTrace")>
-                        <cfdump var="#arguments.contenido.StackTrace#">
+                        <cfdump var="#arguments.contenido.StackTrace#" format="html">
                     </cfif>
 
                     <cfif isdefined('arguments.argumentos')>
                         ARGUMENTS:<br>
-                        <cfdump var="#arguments.argumentos#">
+                        <cfdump var="#arguments.argumentos#" format="html">
                     </cfif>
 
                     <cfif isdefined("cgi")>
@@ -237,15 +235,15 @@
                     </cfif>
 
                     <cfif isdefined("url")>
-                    URL: <cfdump var="#URL#"><br>
+                    URL: <cfdump var="#URL#" format="html"><br>
                     </cfif>
 
                     <cfif isdefined("FORM")>
-                    FORM: <cfdump var="#FORM#"><br>
+                    FORM: <cfdump var="#FORM#" format="html"><br>
                     </cfif>
                     
                     <cfif isdefined("SESSION")>
-                    SESSION: <cfdump var="#SESSION#"><br>
+                    SESSION: <cfdump var="#SESSION#" format="html"><br>
                     </cfif>
 
                     <cfif isdefined("prc.response")>
@@ -273,18 +271,15 @@
         </cfoutput>
 
         <cftry>
-            <cfset contenidoEmail = limitarLongitudLinea(contenidoEmail)>
-
             <cfset enviarElError(
                 argumentCollection: {
                     subject       : "API ERROR SIGE #queMaquina# #arguments.donde#",
-                    contenidoEmail: contenidoEmail
+                    contenidoEmail: encodeForHTML(limitarLongitudLinea(contenidoEmail))
                 }
             )>
 
-        <cfcatch type="any">
-
-        </cfcatch>
+            <cfcatch type="any">
+            </cfcatch>
         </cftry>
 
         </cfoutput>
@@ -310,18 +305,15 @@
 		--->
     </cfquery>
     
-	<cfmail
-		server      = "#local.qServidorEnviarError.server#"
-		username    = "#local.qServidorEnviarError.username#"
-		password    = "#local.qServidorEnviarError.password#"
-
-		to          = "#arguments.to#"
-		from        = "#arguments.from#"
-
-		subject     = "#arguments.subject#"
-		spoolenable = "false"
-	    type        = "html">
-			#arguments.contenidoEmail#
+	<cfmail server      = "#local.qServidorEnviarError.server#"
+            username    = "#local.qServidorEnviarError.username#"
+            password    = "#local.qServidorEnviarError.password#"
+            to          = "#arguments.to#"
+            from        = "#arguments.from#"
+            subject     = "#arguments.subject#"
+            spoolenable = "false"
+            type        = "html">
+        #arguments.contenidoEmail#
 	</cfmail>
 </cffunction>
 
@@ -337,9 +329,9 @@
             var requestBody = toString( getHttpRequestData().content );
             requestBody = deserializeJSON(requestBody, false);
 
-            var EventValues = isJson(event.getHTTPContent()) ? deserializeJson(event.getHTTPContent(), true) : event.getHTTPContent();	
-            var HeadersValues = GetHttpRequestData();			
-           
+            var EventValues = isJson(event.getHTTPContent()) ? deserializeJson(event.getHTTPContent(), true) : event.getHTTPContent();
+            var HeadersValues = GetHttpRequestData();	
+                    
             include template="/views/bugreport.cfm";
         }
 

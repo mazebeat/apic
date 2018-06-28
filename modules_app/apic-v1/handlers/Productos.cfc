@@ -18,13 +18,13 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var cacheKey = 'q-product-all-#session.id_evento#-#session.language#'>
+		<cfset var cacheKey = 'q-product-all-#arguments.rc.id_evento#-#session.language#'>
 
 		<cfif cache.lookup(cacheKey)>
 			<cfset var s = cache.get(cacheKey)>
 			<cfset prc.response.setCachedResponse(true)>
 		<cfelse>
-			<cfset var s = service.all(session.id_evento)>
+			<cfset var s = service.all(arguments.rc.id_evento)>
 
 			<cfif NOT structIsEmpty(s.data.records)>
 				<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -49,13 +49,15 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var cacheKey = 'q-product-allSelected-#session.id_evento#-#session.language#'>
+	
+
+		<cfset var cacheKey = 'q-product-allSelected-#arguments.rc.id_evento#-#session.language#'>
 
 		<cfif cache.lookup(cacheKey)>
 			<cfset var s = cache.get(cacheKey)>
 			<cfset prc.response.setCachedResponse(true)>
 		<cfelse>
-			<cfset var s = service.allSelected(session.id_evento, arguments.event, arguments.rc)>
+			<cfset var s = service.allSelected(arguments.rc.id_evento, arguments.event, arguments.rc)>
 
 			<cfif NOT structIsEmpty(s.data.records)>
 				<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -73,13 +75,13 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var cacheKey = 'q-product-selectedByParticipante-#session.id_evento#-#session.language#'>
+		<cfset var cacheKey = 'q-product-selectedByParticipante-#arguments.rc.id_evento#-#session.language#'>
 
 		<!--- <cfif cache.lookup(cacheKey)>
 			<cfset var s = cache.get(cacheKey)>
 			<cfset prc.response.setCachedResponse(true)>
 		<cfelse> --->
-			<cfset var s = service.selectedByParticipante(session.id_evento, arguments.event, arguments.rc)>
+			<cfset var s = service.selectedByParticipante(arguments.rc.id_evento, arguments.event, arguments.rc)>
 
 			<cfif NOT structIsEmpty(s.data.records)>
 				<cfset s.data.records = QueryToStruct(s.data.records)>

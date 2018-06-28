@@ -34,7 +34,7 @@
 		<cfset s = { ok = true, mensaje= "", data = { "records"={},  "count"= 0, "total"= 0, "pages"= "1 of 1" } }>
 
 		<cfset var records = dao.all(arguments.id_evento, arguments.event, arguments.rc)>
-		
+
 		<cfif queryColumnExists(records, 'id_tipo_participante')>
 			<cfset var tipoParticipantes = tpDAO.all(arguments.event, arguments.rc)>
 			<!--
@@ -77,15 +77,15 @@
 		<cfset s = { ok =true, mensaje="", data ={ "records"={},  "count"=0 } }>
 
 		<!--- <cftry> --->
-			<!--- <cfset var cacheKey = 'q-participante-get-#id_participante#'>
+			<cfset var cacheKey = 'q-participante-get-#id_participante#'>
 
 			<cfif cache.lookup(cacheKey)>
 				<cfset var records = cache.get(cacheKey)>
-			<cfelse> --->
-				<cfset var records = dao.get(arguments.event, arguments.rc, arguments.id_evento, arguments.id_participante)>
+			<cfelse>
+				<cfset var records = dao.get(arguments.event, arguments.rc, arguments.rc.id_evento, arguments.id_participante)>
 
-				<!--- <cfset cache.set(cacheKey, records, 60, 30)> --->
-			<!--- </cfif> --->
+				<cfset cache.set(cacheKey, records, 60, 30)>
+			</cfif>
 
 			<cfset s.data.records = records>
 			<cfset s.data.count   = records.recordCount>
@@ -186,7 +186,7 @@
 		<cfset s = { mensaje= "", data= { "records"={}} }>
 		<cfset out = ''>
 
-		<cfset dataFields = valS.validateCreateDataFields(arguments.rc, arguments.id_evento)>
+		<cfset dataFields = valS.validateCreateDataFields(arguments.rc, arguments.rc.id_evento)>
 		<cfset vList = { a = [], b = [], c = [], d = [] }>
 		
 		<cfloop collection="#dataFields.data.records#" item="key">

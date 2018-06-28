@@ -87,8 +87,8 @@
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
 		<cftry>
-			<cfset var records = dao.selectedByParticipante(arguments.id_evento, arguments.event, arguments.rc)>	
-		
+			<cfset var records = dao.selectedByParticipante(arguments.id_evento, arguments.event, arguments.rc)>
+			
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>
 		<cfcatch type = "any">

@@ -149,8 +149,8 @@
 		<cfargument name="event">
 		<cfargument name="rc">
 
-		<cfset allParticipantes = partServ.get(arguments.event, arguments.rc, arguments.rc.id_participante)>
-	
+		<cfset allParticipantes = partServ.get(arguments.event, arguments.rc, arguments.rc.id_evento, arguments.rc.id_participante)>
+
 		<cfquery name="local.seleccionados" datasource="#application.datasource#">
 			SELECT id_producto, comprar, vender, colaborar
 			FROM vProductosSeleccionados

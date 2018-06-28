@@ -42,6 +42,7 @@ component extends="coldbox.system.testing.BaseTestCase" appMapping="/root"{
 			it( "can handle invalid HTTP Calls", function(){
 				var event = execute( event="echo.onInvalidHTTPMethod", renderResults = true );
 				var response = event.getPrivateValue( "response" );
+				
 				expect(	response.getError() ).toBeTrue();
 				expect(	response.getStatusCode() ).toBe( 405 );
 			});
@@ -63,7 +64,7 @@ component extends="coldbox.system.testing.BaseTestCase" appMapping="/root"{
 				var event 		= execute( route="echo/index" );
 				var response 	= event.getPrivateValue( "response" );
 				expect(	response.getError() ).toBeFalse();
-				expect(	response.getData() ).toBe( "Welcome to my ColdBox RESTFul Service" );
+				expect(	response.getMessages()[1] ).toBe( "Bienvenido a tufabricadeventos.com API RESTFul" );
 			});
 
 			it( "can handle missing actions", function(){

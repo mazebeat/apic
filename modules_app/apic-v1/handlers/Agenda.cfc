@@ -20,7 +20,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var s = service.index(session.id_evento, session.language)>
+		<cfset var s = service.index(arguments.rc.id_evento, session.language)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -35,7 +35,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var s = service.get(arguments.rc.id_participante, session.id_evento, session.language)>
+		<cfset var s = service.get(arguments.rc.id_participante, arguments.rc.id_evento, session.language)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>

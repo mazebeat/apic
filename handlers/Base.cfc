@@ -2,7 +2,7 @@
  * Base
  */
 component extends="BaseHandler" {
-	
+
 	// OPTIONAL HANDLER PROPERTIES
 	this.prehandler_only 	= "";
 	this.prehandler_except 	= "";

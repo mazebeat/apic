@@ -2,22 +2,30 @@
 
 	<cffunction name="configure" access="public" returntype="void" output="false" hint="Interceptor config">
 		<cfscript>
-			
+			return false;
 		</cfscript>
 	</cffunction>
 
 	<cffunction name="preProcess" returntype="void" output="false" access="public">
-		<cfargument name="event" hint="The request context object" />
-		<cfargument name="rc" hint="Request Context struct" />
-		<cfargument name="prc" hint="Private Request Context struct" />
-		<cfargument name="interceptData" hint="A structure containing intercepted information." />
-		<cfargument name="buffer" hint="A request buffer to produce elegant output from the interceptor" />
+		<cfargument name="event"			hint="The request context object" />
+		<cfargument name="rc"				hint="Request Context struct" />
+		<cfargument name="prc"				hint="Private Request Context struct" />
+		<cfargument name="interceptData" 	hint="A structure containing intercepted information." />
+		<cfargument name="buffer" 			hint="A request buffer to produce elegant output from the interceptor" />
 
+		<cfparam name="arguments.rc.language" default="ES">
 
-		<cfif structkeyexists(arguments.rc, "lang")>
-			<cfset session["language"] = uCase(mid(arguments.rc.lang, 1, 2))>
+		<cfset local.countryLanguage = {
+			"es": "es_ES",
+			"en": "en_US",
+			"fr": "fr_FR"
+		}>
 
-			<cfif NOT arrayFind(application.languages, session.language)>
+		<cfif structKeyExists(arguments.rc, "lang")>
+			<cfset session.language = uCase(mid(arguments.rc.lang, 1, 2))>
+			<cfset arguments.rc.language = session.language>
+
+			<cfif NOT arrayFind(application.languages, arguments.rc.language)>
 				<cfscript>
 					if(!structKeyExists(prc, "response")){ 
 						prc.response = getModel("Response"); 
@@ -40,9 +48,14 @@
 					);
 				</cfscript>		
 			</cfif>
+			<cfset setFWLocale(local.countryLanguage[lCase(rc.language)])>	
 		<cfelse>
-			<cfset session["language"] = application.language>
+			<cfset setFWLocale(local.countryLanguage[lCase(application.language)])>	
+			<cfset session.language = application.language>
 		</cfif>	
+	</cffunction>
+
+	<cffunction name="postProcess" returntype="void" output="false" access="public">
 	</cffunction>
 </cfcomponent>
 

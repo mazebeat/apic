@@ -25,13 +25,15 @@
         "relax":"^2.2.0+00032"
     },
     "installPaths":{
-        "cf-jwt-simple":"cf-jwt-simple\\",
+        "cbi18n":"modules\\cbi18n",
+        "cf-jwt-simple":"modules\\cf-jwt-simple",
         "coldbox":"coldbox\\",
-        "relax":"modules/relax",
-        "testbox":"testbox"
+        "relax":"modules\\relax",
+        "testbox":"testbox\\"
     },
     "dependencies":{
-        "cf-jwt-simple":"cf-jwt-simple\\",
+        "cbi18n":"modules\\cbi18n",
+        "cf-jwt-simple":"modules\\cf-jwt-simple",
         "coldbox":"coldbox\\"
     },
     "scripts":{

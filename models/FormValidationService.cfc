@@ -1,7 +1,7 @@
 <!-- 
 	Validation Service
  -->
-	<cfcomponent hint="Validation Service" output="false" accessors="true">
+<cfcomponent hint="Validation Service" output="false" accessors="true">
 
 	<!--- Properties --->
 	<cfproperty name="formS"	inject="model:formulario.FormularioService">
@@ -53,9 +53,12 @@
 			</cfif>
 
 			<!--- Se validan campos login/password --->
-			<!--- <cfset validateLoginPassword(record)> --->
+			<!--- <cfset validateLoginPassword(record, arguments.id_evento)> --->
 
 			<!--- Validamos si existe el campo "login-password" --->
+			<cfif structKeyExists(record, 'id_participante')>
+				<cfset structDelete(record, 'id_participante')>
+			</cfif>
 			<cfif structKeyExists(record, 'login')>
 				<cfset var login = record.login>
 				<cfset structDelete(record, 'login')>
@@ -93,7 +96,7 @@
 				@url.allow_duplicate Fuerza la inserción de datos.
 			---> 
 			<cfif getHTTPRequestData().method EQ 'POST' AND (NOT structKeyExists(url, 'allow_duplicate') OR url.allow_duplicate == false)>
-				<cfset existsParticipant(record)>
+				<cfset existsParticipant(record, arguments.id_evento)>
 			</cfif>
 
 			<!--- Se validan emails duplicados --->
@@ -131,15 +134,15 @@
 			<cfset arguments.dataFields.data.records[key] = record>
 		</cfloop>
 
-		<cfset var formFields = formS.formFields()>
+		<cfset var ff = formS.formFields(arguments.id_evento)>
 
 		<!--- Validamos campos obligatorios --->
-		<cfset requiredFields(keyList, arguments.dataFields.data.records, formFields)>
+		<cfset requiredFields(keyList, arguments.dataFields.data.records, ff)>
 
 		<!--- Validamos por tipo de campo - configuración --->
-		<cfset configFields(keyList, arguments.dataFields.data.records, formFields)>
+		<cfset configurationFields(keyList, arguments.dataFields.data.records, ff)>
 
-		<cfset formFiles(keyList, arguments.dataFields.data.records, formFields)>
+		<cfset formFiles(keyList, arguments.dataFields.data.records, ff, arguments.id_evento)>
 
 		<cfreturn arguments.dataFields>
 	</cffunction>
@@ -159,7 +162,7 @@
 
 		<cfscript>
 			// Filtramos los registros para obtener solo los campos "obligatorios"
-			reqFields = structFilter(formFields, function(key, value) {
+			reqFields = structFilter(arguments.formFields, function(key, value) {
 				return structKeyExists(value.configuration, 'required') AND value.configuration.required == true;
 			});
 
@@ -168,7 +171,7 @@
 
 			// Validamos que los campos entregados por el cliente contengan todas las keys obligatorias
 			for(value in listToArray(myKeyList)) {
-				if(arrayFind(keyList, value) == 0) {
+				if(arrayFind(arguments.keyList, value) == 0) {
 					throw(message="Have not been found [#value#] into [#arrayToList(keyList)#] of the required fields [#myKeyList#]" );
 				}
 			}
@@ -180,7 +183,7 @@
 	<!--- 
 		Valida campos por su configuración según el tipo de campo al que pertenezca
 	 --->
-	<cffunction name="configFields" output="false" returntype="any">
+	<cffunction name="configurationFields" output="false" returntype="any">
 		<cfargument name="keyList" type="array" required="true">
 		<cfargument name="fields" type="any" required="true">
 		<cfargument name="formFields" type="any" required="true">
@@ -189,11 +192,11 @@
 
 		<cfscript>
 			try {
-				for(f in fields) {
+				for(f in arguments.fields) {
 					for(k in structKeyArray(f)) {
-						if(NOT structKeyExists(formFields, k)) { continue; }
+						if(NOT structKeyExists(arguments.formFields, k)) { continue; }
 						
-						var fval = structFind(formFields, k);
+						var fval = structFind(arguments.formFields, k);
 
 						if(isValid('string', fval.type)) {
 							switch (fval.type) {
@@ -240,12 +243,13 @@
 		<cfargument name="keyList"		type="array"	required="true">
 		<cfargument name="fields"		type="any"		required="true">
 		<cfargument name="formFields"	type="any"		required="true">
+		<cfargument name="id_evento" required="true">
 
 		<cfset var reqFields = {}>
 
 		<cfscript>
 			// Filtramos los registros para obtener solo los campos "obligatorios"
-			reqFields = structFilter(formFields, function(key, value) {
+			reqFields = structFilter(arguments.formFields, function(key, value) {
 				return (value.type == 'file');
 			});
 
@@ -257,7 +261,7 @@
 			for(data in fields) {
 				for(key in listToArray(myKeyList)) {
 					if(structKeyExists(data, key)) {
-						data[key] = cdao.uploadFile(data[key]);
+						data[key] = cdao.uploadFile(data[key], arguments.id_evento);
 					}
 				}							
 			}			
@@ -521,35 +525,36 @@
 	--->
 	<cffunction name="validateLoginPassword" output="false" returntype="void">
 		<cfargument name="record"> 
+		<cfargument name="id_evento"> 
 
 		<cfscript>	
 			if(getHTTPRequestData().method == 'POST') {
-				if(structKeyExists(record, 'login') OR structKeyExists(record, 'password')) {
-					// if(structKeyExists(record, 'login') AND NOT structKeyExists(record, 'password')) {
+				if(structKeyExists(arguments.record, 'login') OR structKeyExists(arguments.record, 'password')) {
+					// if(structKeyExists(arguments.record, 'login') AND NOT structKeyExists(arguments.record, 'password')) {
 					// 	throw(message="Error Validation. It has not been found login or password");
 					// }
 
-					// if(structKeyExists(record, 'password') AND NOT structKeyExists(record, 'login')) {
+					// if(structKeyExists(arguments.record, 'password') AND NOT structKeyExists(arguments.record, 'login')) {
 					// 	throw(message="Error Validation. It has not been found login or password");
 					// }
 
 					
-					if(structKeyExists(record, 'login') AND isEmpty(record.login)) {
+					if(structKeyExists(arguments.record, 'login') AND isEmpty(arguments.record.login)) {
 						throw(message="Error Validation. Login's empty ");
 					} 
 
-					if(structKeyExists(record, 'password') AND isEmpty(record.password)) {
+					if(structKeyExists(arguments.record, 'password') AND isEmpty(arguments.record.password)) {
 						throw(message="Error Validation. Password's empty ");
 					} 
 
-					var us = dao.getByLogin(record.login);
+					var us = dao.getByLogin(arguments.record.login, arguments.id_evento);
 
 					if(us.recordcount GT 0) {
 						for(u in us) {
-							if(dao.desEncriptar(u.password) EQ record.password) {
+							if(dao.desEncriptar(u.password) EQ arguments.record.password) {
 								throw(message="Error Validation. Participante already exists");
 							} 
-							if(dao.desEncriptar(u.password) NEQ record.password) { 
+							if(dao.desEncriptar(u.password) NEQ arguments.record.password) { 
 							}
 						}				
 					} else {
@@ -557,31 +562,31 @@
 				}
 			}
 			if(getHTTPRequestData().method == 'PUT') {
-				if(structKeyExists(record, 'email') AND structKeyExists(record, 'login')) {
-					if(NOT structKeyExists(record, 'login')) {
+				if(structKeyExists(arguments.record, 'email') AND structKeyExists(arguments.record, 'login')) {
+					if(NOT structKeyExists(arguments.record, 'login')) {
 						throw(message="Error Validation. It has not been found login");
 					}
 
-					if(structKeyExists(record, 'login') AND isEmpty(record.login)) {
+					if(structKeyExists(arguments.record, 'login') AND isEmpty(arguments.record.login)) {
 						throw(message="Error Validation. Login's empty ");
 					} 
 
-					var us = dao.getByLogin(record.login);
+					var us = dao.getByLogin(arguments.record.login, arguments.id_evento);
 
 					if(us.recordcount LTE 0) {
-						var us = dao.getByLogin(record.email);
+						var us = dao.getByLogin(arguments.record.email, arguments.id_evento);
 						if(us.recordcount GT 0) {
-							throw(message="Error Validation. Participante does not exists [#record.email#].");
+							throw(message="Error Validation. Participante does not exists [#arguments.record.email#].");
 						}
 					}
 				} 
-				if(structKeyExists(record, 'email') AND NOT structKeyExists(record, 'login')) {
-					var us = dao.getByLogin(record.email);
+				if(structKeyExists(arguments.record, 'email') AND NOT structKeyExists(arguments.record, 'login')) {
+					var us = dao.getByLogin(arguments.record.email, arguments.id_evento);
 
 					if(us.recordcount LTE 0) {
-						var us = dao.getByLogin(record.email);
+						var us = dao.getByLogin(arguments.record.email, arguments.id_evento);
 						if(us.recordcount GT 0) {
-							throw(message="Error Validation. Participante does not exists [#record.login#].");
+							throw(message="Error Validation. Participante does not exists [#arguments.record.login#].");
 						}
 					}
 				}
@@ -612,17 +617,13 @@
 	 --->
 	<cffunction name="existsParticipant" output="false" returntype="void">
 		<cfargument name="record">
+		<cfargument name="id_evento">
 		
-		<cfset local.valFieldBasic = formS.defaultFields(session.id_evento, session.language)>
+		<cfset local.valFieldBasic = formS.defaultFields(arguments.id_evento, session.language)>
 		<cfset validation = {}>
 	
 		<cfif local.valFieldBasic.recordCount GT 0>
 			<cfset fieldList = structKeyList(arguments.record)>
-
-			<cfif isdefined("url.debug")>
-				<cfdump var="#fieldList#" label="var">
-				<cfabort>
-			</cfif>
 
 			<cfloop query="#local.valFieldBasic#">
 				<cfif NOT listFind(fieldList, id_campo)>

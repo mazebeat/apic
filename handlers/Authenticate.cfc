@@ -43,37 +43,23 @@ component extends="Base" {
 	 */
 	any function index(event, rc, prc) {
 
-		event.paramValue("password", "");
+		arguments.event.paramValue("password", "");
 
-		// try {
+		try {
 			if(structKeyExists(rc, "password")) {
 				var authuser = authservice.validate(rc.password);
 
 				if (!isNull(authuser)) {
 					var token = authuser.token;
-					var id = '';
-					var type = '';
+					var id    = authuser.getId_evento();
+					var type  = findNoCase("ClientesToken", getMetadata(authuser).name) GT 0 ? 'c' : 'e';
 
-					if(structkeyexists(authuser, 'id_cliente')) {
-						id    = authuser.getId_cliente();
-						type  = "cliente";
-					} else if(structkeyexists(authuser, 'id_evento')) {
-						id    = authuser.getId_evento();
-						type  = "evento";
-					} 
-
-					if(isdefined('token') && !authservice.validateToken(token)) {
-						if(type EQ 'cliente') {
-							token = authservice.grantToken(authuser.getId_cliente(), "c");
-						} else if(type EQ 'evento') {
-							token = authservice.grantToken(authuser.getId_evento(), "e");
-						} else {
-							throw(message="Error: We truly sorry but client validation has failed", errorcode=STATUS.NOT_AUTHENTICATED);
-						}
+					if(isdefined("authuser.token") && isNull(token) OR isEmpty('token') || !authservice.validateToken(token)) {
+						token = authservice.grantToken(id, type);
 					}
 
 					if(isNull(token) OR isEmpty(token)) {
-						throw(message="Error: API Key or API Token does not exists", errorcode=STATUS.NOT_AUTHENTICATED);					
+						throw(message="API Key or API Token does not exists", errorcode=STATUS.NOT_AUTHENTICATED);					
 					}
 
 					var aut = encrypt(serializeJSON(authuser), getSetting('authSecretKey'), "AES", "Base64");
@@ -81,31 +67,20 @@ component extends="Base" {
 					session["usersession"] = { 
 						"type"     = type, 
 						"auth"     = aut,
-						"defaults" = {
-								"form" = {
-									"fields" = ""
-							}
-						}
+						"defaults" = { "form" = { "fields" = "" } }
 					};
 
-					session["id_evento"] = authuser.getId_evento();
-						
-					rc.token = token;
-					var data = {"token" = token};
-					
-					if(type == "cliente") {
-						structInsert(data, 'eventos', '');
-					}
-					prc.response.setData(data);
+					arguments.rc.token = token;
+					arguments.prc.response.setData({ "token" = token });
 				} else {
-					throw(message="Error: Client validation has failed", errorcode=STATUS.NOT_AUTHENTICATED);
+					throw(message="Client validation has failed", errorcode=STATUS.NOT_AUTHENTICATED);
 				}
 			} else {
-				throw(message="Error: Parameters are empty", errorcode=STATUS.NOT_AUTHENTICATED);
+				throw(message="Parameters are empty", errorcode=STATUS.NOT_AUTHENTICATED);
 			}
-		// } catch(Any e) {
-		// 	throw(message="Error: API Key are not correct", errorcode=e.errorcode, detail=e);
-		// }
+		} catch(Any e) {
+			throw(message="API Key is not correct", errorcode=STATUS.NOT_AUTHENTICATED);
+		}
 	}
 
 	/**
@@ -254,7 +229,7 @@ component extends="Base" {
 		}
 
 		if(isnull(usr.getId_permisosToken())) {
-			throw(message = "Error: Empty object, please generate password first.", errorcode = 500);
+			throw(message = "Empty object, please generate password first.", errorcode = 500);
 		}
 
 		var permisos = usr.permisos();
@@ -281,11 +256,11 @@ component extends="Base" {
 		}
 
 		if(arrayLen(rc.permissions) < 3) {
-			throw(message = "Error: Permissions count incorrect.", errorcode = 500);
+			throw(message = "Permissions count incorrect.", errorcode = 500);
 		}
 
 		if(isnull(usr.getId_permisosToken())) {
-			throw(message = "Error: Empty object, please generate password first.", errorcode = 500);
+			throw(message = "Empty object, please generate password first.", errorcode = 500);
 		}
 			
 		var permisos = usr.permisos();

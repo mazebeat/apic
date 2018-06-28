@@ -54,6 +54,8 @@
 	</cffunction>
 
 	<cffunction name="agrupacionDeCampos">
+		<cfargument name="rc">
+
 		<cfquery name = "local.agrupaciones" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 			SELECT *
 			FROM vAgrupacionesDeCampos
@@ -70,6 +72,7 @@
 
 	<cffunction name="cargarValoresCampoGrupoFormulario" access="public" returntype="query" output="false">
 		<cfargument name="id_campo" type="any" required="true">
+		<cfargument name="rc">
 
 		<cfquery name="qValoresCamposGruposFormulario" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 			SELECT *
@@ -82,6 +85,7 @@
 	<cffunction name="get" access="public" returntype="query" output="false">
 		<cfargument name="id_campo" type="numeric" required="true">
 		<cfargument name="id_agrupacion" type="numeric" required="false" default="0">
+		<cfargument name="rc">
 		
 		<cfquery name="local.qUnCampo" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 			SELECT
@@ -107,13 +111,14 @@
 
 	<cffunction name="uploadFile" access="public" returntype="string" output="false">
 		<cfargument name="file" type="string" required="true">
+		<cfargument name="id_evento" required="true">
 
 		<cfset var nombreFichero = ''>
 		<cfif isValid('URL', arguments.file)>
 			<cftry>
 				<cfquery name="local.web" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 					SELECT id_web FROM sige.webs
-					WHERE eventos_id_evento IN (<cfqueryparam value="#session.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
+					WHERE eventos_id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 					AND tiposWebs_id_tipo_web = 1
 					AND activa = 1
 					AND fecha_baja IS NULL

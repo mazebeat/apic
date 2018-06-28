@@ -25,6 +25,6 @@ component extends="Base"{
 	 * Vista principal retorna mensaje de bienvenida
 	 */
 	any function index(event, rc, prc) {
-		prc.response.addMessage("Bienvenido a tufabricadeventos.com API RESTFul");						
+		prc.response.addMessage(getResource(resource='api.welcome'));						
 	}
 }

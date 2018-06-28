@@ -11,7 +11,6 @@
     property name="clienteTokenService" type="any" 			inject="model:security.ClientesTokenService";
 	property name="eventosTokenService" type="any" 			inject="model:security.EventosTokenService";
 	
-	// Properties
 	
 	/**
 	 * Constructor
@@ -29,6 +28,10 @@
 		var data   = passwordToStruct(password);
 		var result = {};
 
+		// if(isdefined("url.debug")) {
+		// 	writeDump(var="#data#", label="data");
+		// 	abort;
+		// }
 	
 		if(data.id != 0 && data.type EQ "c") {
 			result = clienteTokenService.validate(data.id, password);
@@ -49,10 +52,11 @@
 
 		var token   = "";
 		var payload = {
-			"iss"  = application.urlbase,
-			"exp"  = dateAdd("n", tokenExpiration, now()),
-			"sub"  = id,
-			"type" = type
+			"iss"       = application.urlbase,
+			"exp"       = dateAdd("n", tokenExpiration, now()),
+			"sub"       = id,
+			"id_evento" = id,
+			"type"      = type
 		};
 
 		try {
@@ -74,21 +78,19 @@
 	 * @accessToken user token
 	 */	
 	boolean function validateToken(required string accessToken) {
-		
 		var validToken = false;
+		var data       = {};
 	
 		try {
-			var data   = jwt.decode(accessToken);		
+			data   = jwt.decode(accessToken);		
 			validToken = true;
-
-			session.token.data = data;
 		} catch(any e) {
 			if(isdefined('url.debug')) {
 				throw(e);	
 			}
 		}
 
-		if (structKeyExists(local, "data")) {
+		if (structCount(data) GT 0) {
 			if (now() > data.exp) {
 				validToken = false;
 			}
@@ -238,5 +240,20 @@
 		}
 
 		return rsp;
+	}
+
+	any function obtainIdEventoByToke(required string token) {
+		var validToken = false;
+		var data       = {};
+	
+		try {
+			data   = jwt.decode(token);		
+		} catch(any e) {
+			if(isdefined('url.debug')) {
+				throw(e);	
+			}
+		}
+
+		return data.id_evento;
 	}
 } 

@@ -9,5 +9,9 @@
 <cfparam name="url.propertiesFilename" 	default="TEST.properties">
 <cfparam name="url.propertiesSummary" 	default="false" type="boolean">
 
+<cfparam name="application.datasource"  default="sige" type="string">
+<cfparam name="application.languages" 	default="#["ES", "EN", "IT", "RS"]#" type="array">
+<cfparam name="application.language" 	default="ES" type="string">
+
 <!--- Include the TestBox HTML Runner --->
 <cfinclude template="/testbox/system/runners/HTMLRunner.cfm" >

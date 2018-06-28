@@ -23,11 +23,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfif isdefined('rc.id_evento')>
-			<cfset var s = service.all(rc.id_evento, event, rc)>
-		<cfelse>
-			<cfset var s = service.all(session.id_evento, event, rc)>
-		</cfif>
+		<cfset var s = service.all(arguments.rc.id_evento, event, rc)>
 
 		<cfif NOT structIsEmpty(s.data.records) AND isQuery(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -45,21 +41,13 @@
 		<cfargument name="prc">
 
 		<cftry>
-			<cfif isdefined('rc.id_evento')>
-				<cfset var cacheKey = 'q-formH-meta-#rc.id_evento#'>
-			<cfelse>
-				<cfset var cacheKey = 'q-formH-meta-#session.id_evento#'>
-			</cfif>
+			<cfset var cacheKey = 'q-formH-meta-#arguments.rc.id_evento#'>
 
 			<cfif cache.lookup(cacheKey)>
 				<cfset var s = cache.get(cacheKey)>
 				<cfset prc.response.setCachedResponse(true)>
 			<cfelse>
-				<cfif isdefined('rc.id_evento')>
-					<cfset var s = service.meta(rc.id_evento)>
-				<cfelse>
-					<cfset var s = service.meta(session.id_evento)>
-				</cfif>
+				<cfset var s = service.meta(arguments.rc.id_evento)>
 
 				<cfif NOT structIsEmpty(s.data.records) AND isQuery(s.data.records)>
 					<cfset s.data.records = QueryToStruct(s.data.records)>

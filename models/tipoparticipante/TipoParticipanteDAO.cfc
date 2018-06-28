@@ -31,7 +31,7 @@
 				SELECT id_tipo_participante, nombre, codigo,
 				CONCAT("#link#/tiposparticipantes/", id_tipo_participante) AS _link
 				FROM vTiposDeParticipantes
-				WHERE eventos_id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">);
+				WHERE eventos_id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">);
 			</cfquery>
 
 			<cfreturn local.configEventos>

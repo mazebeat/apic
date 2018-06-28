@@ -30,7 +30,7 @@
 		<cfargument name="prc">
 
 		
-		<cfset var s = generalServ.all(session.id_evento)>
+		<cfset var s = generalServ.all(arguments.rc.id_evento)>
 		
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>

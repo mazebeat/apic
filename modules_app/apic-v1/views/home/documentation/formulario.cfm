@@ -3,13 +3,13 @@
     
     <div class="section-block" id="form-meta">
         <h3 class="block-title"><span class="get">GET</span> Metadata</h3>
-        <p class="text-justify"><code class="url">/apic/v#apiversion#/{lang}/{token}/fomularios/meta</code></p>
+        <p class="text-justify"><code class="url">/apic/v#apiversion#/{lang}/{token}/formularios/meta</code></p>
         <p class="text-justify">
             Obtiene toda la metadata de los formulario y grupos asociados al evento. De esta manera se puede consultar por campos específicos de formulario.</p>
         <div class="code-block">
             <h6>Ejemplo:</h6>
             <p class="text-justify">
-                <code>#application.urlbase#/apic/v#apiversion#/{lang}/{token}/fomularios/meta</code></p>
+                <code>#application.urlbase#/apic/v#apiversion#/{lang}/{token}/formularios/meta</code></p>
             <pre class="line-numbers"><code class="language-json">#encodeForHTML('{
             #chr(9)#data: {
             #chr(9)##chr(9)#"count": 1,
@@ -80,12 +80,12 @@
     <div class="section-block" id="form-basics">
         <h3 class="block-title"><span class="get">GET</span> Datos básicos formulario</h3>
         <p class="text-justify">
-            <code class="url">/apic/v#apiversion#/{lang}/{token}/fomularios</code>
+            <code class="url">/apic/v#apiversion#/{lang}/{token}/formularios</code>
         </p>
         <div class="code-block">
             <h6>Ejemplo:</h6>
             <p class="text-justify">
-                <code>#application.urlbase#/apic/v#apiversion#/{lang}/{token}/fomularios</code></p>
+                <code>#application.urlbase#/apic/v#apiversion#/{lang}/{token}/formularios</code></p>
             <pre class="line-numbers"><code class="language-json">#encodeForHTML('{
             #chr(9)#data: {
             #chr(9)##chr(9)#"count": 5,
@@ -133,12 +133,12 @@
     <div class="section-block" id="form-id">
         <h3 class="block-title"><span class="get">GET</span> Obtener por ID</h3>
         <p class="text-justify">
-            <code class="url">/apic/v#apiversion#/{lang}/{token}/fomularios/{id}</code>
+            <code class="url">/apic/v#apiversion#/{lang}/{token}/formularios/{id}</code>
         </p>
         <div class="code-block">
             <h6>Ejemplo:</h6>
             <p class="text-justify">
-                <code>#application.urlbase#/apic/v#apiversion#/{lang}/{token}/fomularios/1234</code></p>
+                <code>#application.urlbase#/apic/v#apiversion#/{lang}/{token}/formularios/1234</code></p>
             <pre class="line-numbers"><code class="language-json">#encodeForHTML('{
             #chr(9)#data: {
             #chr(9)##chr(9)#"count": 1,

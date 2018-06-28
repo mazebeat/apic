@@ -1,39 +1,51 @@
 <cfoutput>
+    <cfprocessingdirective pageencoding="utf-8">
     <cfscript>
         var apiversion = 1;
         var apilanguage = session.language
         var docUrl = listFirst(cgi.REQUEST_URL, "?");
     </cfscript>
+
     <!DOCTYPE html>
-    <!--[if IE 8]> <html lang="en" class="ie8"> <![endif]-->
-    <!--[if IE 9]> <html lang="en" class="ie9"> <![endif]-->
+    <!--[if IE 8]> <html lang="es" class="ie8"> <![endif]-->
+    <!--[if IE 9]> <html lang="es" class="ie9"> <![endif]-->
     <!--[if !IE]><!-->
-    <html lang="#lcase(apilanguage)#">
+    <html lang="#prc.i18n.getFWLanguageCode()#">
     <!--<![endif]-->
 
     <head>
-        <title>APIc V#apiversion# Documentación</title>
+        <title>Tufabricadeventos.com | Documentación APIc V#apiversion#</title>
         <base href="#getSetting('htmlBaseURL')#">
         <!-- Meta -->
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="language" content="#lcase(apilanguage)#">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="description" content="APIc V#apiversion# Tufabricadeventos.com">
+        <meta name="description" content="Documentación manual de usuario APIc V#apiversion# por Tufabricadeventos.com">
         <meta name="author" content="TFE">
+        <meta name="copyright"content="Tufabricadeventos">
+        <meta name="robots" content="index, follow">
+
+        <meta name="og:site_name" property="og:site_name" content="Tufabricadeventos.com"/>
+        <meta name="og:title" property="og:title" content="Tufabricadeventos.com | Documentación APIc V#apiversion#">
+        <meta name="og:description" property="og:description" content="Documentación manual de usuario APIc V#apiversion# por Tufabricadeventos.com"/>
+        <meta name="og:type" property="og:type" content="website" />
+        <meta name="og:url" property="og:url" content="#application.urlbase#/index.cfm/apic/v1/es/doc" />
+        <meta name="og:image" property="og:image" content="http://estatico.tufabricadeventos.com/common/images/logoTFE.gif" />
         
         <link rel="alternate" hreflang="#apilanguage#" href="#docUrl#">
         <link rel="canonical" href="#docUrl#">
 
         <link rel="shortcut icon" href="http://www.tufabricadeventos.com/files/2213/6015/1524/bigIcon-online.png">
         <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
         <!-- Global CSS -->
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
-        <!-- <link rel="stylesheet" href="plugins/bootstrap/css/bootstrap.min.css"> -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+
         <!-- Plugins CSS -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
         
         <link rel="stylesheet" href="#application.urlbase#/includes/plugins/prism/prism.css">
-        <!--- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.8.4/themes/prism.min.css"> --->
     
         <!-- Theme CSS -->
         <link id="theme-style" rel="stylesheet" href="#application.urlbase#/includes/css/styles.css">
@@ -42,7 +54,6 @@
         <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
         <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
         <![endif]-->
-
     </head>
 
     <body class="body-blue" data-spy="scroll" data-target="##doc-nav" data-offset="0">
@@ -226,7 +237,7 @@
                             <section class="doc-section" id="datosprincipales-section">
                                 <h2 class="section-title">Datos Principales</h2>
                                 <div class="section-block">
-                                    <p class="text-justify">URL Base: <code class="url">#application.urlbase#</code></p>
+                                    <p class="text-justify">URL Base: <code class="url">#application.urlbase#/index.cfm</code></p>
                                     <p class="text-justify">
                                         Métodos utilizados
                                         <strong><span class="get">GET</span>, <span class="post">POST</span>, <span class="put">PUT</span></strong>
@@ -303,10 +314,11 @@
             </div>
         </footer>
 
-        <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+
         <script src="#application.urlbase#/includes/plugins/prism/prism.js"></script>
         <script src="#application.urlbase#/includes/js/main.js"></script>
     </body>

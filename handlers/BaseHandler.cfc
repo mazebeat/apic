@@ -10,8 +10,8 @@
 component extends="coldbox.system.EventHandler" {
 	// Inject AuthenticationService
 	property name="authService" type="any" 	inject="model:security.AuthenticationService";
-	property name="emaillogger" type="any" 	inject="logBox:logger:emaillogger"; 
-
+	property name="i18n" 		type="any"	inject="i18n@cbi18n";
+	
 	// Pseudo "constants" used in API Response/Method parsing
 	property name="METHODS";
 	property name="STATUS";
@@ -36,10 +36,11 @@ component extends="coldbox.system.EventHandler" {
 		"CREATED"                = 201,
 		"ACCEPTED"               = 202,
 		"NO_CONTENT"             = 204,
-		"RESET"                  = 205,
+		"RESET_CONTENT"          = 205,
 		"PARTIAL_CONTENT"        = 206,
 		"MULTI_STATUS"           = 207,
 		"ALREADY_REPORTED"       = 208,
+		"NOT_MODIFIED"           = 304, 
 		"BAD_REQUEST"            = 400,
 		"NOT_AUTHORIZED"         = 403,
 		"NOT_AUTHENTICATED"      = 401,
@@ -64,10 +65,11 @@ component extends="coldbox.system.EventHandler" {
 		"CREATED"                = "Created",
 		"ACCEPTED"               = "Accepted",
 		"NO_CONTENT"             = "No content",
-		"RESET"                  = "Reset",
+		"RESET_CONTENT"          = "Reset Content",
 		"PARTIAL_CONTENT"        = "Partial content",
 		"MULTI_STATUS"           = "Multi status",
 		"ALREADY_REPORTED"       = "Already reported",
+		"NOT_MODIFIED"           = "Not Modified",
 		"BAD_REQUEST"            = "Bad request",
 		"NOT_AUTHORIZED"         = "Unauthorized Resource",
 		"NOT_AUTHENTICATED"      = "Invalid or Missing Credentials",
@@ -108,7 +110,9 @@ component extends="coldbox.system.EventHandler" {
 		super.init(application.cbController);
         // my stuff here
         return this;
-    }
+	}
+	
+	// property name="resourceService" inject="i18n@cbi18n";
 
 	/**
 	 * PreHandler for all actions it inherits
@@ -120,12 +124,15 @@ component extends="coldbox.system.EventHandler" {
 	 * @eventArguments 
 	 */
 	function preHandler(event, rc, prc, targetAction, eventArguments) {
+		param name="arguments.rc.id_evento" default="";
+		
 		try {
 			// Start time
 			var stime    = getTickCount();
 
 			// prepare our response object
 			prc.response = getModel("Response");
+			prc.i18n = variables.i18n;
 
 			try {
 				if (isJSON(request._body)) {
@@ -137,11 +144,12 @@ component extends="coldbox.system.EventHandler" {
 				throw(message="Invalid JSON Format!", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
 			}
 		} catch(Any e){
+
 			// Log Locally
 			log.error("[PreHandler] Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
 
 			// Setup General Error Response
-			var code = empty(e.errorcode) ? STATUS.INTERNAL_ERROR: e.errorcode;
+			var code = empty(e.errorcode) ? STATUS.INTERNAL_ERROR : e.errorcode;
 			var msg  = findStatusMessage(code);
 		
 			prc.response
@@ -170,6 +178,7 @@ component extends="coldbox.system.EventHandler" {
 
 			// prepare our response object
 			prc.response = getModel("Response");
+			prc.i18n = variables.i18n;
 			
 			// prepare argument execution
 			var args = { event = event, rc = rc, prc = prc };
@@ -183,7 +192,8 @@ component extends="coldbox.system.EventHandler" {
 
 			if (findNoCase("Echo", event.getCurrentEvent()) == 0 && 
 				findNoCase("Authenticate", event.getCurrentEvent()) == 0 && 
-				findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
+				findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0 && 
+				findNoCase("apic-v1:home.index", event.getCurrentEvent()) == 0) {
 
 				limiterByTime(getSetting('maxUserRequest'), getSetting('waitTimeRequest'), prc, rc, event);
 				
@@ -192,7 +202,7 @@ component extends="coldbox.system.EventHandler" {
 			}		
 
 			// Check APIc Token
-			checkAuthenticationToken(event, rc, prc, targetAction, eventArguments, args);
+			// checkAuthenticationToken(event, rc, prc, targetAction, eventArguments, args);
 
 			// Check Sessions			
 			validateSession(event, rc, prc);
@@ -292,6 +302,7 @@ component extends="coldbox.system.EventHandler" {
 	* on localized errors
 	*/
 	function onError(event, rc, prc, faultAction, exception, eventArguments){
+		param name="faultAction" default="";
 	
 		// Log Locally
 		log.error("Error in base handler (#faultAction#): #exception.message# #exception.detail#", exception);
@@ -302,7 +313,7 @@ component extends="coldbox.system.EventHandler" {
 		}
 
 		// Setup General Error Response
-		var code    = empty(exception.errorcode) ? STATUS.INTERNAL_ERROR: exception.errorcode;
+		var code = empty(exception.errorcode) ? STATUS.INTERNAL_ERROR: exception.errorcode;
 		var msg = findStatusMessage(code);
 	
 		prc.response
@@ -344,11 +355,11 @@ component extends="coldbox.system.EventHandler" {
 	* on invalid http verbs
 	*/
 	function onInvalidHTTPMethod(event, rc, prc, faultAction, eventArguments){
-		
+		param name="faultAction" default="";
 
 		// Log Locally
-		log.warn("InvalidHTTPMethod Execution of (#faultAction#): #event.getHTTPMethod()#", getHTTPRequestData());
-		
+		// log.warn("InvalidHTTPMethod Execution of (#faultAction#): #event.getHTTPMethod()#", getHTTPRequestData());
+
 		// Setup Response
 		prc.response = getModel("Response")
 			.setError(true)
@@ -356,22 +367,17 @@ component extends="coldbox.system.EventHandler" {
 			.addMessage("InvalidHTTPMethod Execution: #event.getHTTPMethod()#")
 			.setStatusCode(STATUS.NOT_ALLOWED)
 			.setStatusText(MESSAGES.NOT_ALLOWED);
-
-		if(isdefined("url.debug")) {
-			writeDump(var="#event#", label="event onInvalidHTTPMethod");
-			abort;
-		}
-		
+			
 		// Render Error Out
 		event.renderData(
-			type		= prc.response.getFormat(),
-			data 		= prc.response.getDataPacket(reset=true),
-			contentType = prc.response.getContentType(),
-			statusCode 	= prc.response.getStatusCode(),
-			statusText 	= prc.response.getStatusText(),
-			location 	= prc.response.getLocation(),
-			isBinary 	= prc.response.getBinary()
-		);
+				type		= prc.response.getFormat(),
+				data 		= prc.response.getDataPacket(reset=true),
+				contentType = prc.response.getContentType(),
+				statusCode 	= prc.response.getStatusCode(),
+				statusText 	= prc.response.getStatusText(),
+				location 	= prc.response.getLocation(),
+				isBinary 	= prc.response.getBinary()
+			);
 	}
 
 	/**
@@ -390,7 +396,7 @@ component extends="coldbox.system.EventHandler" {
 			.setError(true)
 			.addMessage("Action '#missingAction#' could not be found")
 			.setStatusCode(STATUS.NOT_ALLOWED)
-			.setStatusText("Invalid Action");
+			.setStatusText(MESSAGES.NOT_ALLOWED);
 		
 		// Render Error Out
 		event.renderData(
@@ -513,13 +519,6 @@ component extends="coldbox.system.EventHandler" {
 			event.paramValue("token", "");
 			event.paramValue("rc.token", "");
 
-			// if(getSetting("environment") == "development" && 
-			// 	(rc.token EQ "TOKEN" || !len(rc.token)) && isdefined('url.debug')) {
-			// 	session.id_evento   = 1;
-			// 	rc.contraints.token = "";
-			// 	rc.token            = authService.grantToken(session.id_evento);
-			// }	
-
 			/* Extract the token from the authorization header */
 			if (!len(rc.token) && structKeyExists(getHTTPRequestData().headers, "authorization")) {
 				rc.token = listLast(getHTTPRequestData().headers.authorization," ");
@@ -539,21 +538,21 @@ component extends="coldbox.system.EventHandler" {
 	 * Valida session del cliente, buscando por ID session.
 	 */
 	private void function validateSession(event, rc, prc) {
-		// if (findNoCase("authenticate", event.getCurrentEvent()) == 0 &&
-		// 	findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
+		if (findNoCase("Echo", event.getCurrentEvent()) == 0 && 
+			findNoCase("Authenticate", event.getCurrentEvent()) == 0 && 
+			findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0 &&
+			findNoCase("apic-v1:home.index", event.getCurrentEvent()) == 0) {
 
-		// 	if(NOT StructKeyExists(session, 'id_evento')) {
-		// 		if(structkeyexists(session, 'token')) {
-		// 			if(structkeyexists(session.token, 'isvalid')) {
-		// 				if (StructKeyExists(session, 'usersession') AND StructKeyExists(session.usersession, 'auth')) {
-		// 					session.id_evento = session.usersession.auth.id_evento;  
-		// 				} else {
-		// 					throw("Has not been found a client authenticated");
-		// 				}         
-		// 			}
-		// 		}
-		// 	}
-		// }
+			if(NOT StructKeyExists(arguments.rc, 'id_evento') OR isEmpty(arguments.rc.id_evento)) {
+				if(structkeyexists(arguments.rc, 'token')) {
+					arguments.rc.id_evento = authService.obtainIdEventoByToke(arguments.rc.token);
+					
+					if (isEmpty(arguments.rc.id_evento)) {
+						throw(message=MESSAGES.NOT_AUTHENTICATED, errorCode=STATUS.NOT_AUTHENTICATED);
+					}         
+				}
+			}
+		}
 	}
 
 	/**

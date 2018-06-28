@@ -96,7 +96,7 @@
 	</cffunction>
 
 	<cffunction name="groupsByForm" returnType="query" hint="Obtiene todos los formularios según ID de un formulario">
-		<cfargument name="id_formulario" type="numeric" required="false" default="#session.id_evento#" displayname="" hint="">
+		<cfargument name="id_formulario" type="numeric" required="false" displayname="" hint="">
 
 		<!--- <cfquery name="local.agrupacion" datasource="#application.datasource#"> --->
 		<cfquery name="local.agrupacion" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">

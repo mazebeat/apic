@@ -23,13 +23,15 @@
     	<cfargument name="event">
 		<cfargument name="rc">
 		<cfargument name="prc">
-		
-		<cfif arguments.prc.response.getStatusCode() EQ 200 AND structKeyExists(arguments.rc, "token")>
-			<cfset arguments.prc.response.setMessages([]).addMessage("Welcome to APIc V1")>		
-		</cfif>
-    </cffunction>
 
-	<cffunction name="doc" hint="Despliega documentación APIc V1">		
+		<cfset arguments.prc.response.setMessages([]).addMessage(getResource(resource='api.welcomeAPI'))>
+	</cffunction>
+
+	<cffunction name="doc" hint="Despliega documentación APIc V1">	
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
+
 		<cfset arguments.event.setView("home/documentation").noLayout()>
 	</cffunction>
 </cfcomponent>

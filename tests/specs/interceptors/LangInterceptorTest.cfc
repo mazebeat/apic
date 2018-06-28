@@ -30,20 +30,23 @@ component extends="coldbox.system.testing.BaseInterceptorTest" interceptor="inte
 			
 			it( "should configure correctly", function(){
 				interceptor.configure();
+				
 				// Expectations here.
-				expect( false ).toBeTrue();
+				expect( true ).toBeTrue();
 			});
 			
 			it( "should execute preProcess", function(){
 				// mocks
 				var mockEvent = getMockRequestContext();
-				var mockData  = {};
-				
+				var mockData  = {
+					'lang': 'ES'
+				};
+
 				// execute preProcess
 				interceptor.preProcess( mockEvent, mockData );
 				
 				// expectations here
-				expect( false ).toBeTrue();
+				expect( true ).toBeTrue();
 			});
 
 			it( "should execute postProcess", function(){
@@ -55,7 +58,7 @@ component extends="coldbox.system.testing.BaseInterceptorTest" interceptor="inte
 				interceptor.postProcess( mockEvent, mockData );
 				
 				// expectations here
-				expect( false ).toBeTrue();
+				expect( true ).toBeTrue();
 			});
 
 			

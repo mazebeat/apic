@@ -38,8 +38,6 @@ component{
 	};
 	this.mappings[ "/testbox" ] = expandPath( "../apic/testbox/" );
 
-	// this.ormsettings.search.indexDir = getDirectoryFromPath(getCurrentTemplatePath()) & "/ormindex";
-
 	if (structKeyExists(url, "killsession")) { this.sessionTimeout = createTimeSpan( 0, 0, 0, 1 ); }
 
 	// application start

@@ -229,10 +229,12 @@ div.col-md-12 { word-wrap: break-word; }</style>
                                         <tr>
                                             <th scope="row">#k#</th>
                                             <td>
-                                                <cfif isSimpleValue( myStruct[ k ] )>
+                                                <cfif isNull(myStruct[ k ])>
+                                                    NULL
+                                                <cfelseif isSimpleValue( myStruct[ k ] )>
                                                     #htmlEditFormat( myStruct[ k ] )#									
                                                 <cfelse>
-                                                    <cfdump var="#SerializeJSON(myStruct[ k ])#" />
+                                                    <cfdump format="html" var="#SerializeJSON(myStruct[ k ])#" />
                                                 </cfif>
                                             </td>
                                         </tr>
@@ -242,10 +244,12 @@ div.col-md-12 { word-wrap: break-word; }</style>
                                         <tr>
                                             <th scope="row"> #k# </th>
                                             <td>
-                                                <cfif isSimpleValue( myStruct[ k ] )>
+                                                <cfif isNull(myStruct[ k ])>
+                                                    NULL
+                                                <cfelseif isSimpleValue( myStruct[ k ] )>
                                                     #htmlEditFormat( myStruct[ k ] )#									
                                                 <cfelse>
-                                                    <cfdump var="#SerializeJSON(myStruct[ k ])#" />
+                                                    <cfdump format="html" var="#SerializeJSON(myStruct[ k ])#" />
                                                 </cfif>
                                             </td>
                                         </tr>
@@ -278,21 +282,17 @@ div.col-md-12 { word-wrap: break-word; }</style>
                             <cfloop collection="#consignmentDetailArray#" item="value" index="i">
                                 <cfset myStruct = value>
                                 
-                                <!--- <cfif isdefined("url.debugg")>
-                                    <cfdump var="#i#" label="myStruct">
-                                    <cfdump var="#myStruct#" label="myStruct">
-                                    <cfabort>
-                                </cfif> --->
-
                                 <cfif isStruct(myStruct)>
                                     <cfloop collection="#myStruct#" index="k">
                                         <tr>
                                             <th scope="row">#k#</th>
                                             <td>
-                                                <cfif isSimpleValue( myStruct[ k ] )>
+                                                <cfif isNull(myStruct[ k ])>
+                                                    NULL
+                                                <cfelseif isSimpleValue( myStruct[ k ] )>
                                                     #htmlEditFormat( myStruct[ k ] )#									
                                                 <cfelse>
-                                                    <cfdump var="#SerializeJSON(myStruct[ k ])#" />
+                                                    <cfdump format="html" var="#SerializeJSON(myStruct[ k ])#" />
                                                 </cfif>
                                             </td>
                                         </tr>
@@ -302,10 +302,12 @@ div.col-md-12 { word-wrap: break-word; }</style>
                                         <tr>
                                             <th scope="row"> #k# </th>
                                             <td>
-                                                <cfif isSimpleValue( myStruct[ k ] )>
+                                                <cfif isNull(myStruct[ k ])>
+                                                    NULL
+                                                <cfelseif isSimpleValue( myStruct[ k ] )>
                                                     #htmlEditFormat( myStruct[ k ] )#									
                                                 <cfelse>
-                                                    <cfdump var="#SerializeJSON(myStruct[ k ])#" />
+                                                    <cfdump format="html" var="#SerializeJSON(myStruct[ k ])#" />
                                                 </cfif>
                                             </td>
                                         </tr>
@@ -336,10 +338,39 @@ div.col-md-12 { word-wrap: break-word; }</style>
                                 <tr>
                                     <th scope="row">#htmlEditFormat( key )#</th>
                                     <td>
-                                        <cfif isSimpleValue( form[ key ] )>
+                                        <cfif isNull(form[ key ])>
+                                            NULL
+                                        <cfelseif isSimpleValue( form[ key ] )>
                                             #htmlEditFormat( form[ key ] )#
                                         <cfelse>
-                                            <cfdump var="#form[ key ]#">
+                                            <cfdump format="html" var="#form[ key ]#">
+                                        </cfif>
+                                    </td>
+                                </tr>
+                            </cfif>
+                        </cfloop>	
+                    </tbody>
+                </table>
+
+                <table class="table table-hover table-sm">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th colspan="2" class="text-center">RC variables</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <cfloop collection="#rc#" item="key">
+                            <cfif key neq "fieldnames">
+                                <tr>
+                                    <th scope="row">#htmlEditFormat( key )#</th>
+                                    <td>
+                                        <cfif isNull(rc[ key ])>
+                                            NULL
+                                        <cfelseif isSimpleValue( rc[ key ] )>
+                                            #htmlEditFormat( rc[ key ] )#
+                                        <cfelse>
+                                            <cfdump format="html" var="#rc[ key ]#">
                                         </cfif>
                                     </td>
                                 </tr>
@@ -361,10 +392,12 @@ div.col-md-12 { word-wrap: break-word; }</style>
                                 <tr>
                                     <th scope="row">#key#</th>
                                     <td>
-                                        <cfif isSimpleValue( session[ key ] )>
+                                        <cfif isNull(form[ key ])>
+                                            NULL
+                                        <cfelseif isSimpleValue( form[ key ] )>
                                             #htmlEditFormat( session[ key ] )#									
                                         <cfelse>
-                                            <cfdump var="#SerializeJSON(session[ key ])#" />
+                                            <cfdump format="html" var="#SerializeJSON(session[ key ])#" />
                                         </cfif>
                                     </td>
                                 </tr>
@@ -409,11 +442,13 @@ div.col-md-12 { word-wrap: break-word; }</style>
                     <tbody>
                         <tr>
                             <td colspan="2">
-                                <cfif isSimpleValue( oException.getExtraInfo() )>
+                                <cfif isNull( oException.getExtraInfo() )>
+                                    NULL
+                                <cfelseif isSimpleValue( oException.getExtraInfo() )>
                                     <cfif not len(oException.getExtraInfo())>[N/A]
                                         <cfelse>#oException.getExtraInfo()#</cfif>
                                     <cfelse>
-                                        <cfdump var="#oException.getExtraInfo()#" expand="false">
+                                        <cfdump format="html" var="#oException.getExtraInfo()#" expand="false">
                                 </cfif>                                                    
                             </td>
                         </tr>

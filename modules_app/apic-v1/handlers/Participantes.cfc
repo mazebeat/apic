@@ -29,7 +29,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">	
 
-		<cfset s = service.all(session.id_evento, arguments.event, arguments.rc)>
+		<cfset s = service.all(arguments.rc.id_evento, arguments.event, arguments.rc)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -49,7 +49,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset s = service.get(arguments.event, arguments.rc, session.id_evento, arguments.rc.id_participante)>
+		<cfset s = service.get(arguments.event, arguments.rc, arguments.rc.id_evento, arguments.rc.id_participante)>
 		
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -103,7 +103,7 @@
 		<cfargument name="prc">
 
 		<!--- <cftry> --->
-			<cfset s = service.create(arguments.event, arguments.rc, session.id_evento)>
+			<cfset s = service.create(arguments.event, arguments.rc, arguments.rc.id_evento)>
 			<cfset arguments.prc.response.setData(s.data)> 
 		<!--- <cfcatch type = "any"> --->
 			<!--- <cfset sendError(cfcatch, rc, event)> --->
@@ -124,7 +124,7 @@
 		<cfargument name="prc">
 
 		<!--- <cftry> --->
-			<cfset s = service.modify(arguments.event, arguments.rc, session.id_evento)>
+			<cfset s = service.modify(arguments.event, arguments.rc, arguments.rc.id_evento)>
 			<cfset arguments.prc.response.setData(s.data)> 
 		<!--- <cfcatch type = "any"> --->
 			<!--- <cfset sendError(cfcatch, rc, event)> --->

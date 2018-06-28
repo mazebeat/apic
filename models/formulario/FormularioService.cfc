@@ -237,7 +237,7 @@
 			<!--- <cfset var allGroups = cache.get(cacheKey)> --->
 		<!--- <cfelse> --->
 		<cfset var frm = dao.getByIdTipoParticipante(id_tipo_participante, event, rc)>
-				
+		
 		<cfloop query="frm">
 			<cfset var groups = dao.groupsByForm(id_formulario)>
 			<cfset querySetCell(frm, 'id_agrupacion', valueList(groups.id_agrupacion), frm.CurrentRow)>
@@ -516,9 +516,11 @@
 	</cffunction>
 
 	<cffunction name="formFields">
-		<cfset var formFields = this.meta(session.id_evento)>
+		<cfargument name="id_evento">
+		
+		<cfset var ff = this.meta(arguments.id_evento)>
 
-		<cfreturn formFields.data.records>
+		<cfreturn ff.data.records>
 	</cffunction>
 
 	<cffunction name="defaultFields">

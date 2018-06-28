@@ -73,6 +73,7 @@
 	 --->
 	<cffunction name="generarConsultaInforme" returnType="string" hint="">
 		<cfargument name="ids_campo" type="string" required="true" default="" displayname="Obtiene campos por ID" hint="Lista de IDs campo separados por coma">
+		<cfargument name="id_evento">
 
 		<cfquery name="local.qCamposInforme" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 			SELECT id_campo, id_tipo_campo, id_agrupacion, id_tipo_campo_fijo
@@ -87,11 +88,12 @@
 		<cfset var sColumnas           = createObject("java", "java.util.LinkedHashMap").init()>	
 		<cfset var sColumnasInnerWhere = createObject("java", "java.util.LinkedHashMap").init()>
 
-		<cfreturn arraytolist(generarColumnas(local.qCamposInforme))>
+		<cfreturn arraytolist(generarColumnas(local.qCamposInforme, arguments.id_evento))>
 	</cffunction>
 
 	<cffunction name="generarColumnas" access="public" returntype="any" output="false">
 		<cfargument name="qCamposInforme" type="Query" required="true" hint="">
+		<cfargument name="id_evento">
 
 		<cfset s=[]>
 		<cfset w=[]>
@@ -105,7 +107,7 @@
 					<cfif (arrayFind([3,4,6,7,8,9,109,110,111,112,118,119,120,131,235,236,237,238,239,240,248,244,157,158,254,255,559,560,160], id_campo) gt 0)>
 						<!--- CAMPOS NORMALES --->
 						<!--- <cfset ArrayAppend(s, generarUnaColumnaCampoOtros(id_campo, titulo))> --->
-						<cfset ArrayAppend(s, generarUnaColumnaCampoOtros(id_campo))>
+						<cfset ArrayAppend(s, generarUnaColumnaCampoOtros(id_campo, arguments.id_evento))>
 						
 						<!--- <cfif structKeyExists(arguments.rc, 'CAMPO_#id_campo#')>
 							<cfset valor = evaluate('arguments.rc.CAMPO_#id_campo#')>
@@ -332,6 +334,7 @@
 
 	<cffunction name="generarUnaColumnaCampoOtros" access="public" rturntype="string" output="false">
 		<cfargument name="id_campo" required="true"/>
+		<cfargument name="id_evento" required="true"/>
 		<!--- <cfargument name="titulo" required="true"/> --->
 
 		<cfset var s = ''>
@@ -377,8 +380,8 @@
 							SELECT DISTINCT(GROUP_CONCAT(valor SEPARATOR '<br>'))
 							FROM resultadosDePagos rp
 							INNER JOIN resultadosDePagosPasarelasDatos rppd ON rp.id_resultado = rppd.id_resultado
-							WHERE rp.id_evento IN (#session.id_evento#)
-							AND rppd.id_evento IN (#session.id_evento#)
+							WHERE rp.id_evento IN (#arguments.id_evento#)
+							AND rppd.id_evento IN (#arguments.id_evento#)
 							AND rp.id_participante = p.id_participante
 							AND metodointro = 'auto'
 							AND rp.resultado IN ('ok')
@@ -399,8 +402,8 @@
 									INNER JOIN
 								resultadosDePagosPasarelasDatos rppd ON rp.id_resultado = rppd.id_resultado
 							where
-								rp.id_evento = #session.id_evento#
-								and rppd.id_evento = #session.id_evento#
+								rp.id_evento = #arguments.id_evento#
+								and rppd.id_evento = #arguments.id_evento#
 									and rp.id_participante = p.id_participante
 									and metodointro = 'auto'
 									and rp.resultado in ('ok')
@@ -445,21 +448,21 @@
 				<!--- PERMISOS PARA VER ESTE PARTICIPANTE --->
 				<cfcase value="133">
 					<cfsavecontent variable="s">
-						REPLACE(listaNombresPermisosParticipante(p.id_participante, #session.id_evento#), CONVERT(',' USING utf8), '<br>') AS "#arguments.id_campo#"
+						REPLACE(listaNombresPermisosParticipante(p.id_participante, #arguments.id_evento#), CONVERT(',' USING utf8), '<br>') AS "#arguments.id_campo#"
 					</cfsavecontent>
 				</cfcase>
 
 				<!--- USUARIO QUE LO CREO --->
 				<cfcase value="134">
 					<cfsavecontent variable="s">
-						nombreUsuario(p.id_usuario_alta, #session.id_evento#) AS "#arguments.id_campo#"
+						nombreUsuario(p.id_usuario_alta, #arguments.id_evento#) AS "#arguments.id_campo#"
 					</cfsavecontent>
 				</cfcase>
 
 				<!--- USUARIO QUE LO MODIFICO --->
 				<cfcase value="135">
 					<cfsavecontent variable="s">
-						nombreUsuario(p.id_usuario_modif, #session.id_evento#) AS "#arguments.id_campo#"
+						nombreUsuario(p.id_usuario_modif, #arguments.id_evento#) AS "#arguments.id_campo#"
 					</cfsavecontent>
 				</cfcase>
 
@@ -508,7 +511,7 @@
 							wia.nombre AS titulo
 						FROM vWebsIdiomasActivos wia 
 						INNER JOIN webs w ON w.id_web = wia.id_web
-						AND w.eventos_id_evento IN (<cfqueryparam value="#session.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
+						AND w.eventos_id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 						AND w.tiposWebs_id_tipo_web = 1
 						ORDER BY wia.nombre
 					</cfquery>
@@ -581,7 +584,7 @@
 				<cfcase value="8">
 					<cfsavecontent variable="s">
 						<cfquery name="local.qGetZonaHorariaEvento" datasource="#application.datasource#" cachedwithin="#createTimeSpan(0,0,1,0)#">
-							select zonaHorariaEvento(#session.id_evento#) AS zonaHoraria
+							select zonaHorariaEvento(#arguments.id_evento#) AS zonaHoraria
 						</cfquery>
 						<cfif local.qGetZonaHorariaEvento.zonaHoraria is 'Europe/Madrid'>
 							p.fecha_alta
@@ -667,7 +670,7 @@
 					<cfsavecontent variable="s">
 						<!--- DATE_FORMAT(CONVERT_TZ(str_to_date(p.fecha_modif, '%d/%m/%Y %T'), 'Europe/Madrid',zonaHorariaEvento(p.id_evento)), '%d/%m/%Y %T')  --->
 						<cfquery name="local.qGetZonaHorariaEvento" datasource="#application.datasource#" cachedwithin="#createTimeSpan(0,0,1,0)#">
-							select zonaHorariaEvento(#session.id_evento#) AS zonaHoraria
+							select zonaHorariaEvento(#arguments.id_evento#) AS zonaHoraria
 						</cfquery>
 						<cfif local.qGetZonaHorariaEvento.zonaHoraria is 'Europe/Madrid'>
 							p.fecha_modif
@@ -1175,7 +1178,7 @@
 						<!---<cfset var aIn = arrayNew(1)>
 
 						<cfloop list="#valor#" index="id_valor">
-							<cfset aIn.append("find_in_set(convert(#id_valor# using utf8), (listaIdsConceptos2(p.id_participante, 1, '#session.id_idioma#', #session.id_evento#)))")>
+							<cfset aIn.append("find_in_set(convert(#id_valor# using utf8), (listaIdsConceptos2(p.id_participante, 1, '#session.id_idioma#', #arguments.id_evento#)))")>
 						</cfloop>
 						(
 							#arrayToList(aIn, ' and ')#
@@ -1694,6 +1697,7 @@
 	<cffunction name="rellenarDatosInforme" returntype="query" output="false">
 		<cfargument name="consulta" required="true" type="string" >
 		<cfargument name="query" required="true" type="query">
+		<cfargument name="id_evento">
 
 		<cfset var q = arguments.query>
 
@@ -1701,10 +1705,10 @@
 		<cfinclude template = "/default/admin/helpers/string.cfm">
 
 		<cfif arguments.query.recordCount gt 0>
-			<cfset q = rellenarDatosCampos(arguments.consulta, q)>
-			<cfset q = rellenarDatosCampoSiNo(arguments.consulta, q)>
-			<cfset q = rellenarDatosCamposLista(arguments.consulta, q)>
-			<cfset q = rellenarDatosCamposMultiSeleccion(arguments.consulta, q)>
+			<cfset q = rellenarDatosCampos(arguments.consulta, q, arguments.id_evento)>
+			<cfset q = rellenarDatosCampoSiNo(arguments.consulta, q, arguments.id_evento)>
+			<cfset q = rellenarDatosCamposLista(arguments.consulta, q, arguments.id_evento)>
+			<cfset q = rellenarDatosCamposMultiSeleccion(arguments.consulta, q, arguments.id_evento)>
 		</cfif>
 		
 		<cfreturn q>
@@ -1713,7 +1717,7 @@
 	<cffunction name="rellenarDatosCampos" returntype="query" output="false">
 		<cfargument name="consulta" required="true" type="string" >
 		<cfargument name="query" required="true" type="query">
-		<cfargument name="nombresCampos" required="false" default="#structNew()#">
+		<cfargument name="id_evento">
 		
 		<cfset var q = arguments.query>
 
@@ -1726,7 +1730,7 @@
 			<cfset var id_campo = ''>
 			<cfset var aCampos = []>
 			
-			<cfset sCampos = obtenerValores(posCampos, listaIds)>
+			<cfset sCampos = obtenerValores(posCampos, listaIds, arguments.id_evento)>
 
 			<cfset var sLocal = {}>
 			<cfset var nombreColumna = ''>
@@ -1753,7 +1757,8 @@
 	<cffunction name="rellenarDatosCampoSiNo" returntype="query" output="false">
 		<cfargument name="consulta" required="true" type="string" >
 		<cfargument name="query" required="true" type="query">
-		
+		<cfargument name="id_evento">
+
 		<cfset var q = arguments.query>
 
 		<!--- CAMPOSINO --->
@@ -1765,7 +1770,7 @@
 			<cfset var id_campo = ''>
 			<cfset var aCampos = []>
 
-			<cfset sCamposSiNo = obtenerValores(posCampoSiNo, listaIds)>
+			<cfset sCamposSiNo = obtenerValores(posCampoSiNo, listaIds, arguments.id_evento)>
 
 			<cfloop query="q">
 				<cfloop from ="1" to="#posCampoSiNo.len()#" index="i">
@@ -1809,7 +1814,7 @@
 			<cfset var id_campo = ''>
 			<cfset var aCampos = []>
 			
-			<cfset sCamposMultiSeleccion = obtenerValores(posCamposMultiseleccion, listaIds)>
+			<cfset sCamposMultiSeleccion = obtenerValores(posCamposMultiseleccion, listaIds, arguments.id_evento)>
 
 			<cfloop query="q">
 				<cfloop from ="1" to="#posCamposMultiseleccion.len()#" index="i">
@@ -1851,6 +1856,7 @@
 	<cffunction name="rellenarDatosCamposLista" returntype="query" output="false">
 		<cfargument name="consulta" required="true" type="string" >
 		<cfargument name="query" required="true" type="query">
+		<cfargument name="id_evento">
 
 		<cfset var q = arguments.query>
 
@@ -1863,7 +1869,7 @@
 			<cfset var id_campo = ''>
 			<cfset var aCampos = []>
 			
-			<cfset sCamposLista = obtenerValores(posCamposLista	, listaIds)>
+			<cfset sCamposLista = obtenerValores(posCamposLista	, listaIds, arguments.id_evento)>
 
 			<cfloop query="q">
 				<cfloop from ="1" to="#posCamposLista.len()#" index="i">
@@ -1896,6 +1902,7 @@
 	<cffunction name="obtenerValores">
 		<cfargument name="posCampos" type="array" required="true" default="[]">
 		<cfargument name="listaIds" type="any" required="true">
+		<cfargument name="id_evento">
 
 		<cfset var aCampos = []>
 		<cfset var sCamposLista = {}>
@@ -1906,7 +1913,7 @@
 			<cfquery name="local.qDatosParticipantes" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
 				SELECT id_participante, valor, id_campo
 				FROM vParticipantesDatos
-				WHERE id_evento IN (<cfqueryparam value="#session.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
+				WHERE id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 				AND id_participante IN (<cfqueryparam value="#arguments.listaIds#" cfsqltype="CF_SQL_INTEGER" list="true">)
 				AND id_campo = <cfqueryparam value="#id_campo#" cfsqltype="CF_SQL_INTEGER">
 			</cfquery>
