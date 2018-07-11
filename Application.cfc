@@ -23,6 +23,7 @@ component{
 	this.secureJSON             = true;
 	this.compression            = true;
 
+
 	// COLDBOX STATIC PROPERTY, DO NOT CHANGE UNLESS THIS IS NOT THE ROOT OF YOUR COLDBOX APP
 	COLDBOX_APP_ROOT_PATH = getDirectoryFromPath( getCurrentTemplatePath() );
 	// The web server mapping to this application. Used for remote purposes or static purposes
@@ -49,6 +50,10 @@ component{
 		application.languages  = ["ES", "EN", "IT", "RS"];
 		application.language   = 'ES';
 		application.datasource = this.datasource;
+
+		application.api = { 
+			version = 1
+		}
 
 		return true;
 	}

@@ -24,7 +24,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset arguments.prc.response.setMessages([]).addMessage(getResource(resource='api.welcomeAPI'))>
+		<cfset arguments.prc.response.setMessages([]).addMessage(getResource(resource='api.welcomeAPI', values= [ application.api.version ] ))>
 	</cffunction>
 
 	<cffunction name="doc" hint="Despliega documentación APIc V1">	

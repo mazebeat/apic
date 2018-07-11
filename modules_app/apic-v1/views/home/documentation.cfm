@@ -1,7 +1,7 @@
 <cfoutput>
     <cfprocessingdirective pageencoding="utf-8">
     <cfscript>
-        var apiversion = 1;
+        var apiversion = application.api.version;
         var apilanguage = session.language
         var docUrl = listFirst(cgi.REQUEST_URL, "?");
     </cfscript>
@@ -110,7 +110,7 @@
                     <h1 class="display-3 text-highlight mb-0"><i class="icon fa fa-code "></i> Documentación APIc V#apiversion# <i class="icon fa fa-code "></i></h1>
                     <p class="meta">
                         <i class="fa fa-clock-o"></i> Última actualización:
-                        <span id="last_updated">Mar Marzo 6 2018 13:12pm</span>
+                        <span id="last_updated">#prc.i18n.i18nDateTimeFormat(prc.i18n.toEpoch(ParseDateTime('2018-07-16T19:20:30', "yyyy-MM-dd'T'HH:nn")), 1, 3)#</span>
                     </p>
                 </div>
             </section>

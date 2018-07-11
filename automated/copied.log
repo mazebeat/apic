@@ -898,3 +898,17 @@ copying /Application.cfc
 copying /models/FormValidationService.cfc
 End finding
 .
+BACKUP 2018-07-11 11:28:35 -----------
+Finding modified or new files...
+Init copy...
+copying /handlers/Echo.cfc
+copying /logs/system.log
+copying /logs/access.log
+copying /Application.cfc
+copying /modules_app/apic-v1/handlers/Home.cfc
+copying /modules_app/apic-v1/views/home/documentation.cfm
+copying /includes/i18n/main_es_ES.properties
+copying /includes/i18n/main_en_US.properties
+copying /includes/i18n/main.properties
+End finding
+.
