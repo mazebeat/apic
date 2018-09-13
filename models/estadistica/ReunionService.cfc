@@ -30,13 +30,12 @@
 	</cffunction>
 
 	<cffunction name="all2" hint="Todos los eventos" output="false" returntype="struct">
-		<cfargument name="id_evento" required="true">
 		<cfargument name="event">
 		<cfargument name="rc">
 
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
-		<cfset var records = dao.all2(arguments.id_evento, arguments.event, arguments.rc)>
+		<cfset var records = dao.all2(arguments.event, arguments.rc)>
 	
 		<cfset s.data.records = records>
 		<cfset s.data.count = records.recordCount>
@@ -45,14 +44,12 @@
 	</cffunction>
 
 	<cffunction name="get" hint="Todos los eventos" output="false" returntype="struct">
-		<cfargument name="id_evento" required="true">
-		<cfargument name="id_participante" required="true">
 		<cfargument name="event">
 		<cfargument name="rc">
 		
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
-		<cfset var records = dao.get(arguments.id_evento, arguments.id_participante, arguments.event, arguments.rc)>
+		<cfset var records = dao.get(arguments.event, arguments.rc)>
 
 		<cfset s.data.records = records>
 		<cfset s.data.count = records.recordCount>

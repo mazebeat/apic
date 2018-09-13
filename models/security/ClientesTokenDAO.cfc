@@ -47,24 +47,20 @@ component accessors="true" {
     }
 
 	/**
-	 * Registra un nuevo evento en la tabla apic_eventosToken
+	 * Registra un nuevo evento en la tabla apic_clienteToken
 	 * @idevento 
 	 * @password 
 	 * @tokenexpiration 
 	 */
-	void function register(required numeric idcliente) {
+	void function register(required numeric idcliente, string password = '', numeric tokenExpiration) {
 		transaction action="begin" {
 			try {
-				var queryS = "INSERT INTO apic_permisosToken (lectura, escritura, borrado) VALUES (1,1,1)";
-				var query = new Query(name="local.registerCT", datasource="#application.datasource#", sql="#queryS#");        
-
+				var query = new Query(name="local.registerCT", datasource="#application.datasource#", sql="INSERT INTO apic_permisosToken (lectura, escritura, borrado) VALUES (1, 1, 0)");        
 				var result = query.execute();
 
-				queryS = "INSERT INTO apic_clientesToken (id_cliente, password, id_permisosToken) 
-				VALUES (:idcliente, ' ', :idpermisos)";
-				
-				query = new Query(datasource="#application.datasource#", sql="#queryS#")
+				query = new Query(datasource="#application.datasource#", sql="INSERT INTO apic_clientesToken (id_cliente, password, id_permisosToken) VALUES (:idcliente, :password, :idpermisos)")
 				.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_INTEGER")
+				.addParam(name="password", value=arguments.password, cfsqltype="CF_SQL_VARCHAR")
 				.addParam(name="idpermisos", value=result.getPrefix().generatedKey, cfsqltype="CF_SQL_INTEGER");
 
 				result = query.execute();
@@ -72,6 +68,7 @@ component accessors="true" {
 				transaction action="commit";
 			} catch(any e) {
 				transaction action="rollback";
+				throw(message="Error when were triying to register a new cliente", errorcode=e.errorCode);
 			}
 		}
 	}
@@ -101,19 +98,13 @@ component accessors="true" {
 	void function updatePassword(required numeric idcliente, required string password) {
 		transaction action="begin" {
 			try {
-		
-				var query = new Query(name="local.updatePasswordCT", datasource="#application.datasource#", sql="SELECT id FROM apic_clientesToken WHERE id_cliente = :idcliente")
+				var queryS = "SELECT id FROM apic_clientesToken WHERE id_cliente = :idcliente";
+				var query = new Query(name="local.updatePasswordCT", datasource="#application.datasource#", sql="#queryS#")
 					.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_INTEGER");
-
 				var result = query.execute().getResult();
-
-				if(result.recordCount EQ 0) {
-					this.register(idcliente);
-				}
-				
+				if(result.recordCount EQ 0) this.register(idcliente); 
 				var queryS = " UPDATE apic_clientesToken SET password = :password, fecha_baja = NULL 
 							   WHERE id_cliente = :idcliente";
-
 				var query = new Query(name="local.updatePasswordCT2", datasource="#application.datasource#", sql="#queryS#")
 							.addParam(name="idcliente", value=arguments.idcliente, cfsqltype="CF_SQL_INTEGER")
 							.addParam(name="password", value=arguments.password, cfsqltype="CF_SQL_VARCHAR");
@@ -191,9 +182,9 @@ component accessors="true" {
 		return query.execute().getResult();
 	}
 	
-	query function getAllEvents(required numeric idcliente) {
+	query function getAllEvents(required string idcliente) {
 		var queryS = "SELECT GROUP_CONCAT(id_evento) AS 'id_evento' FROM vEventos
-					  WHERE clientes_id_cliente = :idcliente";
+					  WHERE clientes_id_cliente IN (:idcliente)";
 		var query = new Query(datasource = "#application.datasource#", sql = "#queryS#")
 		.addParam(name = "idcliente", value = arguments.idcliente, cfsqltype = "CF_SQL_INTEGER");
 		

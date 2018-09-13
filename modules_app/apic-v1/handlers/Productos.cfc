@@ -18,19 +18,10 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var cacheKey = 'q-product-all-#arguments.rc.id_evento#-#session.language#'>
+		<cfset var s = service.all(arguments.rc.id_evento)>
 
-		<cfif cache.lookup(cacheKey)>
-			<cfset var s = cache.get(cacheKey)>
-			<cfset prc.response.setCachedResponse(true)>
-		<cfelse>
-			<cfset var s = service.all(arguments.rc.id_evento)>
-
-			<cfif NOT structIsEmpty(s.data.records)>
-				<cfset s.data.records = QueryToStruct(s.data.records)>
-			</cfif>
-
-			<cfset cache.set(cacheKey, s, 60, 30)>
+		<cfif NOT structIsEmpty(s.data.records)>
+			<cfset s.data.records = QueryToStruct(s.data.records)>
 		</cfif>
 
 		<cfset arguments.prc.response.setData(s.data).setError(!s.ok)> 
@@ -41,15 +32,21 @@
 		<cfargument name="event">
 		<cfargument name="rc">
 		<cfargument name="prc">
-		<cfset event.setView( "Productos/get" )>
+
+		<cfset var s = service.get(arguments.rc.id_evento, arguments.rc.id_producto)>
+
+		<cfif NOT structIsEmpty(s.data.records)>
+			<cfset s.data.records = QueryToStruct(s.data.records)>
+		</cfif>
+
+		<cfset arguments.prc.response.setData(s.data).setError(!s.ok)> 
+		<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>
 	</cffunction>
 
 	<cffunction name="allSelected" output="false" hint="get">
 		<cfargument name="event">
 		<cfargument name="rc">
 		<cfargument name="prc">
-
-	
 
 		<cfset var cacheKey = 'q-product-allSelected-#arguments.rc.id_evento#-#session.language#'>
 

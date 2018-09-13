@@ -32,7 +32,7 @@ component accessors="true" {
 		variables.data 				= {};
 		variables.error 			= false;
 		variables.binary 			= false;
-		variables.messages 			= [];
+		variables.messages 			= [];		
 		variables.location 			= "";
 		variables.jsonCallBack 		= "";
 		variables.jsonQueryFormat 	= "query";
@@ -79,15 +79,20 @@ component accessors="true" {
 		} catch (any e) {}
 		
 		var packet = {
-			"error"          = variables.error ? true: false,
+			"error"          = variables.error ? true : false,
 			"messages"       = variables.messages,
 			"data"           = variables.data,
 			"statusCode"     = variables.statusCode,
-			"statusText"     = variables.statusText,
-			// "cachedResponse" = variables.cachedResponse,
-			// "headers"        = variables.headers,
-			// "responsetime"   = variables.responsetime,
+			"statusText"     = variables.statusText			
 		};
+
+		if(isdefined("url.debug") && (cgi.REMOTE_ADDR is '47.63.119.142') || cgi.REMOTE_ADDR IS '192.168.1.199') {
+			structAppend(packet, {
+				"headers"        = variables.headers,
+				"cachedResponse" = variables.cachedResponse,
+				"responsetime"   = variables.responsetime,
+			})
+		}
 
 		// Are we reseting the data packet
 		if(arguments.reset){

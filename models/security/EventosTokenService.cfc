@@ -52,9 +52,9 @@ component accessors="true"{
 	 * @password 
 	 * @tokenexpiration 
 	 */
-	any function register(required numeric idevento, required string password, date tokenexpiration) {
+	any function register(required numeric idevento, required string password, numeric tokenExpiration) {
 		// TODO: mejorar registros
-		dao.register();
+		dao.register(arguments.idevento, arguments.password, arguments.tokenExpiration);
 	}
 
 	/**

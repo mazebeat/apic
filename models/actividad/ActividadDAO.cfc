@@ -89,25 +89,15 @@
 
 		<cftry>
 			<cfquery name="local.rooms" datasource="#application.datasource#">
-				SELECT
-				id_sala, 
-				nombre, 
-				capacidad, 
-				IF(id_tipo_sala = 1, 'Sala para reunión', 'Sala para actividad') AS tipo
+				SELECT id_sala, nombre, capacidad, IF(id_tipo_sala = 1, 'Sala para reunión', 'Sala para actividad') AS tipo
 				FROM vSalas
-				WHERE eventos_id_evento IN (#id_evento#)
+				WHERE eventos_id_evento IN (#arguments.id_evento#)
 			</cfquery>
 
 			<cfquery name="local.calendar" datasource="#application.datasource#">
-				SELECT 
-				id_hora,
-				dia,
-				hora_inicio,
-				hora_fin,
-				networking,
-				activa
+				SELECT id_hora, dia, hora_inicio, hora_fin, networking, activa
 				FROM vCalendarios
-				WHERE id_evento IN (#id_evento#)
+				WHERE id_evento IN (#arguments.id_evento#)
 			</cfquery>
 
 			<cfquery name="local.reunions" datasource="#application.datasource#">
@@ -118,11 +108,11 @@
 				id_sala AS 'sala',
 				id_hora AS 'calendario'
 				FROM vReunionesGeneradas
-				WHERE id_evento IN (#id_evento#)
-				AND participante1 = <cfqueryparam value="#id_participante#" cfsqltype="CF_SQL_INTEGER">
+				WHERE id_evento IN (#arguments.id_evento#)
+				AND participante1 = <cfqueryparam value="#arguments.id_participante#" cfsqltype="CF_SQL_INTEGER">
 			</cfquery>
 
-			<cfset result = {}>
+			<cfset var result = {}>
 
 			<cfloop query="#local.reunions#">
 				<!--- Agregamos las salas --->

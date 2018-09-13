@@ -62,5 +62,4 @@ component output="false" accessors="true" extends="models.BaseModel" table="apic
 
 		return this;
 	}
-
 } 	

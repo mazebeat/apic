@@ -12,7 +12,7 @@ component accessors="true"{
 	/**
 	 * Constructor
 	 */
-	ClientesTokenService function init(){
+	ClientesTokenService function init() {
 		return this;
 	}
 
@@ -52,9 +52,9 @@ component accessors="true"{
 	 * @password 
 	 * @tokenexpiration 
 	 */
-	any function register(required numeric idcliente, required string password, date tokenexpiration) {
+	any function register(required numeric idcliente, required string password, numeric tokenExpiration) {
 		// TODO: mejorar registros
-		dao.register();
+		dao.register(arguments.idcliente, arguments.password, arguments.tokenExpiration);
 	}
 
 	/**
@@ -63,7 +63,7 @@ component accessors="true"{
 	 * @token 
 	 */
 	any function updateToken(required numeric idcliente, required string token){
-		dao.updateToken(arguments.idcliente, arguments.token);
+			dao.updateToken(arguments.idcliente, arguments.token);
 	}
 
 	/**
@@ -83,9 +83,7 @@ component accessors="true"{
 	any function byToken(required numeric idcliente, required string token){ 
 		var query =  dao.byToken(arguments.idcliente, arguments.token);
 
-		if(idcliente EQ 0 OR query.recordcount EQ 0) {
-            return wirebox.getInstance("ClientesToken");
-        }
+		if(idcliente EQ 0 OR query.recordcount EQ 0) return wirebox.getInstance("ClientesToken");
 
         return populator.populateFromQuery(wirebox.getInstance("ClientesToken"), query, 1);
 	}	
@@ -106,21 +104,16 @@ component accessors="true"{
 	any function activateDesactivate(required numeric idcliente) {
 		var query = dao.activateDesactivate(arguments.idcliente);
 
-        if(idcliente EQ 0 OR query.recordcount EQ 0) {
-            return wirebox.getInstance("ClientesToken");
-        }
+        if(idcliente EQ 0 OR query.recordcount EQ 0) return wirebox.getInstance("ClientesToken");
 
         return populator.populateFromQuery(wirebox.getInstance("ClientesToken"), query, 1);
 	}
 
 	any function getAllEvents(required ClientesToken clienteToken) {
 		var idcliente = arguments.clienteToken.getId_cliente();
-
 		var query = dao.getAllEvents(idcliente);
 
-		if(idcliente EQ 0 OR query.recordcount EQ 0) {
-            return "";
-		}
+		if(idcliente EQ 0 OR query.recordcount EQ 0) return "";
 
 		arguments.clienteToken.id_evento = query.id_evento;
 

@@ -1,4 +1,4 @@
-<cfcomponent hint="ProductoDAO" output="false" accessors="true">
+<cfcomponent hint="ProductoDAO" output="false" accessors="true" extends="models.BaseModel">
 
 	<!--- Properties --->
 	<cfproperty name="partServ"			inject="model:participante.ParticipanteDAO">
@@ -49,7 +49,6 @@
 			</cfquery>
 
 			<cfset queryDeleteColumn(local.findProductos, 'id_grupo')>
-			<!--- <cfset queryDeleteColumn(local.findProductos, 'id_producto')> --->
 
 			<cfset local.grupos.productos[currentrow] = local.findProductos>
 		</cfloop>
@@ -61,9 +60,8 @@
 
 	<cffunction name="get" access="public" returntype="any" output="false">
 		<cfargument name="id_evento" required="true">
-		<cfargument name="event">
-		<cfargument name="rc">
-	
+		<cfargument name="id_producto" type="numeric" required="true">
+
 		<cfquery name="local.grupos" datasource="#application.datasource#">
 			SELECT
 			DISTINCT(id_grupo) AS id_grupo,
@@ -84,39 +82,38 @@
 			descripcion			
 			FROM vProductos
 			WHERE id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_VARCHAR">
-			AND id_grupo IN (<cfqueryparam value="#valueList(local.grupos.id_grupo)#" list="true" cfsqltype="CF_SQL_INTEGER">);
+			AND id_grupo IN (<cfqueryparam value="#valueList(local.grupos.id_grupo)#" list="true" cfsqltype="CF_SQL_INTEGER">)
+			AND id_producto = <cfqueryparam value="#arguments.id_producto#" cfsqltype="CF_SQL_INTEGER">
 		</cfquery>
 
-		<cfloop query="#local.grupos#">
+		<cfset local.grupos2 = queryNew('id')>
+
+		<cfloop query="#local.productosByGrupo#">
 			<cfquery name="local.findProductos" dbtype="query">
 				SELECT *
-				FROM [local].productosByGrupo
+				FROM [local].grupos
 				WHERE id_grupo = #id_grupo#
 			</cfquery>
 
-			<cfset queryDeleteColumn(local.findProductos, 'id_grupo')>
-			<!--- <cfset queryDeleteColumn(local.findProductos, 'id_producto')> --->
+			<cfset local.grupos2 = local.findProductos>
 
-			<cfset local.grupos.productos[currentrow] = local.findProductos>
+			<cfset local.grupos2.productos = GetQueryRow(local.productosByGrupo, currentrow)>
 		</cfloop>
 
-		<cfset queryDeleteColumn(local.grupos, 'id_grupo')>
-
-		<cfreturn local.grupos>
+		<cfreturn local.grupos2>
 	</cffunction>
-
 
 	<cffunction name="allSelected" access="public" returntype="any" output="false">
 		<cfargument name="id_evento" required="true">
 		<cfargument name="event">
 		<cfargument name="rc">
 
-		<cfset local.allParticipantes = partServ.all(arguments.id_evento, arguments.event, arguments.rc)>
-	
+		<cfset local.allParticipantes = partServ.all(arguments.event, arguments.rc)>
+
 		<cfquery name="local.seleccionados" datasource="#application.datasource#">
 			SELECT id_producto, id_participante AS 'data', comprar, vender, colaborar
 			FROM vProductosSeleccionados
-			WHERE id_participante IN (<cfqueryparam value="#valueList(allParticipantes.id_participante)#" list="true" cfsqltype="CF_SQL_INTEGER">)
+			WHERE id_participante IN (<cfqueryparam value="#valueList(local.allParticipantes.id_participante)#" list="true" cfsqltype="CF_SQL_INTEGER">)
 		</cfquery>
 
 		<cfloop query="#local.seleccionados#">

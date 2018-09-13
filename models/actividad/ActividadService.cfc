@@ -19,15 +19,15 @@
 	<cffunction name="all" hint="Todos los eventos" output="false" returntype="struct">
 		<cfargument name="id_evento">
 
-		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
+		<cfset var s = { ok = true, mensaje= "", data = { 'records':{},  'count'= 0}}>
 
 		<cftry>
-			<cfset var records = dao.all(id_evento)>	
+			<cfset var records = dao.all(arguments.id_evento)>	
 		
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>
 		<cfcatch type = "any">
-			<cfthrow type="any" message="#cfcatch.Message#">
+			<cfthrow type="any" message="Loading Activities failed" detail="#cfcatch.Message#">
 		</cfcatch>
 		</cftry> 
 		
@@ -38,15 +38,15 @@
 		<cfargument name="id_evento">
 		<cfargument name="id_participante">
 
-		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
+		<cfset var s = { ok = true, mensaje= "", data = { 'records':{},  'count'= 0}}>
 
 		<cftry>
-			<cfset var records = dao.getByParticipante(id_evento, id_participante)>	
+			<cfset var records = dao.getByParticipante(arguments.id_evento, arguments.id_participante)>	
 		
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>
 		<cfcatch type = "any">
-			<cfthrow type="any" message="#cfcatch.Message#">
+			<cfthrow type="any" message="Loading Activities of #arguments.id_participante# failed" detail="#cfcatch.Message#">
 		</cfcatch>
 		</cftry> 
 		

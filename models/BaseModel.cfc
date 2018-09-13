@@ -26,5 +26,20 @@
 			return trim(link);
 		</cfscript>		
 	</cffunction>
-	
+
+	<cffunction name="getPaginationQuery">
+		<cfargument name="token" type="string" required="true">
+	</cffunction>
+
+	<cfscript>
+		any function GetQueryRow(query, rowNumber) {
+			var i = 0;
+			var rowData = StructNew();
+			var cols = ListToArray(query.columnList);
+			for (i = 1; i lte ArrayLen(cols); i = i + 1) {
+				rowData[lcase(cols[i])] = query[cols[i]][rowNumber];
+			}
+			return rowData;
+		}
+	</cfscript>
 </cfcomponent>

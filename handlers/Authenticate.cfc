@@ -3,21 +3,18 @@
  */
 component extends="Base" {
 
-	property name="prmToken" 		type="any"	inject="model:security.PermisosTokenService";
-	property name="cService" 		type="any"	inject="model:security.ClientesTokenService";
-	property name="eService" 		type="any"	inject="model:security.EventosTokenService";
-	property name="authSecretKey"  	type="any"	inject="coldbox:setting:authSecretKey";
+	property name="cliService" 	type="any"	inject="model:security.ClientesTokenService";
+	property name="eService" 	type="any"	inject="model:security.EventosTokenService";
+	property name="prmToken" 	type="any"	inject="model:security.PermisosTokenService";
 
-
-	// OPTIONAL HANDLER PROPERTIES
 	this.prehandler_only 	  = "";
 	this.prehandler_except 	  = "";
 	this.posthandler_only 	  = "";
 	this.posthandler_except   = "";
 	this.aroundHandler_only   = "";
-	this.aroundHandler_except = "";		
+	this.aroundHandler_except = "";
 
-	// REST Allowed HTTP Methods Ex: this.allowedMethods = 
+	// REST Allowed HTTP Methods 
 	this.allowedMethods = {
 		"index"               = METHODS.POST,
 		"generatePassword"    = METHODS.POST,
@@ -42,44 +39,40 @@ component extends="Base" {
 	 * @returnType model:Response
 	 */
 	any function index(event, rc, prc) {
-
-		arguments.event.paramValue("password", "");
-
 		try {
-			if(structKeyExists(rc, "password")) {
-				var authuser = authservice.validate(rc.password);
-
-				if (!isNull(authuser)) {
-					var token = authuser.token;
-					var id    = authuser.getId_evento();
-					var type  = findNoCase("ClientesToken", getMetadata(authuser).name) GT 0 ? 'c' : 'e';
-
-					if(isdefined("authuser.token") && isNull(token) OR isEmpty('token') || !authservice.validateToken(token)) {
-						token = authservice.grantToken(id, type);
+			if(structKeyExists(arguments.rc, "password") AND !isEmpty(arguments.rc.password)) {
+				var authuser = authservice.validate(arguments.rc.password);
+					
+				if (!isNull(authuser) AND !isNull(authuser.getId())) {
+					var type  = findNoCase("ClientesToken", getMetadata(authuser).name) GT 0 ? 'C' : 'E';
+					var token = isEmpty(authuser.token) ? "" : authuser.token;
+					
+					if(isdefined("authuser.token") && isNull(token) OR isEmpty(token) || !authservice.validateToken(token)) {
+						var idsEvento = (isEmpty(authuser.getId_evento()) && type IS 'C') ? authuser.getEvents() : authuser.getId_evento();
+						token = authservice.grantToken(authuser.getId(), type, idsEvento);
 					}
-
+					
 					if(isNull(token) OR isEmpty(token)) {
 						throw(message="API Key or API Token does not exists", errorcode=STATUS.NOT_AUTHENTICATED);					
 					}
-
-					var aut = encrypt(serializeJSON(authuser), getSetting('authSecretKey'), "AES", "Base64");
-
-					session["usersession"] = { 
-						"type"     = type, 
-						"auth"     = aut,
-						"defaults" = { "form" = { "fields" = "" } }
-					};
-
-					arguments.rc.token = token;
+					
 					arguments.prc.response.setData({ "token" = token });
+
+					// var aut = encrypt(serializeJSON(authuser), getSetting('authSecretKey'), "AES", "Base64");
+					// session["usersession"] = { 
+					// 	"type"     = type, 
+					// 	"auth"     = aut,
+					// 	"defaults" = { "form" = { "fields" = "" } }
+					// };
+					// arguments.rc.token = token;
 				} else {
-					throw(message="Client validation has failed", errorcode=STATUS.NOT_AUTHENTICATED);
+					throw(message="Client validation has failed");
 				}
 			} else {
-				throw(message="Parameters are empty", errorcode=STATUS.NOT_AUTHENTICATED);
+				throw(message="Parameters are empty");
 			}
 		} catch(Any e) {
-			throw(message="API Key is not correct", errorcode=STATUS.NOT_AUTHENTICATED);
+			throw(message=e.message, errorcode=STATUS.NOT_AUTHENTICATED);
 		}
 	}
 
@@ -93,45 +86,29 @@ component extends="Base" {
 	 * @returnType model:Response
 	 */
 	any function generatePassword(event, rc, prc) {
-		var jsonData = event.getHTTPContent( json=true );
-		var isevent = false;
-
-		if(NOT structKeyExists(rc, 'password') && (NOT rc.password EQ getSetting('secretWord'))) {
+		if(NOT structKeyExists(arguments.rc, 'password') && (NOT arguments.rc.password EQ getSetting('secretWord'))) {
 			throw(message="Parameters password incorrect/empty", errorcode=STATUS.BAD_REQUEST);
 		} 
-
-		if(NOT structkeyExists(rc, 'id')) {
+		
+		if(NOT structkeyExists(arguments.rc, 'id')) {
 			throw(message="Parameters ID incorrect/empty", errorcode=STATUS.BAD_REQUEST);
 			return;
 		}
+		
+		var isevent = false;
+		var id = arguments.rc.id;
 
-		var id = rc.id;
-
-		if(structkeyExists(rc, 'isevent')) {
-			isevent  = rc.isevent;
-		}
+		if(structkeyExists(rc, 'isevent')) isevent = arguments.rc.isevent;
 
 		try {
 			rsp = authservice.generatePassword(id, isevent);
-
-			prc.response.setData({ 
-				"id"       = id, 
-				"password" = rsp
-			});
+			arguments.prc.response.setData({ "id" = id, "password" = rsp });
 		} catch(any e) {
-			prc.response.setData({ 
-				"id"       = id, 
-				"password" = 'No existe contraseña, por favor generar.'
-			});
-			prc.response.setError(true)
-							.addMessage("Error when was trying to generate password")
-							.setStatusCode(STATUS.BAD_REQUEST)
-							.setStatusText(MESSAGES.BAD_REQUEST);
-						
-			
-			if(getSetting("environment") eq "development") {
-				prc.response.addMessage(e.message);
-			}
+			arguments.prc.response.setData({ "id" = id, "password" = 'No existe contraseña, por favor generar.' })
+				.setError(true)
+				.setStatusCode(STATUS.BAD_REQUEST)
+				.setStatusText(MESSAGES.BAD_REQUEST)
+				.addMessage("Error when was trying to generate password");
 		}
 	}
 
@@ -145,38 +122,31 @@ component extends="Base" {
 	 * @returnType model:Response
 	 */
 	any function obtainPassword(event, rc, prc) {
-
-		var isevent = false;
-	
-		if(NOT structkeyExists(rc, 'password') && (NOT rc.password EQ getSetting('secretWord'))) {
+		if(NOT structkeyExists(arguments.rc, 'password') && (NOT arguments.rc.password EQ getSetting('secretWord'))) {
 			throw(message="Parameters password incorrect/empty", errorcode=STATUS.BAD_REQUEST)
 		} 
-
-		if(NOT structkeyExists(rc, 'id')) {
+		
+		if(NOT structkeyExists(arguments.rc, 'id')) {
 			throw(message="Parameters ID incorrect/empty", errorcode=STATUS.BAD_REQUEST)
 		}
+		
+		var isevent = false;
+		var id      = arguments.rc.id;
 
-		var id = rc.id;
-
-		if (structkeyExists(rc, 'isevent')) {
-			isevent  = rc.isevent;
-		}
+		if (structkeyExists(rc, 'isevent'))	isevent  = arguments.rc.isevent;
 
 		try {
 			rsp = authservice.obtainPassword(id, isevent);
 
-			if(isEmpty(rsp.password)) {
-				var message = "Client does not have an assigned password";
-				// if(session.language IS 'ES') {
-				// 	message = "El cliente no tiene contraseña asiganada.";
-				// }
-				prc.response.addMessage(message).setError(true);
-			}
-			prc.response.setData({ 
+			if(isEmpty(rsp.password)) throw(message="Client does not have an assigned password");
+
+			var data = { 
 				"id"         = id, 
 				"password"   = rsp.password,
-				"fecha_baja" = (!isnull(rsp.fecha_baja) && rsp.fecha_baja != '' )? getIsoTimeString(rsp.fecha_baja) : rsp.fecha_baja
-			});				
+			};
+			var fb =  (!isnull(rsp.fecha_baja) && rsp.fecha_baja != '' )? getIsoTimeString(rsp.fecha_baja) : rsp.fecha_baja;
+			if(!isEmpty(fb)) structInsert(data, "fecha_baja", fb);
+			arguments.prc.response.setData(data);				
 		} catch(any e) {
 			throw(message="Error when was trying to get password", errorcode=STATUS.BAD_REQUEST, detail=e)
 		}
@@ -190,17 +160,17 @@ component extends="Base" {
 	 * @prc 
 	 */
 	any function activateDesactivate(event, rc, prc) {
-		var jsonData = event.getHTTPContent( json=true );
-		var isevent = false;
-
-		var rsp = authservice.activateDesactivate(rc.id, rc.isevent);
+		var rsp = authservice.activateDesactivate(arguments.rc.id, arguments.rc.isevent);
 
 		try {
-			prc.response.setData({ 
-				"id"         = rc.id,
-				"fecha_baja" = (!isnull(rsp.fecha_baja) && rsp.fecha_baja != '' )? getIsoTimeString(rsp.fecha_baja) : rsp.fecha_baja
-			})
-			.addMessage('Date of low updated');
+			var data = { "id" =  arguments.rc.id, "actived" = true };
+			var fb =  (!isnull(rsp.fecha_baja) && rsp.fecha_baja != '' )? getIsoTimeString(rsp.fecha_baja) : rsp.fecha_baja;
+			if(!isEmpty(fb)) {
+				structInsert(data, "fecha_baja", fb);
+				structInsert(data, "actived", false, true);
+			}
+			arguments.prc.response.setData(data)
+			.addMessage('The date has been updated');
 		} catch (Any e) { 
 			throw(message="Activate/Deactivate failed", detail=e);
 		}
@@ -222,14 +192,10 @@ component extends="Base" {
 	 * @prc 
 	 */
 	any function permissionsUser(event, rc, prc) {
-		if(!rc.isevent){
-			var usr = cService.get(rc.id);
-		} else {
-			var usr = eService.get(rc.id);
-		}
+		var usr =  (!arguments.rc.isevent) ? cliService.get(arguments.rc.id) : eService.get(arguments.rc.id);
 
 		if(isnull(usr.getId_permisosToken())) {
-			throw(message = "Empty object, please generate password first.", errorcode = 500);
+			throw(message="Empty object, please generate password first.", errorcode=STATUS.INTERNAL_ERROR);
 		}
 
 		var permisos = usr.permisos();
@@ -249,13 +215,13 @@ component extends="Base" {
 	 * @prc 
 	 */
 	any function savePermissionsUser(event, rc, prc) {
-		if(!rc.isevent){
-			var usr = cService.get(rc.id);
+		if(!arguments.rc.isevent){
+			var usr = cliService.get(arguments.rc.id);
 		} else {
-			var usr = eService.get(rc.id);
+			var usr = eService.get(arguments.rc.id);
 		}
 
-		if(arrayLen(rc.permissions) < 3) {
+		if(arrayLen(arguments.rc.permissions) < 3) {
 			throw(message = "Permissions count incorrect.", errorcode = 500);
 		}
 
@@ -265,8 +231,8 @@ component extends="Base" {
 			
 		var permisos = usr.permisos();
 
-		for (i = 1; i <= arrayLen(rc.permissions); i++) {
-			var value = rc.permissions[i];
+		for (i = 1; i <= arrayLen(arguments.rc.permissions); i++) {
+			var value = arguments.rc.permissions[i];
 
 			if(i == 1) {
 				permisos.setLectura(value);
@@ -279,16 +245,23 @@ component extends="Base" {
 		
 		try {
 			permisos.updateModel();
-			prc.response.addMessage("User permissions changed");
+			arguments.prc.response.addMessage("User permissions changed");
 		} catch(Any e) {
 			throw(message="Error when were saving user permissions", errorcode=e.errorcode, detail=e);
 		}
 	}
 
+	/**
+	 * Give token information to
+	 *
+	 * @event 
+	 * @rc 
+	 * @prc 
+	 */
 	any function tokenInformation(event, rc, prc) {		
 		try {
 			if(isdefined('url.tfe') && url.tfe == getSetting('secretWord')) {
-				prc.response.setData(authservice.decodeToken(arguments.rc.token));	
+				arguments.prc.response.setData(authservice.decodeToken(arguments.rc.token));
 			}
 		} catch(Any e) {
 			throw(message="Error getting token information", errorcode=e.errorcode, detail=e);

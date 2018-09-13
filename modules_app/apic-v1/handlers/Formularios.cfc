@@ -40,29 +40,34 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
+		<cfif structKeyExists(arguments.rc, "by_evento") AND listFind(arguments.rc.id_evento, arguments.rc.by_evento) GT 0>
+			<cfset arguments.rc.id_evento = arguments.rc.by_evento>
+		</cfif>
+
+		<!---
 		<cftry>
 			<cfset var cacheKey = 'q-formH-meta-#arguments.rc.id_evento#'>
 
 			<cfif cache.lookup(cacheKey)>
 				<cfset var s = cache.get(cacheKey)>
 				<cfset prc.response.setCachedResponse(true)>
-			<cfelse>
+			<cfelse> --->
 				<cfset var s = service.meta(arguments.rc.id_evento)>
 
 				<cfif NOT structIsEmpty(s.data.records) AND isQuery(s.data.records)>
 					<cfset s.data.records = QueryToStruct(s.data.records)>
 				</cfif>
-				<cfset cache.set(cacheKey, s, 60, 30)>
-			</cfif>
+				<!--- <cfset cache.set(cacheKey, s, 60, 30)>
+			</cfif> --->
 
 			<cfset prc.response.setData(s.data).setError(!s.ok)> 
 			<cfif NOT isEmpty(s.mensaje)>
 				<cfset prc.response.addMessage(s.mensaje)>
 			</cfif>			
-		<cfcatch type="any">
+		<!--- <cfcatch type="any">
 			<cfthrow type="any" message="Error getting form metadata" detail="#cfcatch.detail#">
 		</cfcatch>
-		</cftry> 
+		</cftry>  --->
 	</cffunction>
 
 	<cffunction name="get" output="false" hint="get">

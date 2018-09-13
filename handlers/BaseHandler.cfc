@@ -1,21 +1,14 @@
-/**
-* ********************************************************************************
-* Copyright 2005-2007 ColdBox Framework by Luis Majano and Ortus Solutions, Corp
-* www.ortussolutions.com
-* ********************************************************************************
-* Base RESTFul handler spice up as needed.
-* This handler will create a Response model and prepare it for your actions to use
-* to produce RESTFul responses.
-*/
 component extends="coldbox.system.EventHandler" {
+
 	// Inject AuthenticationService
 	property name="authService" type="any" 	inject="model:security.AuthenticationService";
-	property name="i18n" 		type="any"	inject="i18n@cbi18n";
+	// property name="i18n" 		type="any"	inject="i18n@cbi18n";
 	
 	// Pseudo "constants" used in API Response/Method parsing
 	property name="METHODS";
 	property name="STATUS";
 	property name="MESSAGES";
+	property name="PUBLIC_PAGES";
 
 	// Verb aliases - in case we are dealing with legacy browsers or servers (e.g. IIS7 default)
 	METHODS = {
@@ -25,11 +18,11 @@ component extends="coldbox.system.EventHandler" {
 		"PATCH"   = "PATCH",
 		"PUT"     = "PUT",
 		"DELETE"  = "DELETE",
-		"OPTIONS" = "OPTIONS"
+		"OPTIONS" = "OPTIONS"	
 	};
 	
 	// HTTP STATUS CODES
-	STATUS                    = {
+	STATUS = {
 		"CONTINUE"               = 100,
 		"CHECKPONT"              = 103,
 		"SUCCESS"                = 200,
@@ -85,7 +78,14 @@ component extends="coldbox.system.EventHandler" {
 		"NOT_IMPLEMENTED"        = "Not implemented",
 		"PARAMETERS_ERROR"       = "Parameters error",
 		"SERVICE_UNAVAILABLE"    = "Service Unavailable"
-	}
+	};
+
+	// Public pages list - Those pages are allow to access without an API Token
+	PUBLIC_PAGES = [
+		"Echo", 
+		"Authenticate", 
+		"apic-v1:home"
+	];
 
 	// OPTIONAL HANDLER PROPERTIES
 	this.prehandler_only 		= "";
@@ -105,51 +105,81 @@ component extends="coldbox.system.EventHandler" {
 		"delete": METHODS.DELETE
 	};
 
-	function init() {
-        // init super
+	BaseHandler function init() {
 		super.init(application.cbController);
-        // my stuff here
         return this;
 	}
-	
-	// property name="resourceService" inject="i18n@cbi18n";
 
-	/**
-	 * PreHandler for all actions it inherits
-	 *
-	 * @event 
-	 * @rc 
-	 * @prc 
-	 * @targetAction 
-	 * @eventArguments 
-	 */
 	function preHandler(event, rc, prc, targetAction, eventArguments) {
-		param name="arguments.rc.id_evento" default="";
+		param name="arguments.rc.id_evento" default="" type="string";
 		
 		try {
-			// Start time
-			var stime    = getTickCount();
-
 			// prepare our response object
-			prc.response = getModel("Response");
-			prc.i18n = variables.i18n;
-
+			arguments.prc.response = getModel("Response");
+			
+			// Check if body request is JSON type
 			try {
 				if (isJSON(request._body)) {
-					structAppend( rc, deserializeJSON(request._body), true );
-				} else if( isJSON( event.getHTTPContent() ) ){
-					structAppend( rc, event.getHTTPContent( json=true ), true );
+					structAppend(arguments.rc, deserializeJSON(request._body), true);
+				} else if( isJSON(arguments.event.getHTTPContent())) {
+					structAppend(arguments.rc, arguments.event.getHTTPContent(json=true), true);
 				}
 			} catch(Any e) {
-				throw(message="Invalid JSON Format!", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
+				throw(message=getResource(resource='validation.invalidJSONFormat'), errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
 			}
-		} catch(Any e){
+		} catch(Any e) {
+			log.error("[PREHANDLER] ERROR CALLING #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
+			sendError(e, arguments.rc, arguments.event);
+		}
+	}
+		
+	/**
+	* Around handler for all actions it inherits
+	*/
+	function aroundHandler(event, rc, prc, targetAction, eventArguments) {
+		try{
+			var stime = getTickCount();
 
+			// prepare our response object
+			arguments.prc.response = getModel("Response");
+			// arguments.prc.i18n = variables.i18n;
+
+			// prepare argument execution
+			var args = { event = arguments.event, rc = arguments.rc, prc = arguments.prc };
+
+			structAppend(args, arguments.eventArguments);
+
+			// Incoming Format Detection
+			if(structKeyExists(arguments.rc, "format")){
+				arguments.prc.response.setFormat(arguments.rc.format);
+			}
+
+			// While evento does not be one of these pages
+			if (isPrivatePages(arguments.event)) {
+				// Check APIc Token
+				this.checkAuthenticationToken(arguments.event, arguments.rc, arguments.prc);			
+				// Validat user actions
+				this.validateActions(arguments.event, arguments.rc, arguments.prc);
+				// Check if user has a valid session (token)
+				this.validateSession(arguments.event, arguments.rc, arguments.prc);
+				// Check an unique ID_EVENTO when type of API Token is client type
+				this.isClientToken(arguments.event, arguments.rc, arguments.prc);
+				// Check request per seconds by user
+				limiterByTime(arguments.event, arguments.rc, arguments.prc, getSetting('maxUserRequest'), getSetting('waitTimeRequest'));
+			}		
+
+			// Execute action
+			if (!arguments.prc.response.getError()) {
+				var actionResults = targetAction(argumentCollection=args);
+			}
+		} catch(Any e){	
 			// Log Locally
-			log.error("[PreHandler] Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
+			log.error("[AROUNDHANDLER] ERROR CALLING #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
+
+			sendError(e, rc, event);			
 
 			// Setup General Error Response
-			var code = empty(e.errorcode) ? STATUS.INTERNAL_ERROR : e.errorcode;
+			var code = empty(e.errorcode) ? STATUS.INTERNAL_ERROR: e.errorcode;
 			var msg  = findStatusMessage(code);
 		
 			prc.response
@@ -157,77 +187,7 @@ component extends="coldbox.system.EventHandler" {
 				.addMessage(e.message)
 				.setStatusCode(code)
 				.setStatusText(msg);
-			
-			// Development additions
-			if(getSetting("environment") eq "development") {
-				prc.response.addMessage("Detail: #e.detail#")
-							.addMessage("StackTrace: #e.stacktrace#");
-			}
-		}
-		
-		// end timer
-		prc.response.setResponseTime(getTickCount() - stime);
-	}
 
-	/**
-	* Around handler for all actions it inherits
-	*/
-	function aroundHandler(event, rc, prc, targetAction, eventArguments) {
-		try{
-			var stime    = getTickCount();
-
-			// prepare our response object
-			prc.response = getModel("Response");
-			prc.i18n = variables.i18n;
-			
-			// prepare argument execution
-			var args = { event = event, rc = rc, prc = prc };
-
-			structAppend(args, eventArguments);
-
-			// Incoming Format Detection
-			if(structKeyExists(rc, "format")){
-				prc.response.setFormat(rc.format);
-			}
-
-			if (findNoCase("Echo", event.getCurrentEvent()) == 0 && 
-				findNoCase("Authenticate", event.getCurrentEvent()) == 0 && 
-				findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0 && 
-				findNoCase("apic-v1:home.index", event.getCurrentEvent()) == 0) {
-
-				limiterByTime(getSetting('maxUserRequest'), getSetting('waitTimeRequest'), prc, rc, event);
-				
-				// Validat user actions
-				validateActions(event, rc, prc);	
-			}		
-
-			// Check APIc Token
-			// checkAuthenticationToken(event, rc, prc, targetAction, eventArguments, args);
-
-			// Check Sessions			
-			validateSession(event, rc, prc);
-
-			// Execute action
-			if (!prc.response.getError()) {
-				var actionResults = targetAction(argumentCollection=args);
-			}
-		} catch(Any e){	
-			// Log Locally
-			log.error("[AroundHandler] Error calling #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
-
-			// Setup General Error Response
-			var code    = empty(e.errorcode) ? STATUS.INTERNAL_ERROR: e.errorcode;
-			var msg = findStatusMessage(code);
-		
-			prc.response
-				.setError(true)
-				.addMessage(e.message)
-				.setStatusCode(code)
-				.setStatusText(msg);
-
-			sendError(e, rc, event);
-				
-			// Development additions
 			if((getSetting("environment") eq "development") ) { 
 				prc.response.addMessage("Detail: #e.detail#")
 							.addMessage("StackTrace: #e.stacktrace#");
@@ -275,7 +235,6 @@ component extends="coldbox.system.EventHandler" {
 		}
 
 		if(!len(event.getCurrentView())){
-			
 			// Magical Response renderings
 			event.renderData(
 				type		= prc.response.getFormat(),
@@ -290,7 +249,6 @@ component extends="coldbox.system.EventHandler" {
 
 		// Global Response Headers
 		prc.response.addHeader("x-response-time", prc.response.getResponseTime()).addHeader("x-cached-response", prc.response.getCachedResponse());
-	
 		
 		// Response Headers
 		for(var thisHeader in prc.response.getHeaders()){
@@ -358,7 +316,7 @@ component extends="coldbox.system.EventHandler" {
 		param name="faultAction" default="";
 
 		// Log Locally
-		// log.warn("InvalidHTTPMethod Execution of (#faultAction#): #event.getHTTPMethod()#", getHTTPRequestData());
+		log.warn("InvalidHTTPMethod Execution of (#faultAction#): #event.getHTTPMethod()#", getHTTPRequestData());
 
 		// Setup Response
 		prc.response = getModel("Response")
@@ -367,7 +325,7 @@ component extends="coldbox.system.EventHandler" {
 			.addMessage("InvalidHTTPMethod Execution: #event.getHTTPMethod()#")
 			.setStatusCode(STATUS.NOT_ALLOWED)
 			.setStatusText(MESSAGES.NOT_ALLOWED);
-			
+		
 		// Render Error Out
 		event.renderData(
 				type		= prc.response.getFormat(),
@@ -383,14 +341,12 @@ component extends="coldbox.system.EventHandler" {
 	/**
 	* Invalid method execution
 	**/
-	function onMissingAction(event, rc, prc, missingAction, eventArguments){
-		if(isdefined("url.debug")) {
-			writeDump(var="#event#", label="event onMissingAction");
-			abort;
-		}
+	function onMissingAction(event, rc, prc, missingAction, eventArguments) {
+		param name="missingAction" default="";
 
 		// Log Locally
 		log.warn("Invalid HTTP Method Execution of (#missingAction#): #event.getHTTPMethod()#", getHTTPRequestData());
+		
 		// Setup Response
 		prc.response = getModel("Response")
 			.setError(true)
@@ -416,8 +372,7 @@ component extends="coldbox.system.EventHandler" {
 	* Utility function for miscellaneous 404's
 	**/
 	private function routeNotFound(event, rc, prc){
-		
-		if(!structKeyExists(prc, "response")){
+		if(!structKeyExists(prc, "response")) {
 			prc.response = getModel("Response");
 		}
 
@@ -430,7 +385,7 @@ component extends="coldbox.system.EventHandler" {
 	/**
 	* Utility method for when an expectation of the request failes (e.g. an expected paramter is not provided)
 	**/
-	private function onExpectationFailed( event = getRequestContext(), rc = getRequestCollection(), prc = getRequestCollection(private=true) ) {
+	private function onExpectationFailed(event=getRequestContext(), rc=getRequestCollection(), prc=getRequestCollection(private=true)) {
 		if(!structKeyExists(prc, "response")){
 			prc.response = getModel("Response");
 		}
@@ -444,7 +399,7 @@ component extends="coldbox.system.EventHandler" {
 	/**
 	* Utility method to render missing or invalid authentication credentials
 	**/
-	private function onAuthenticationFailure( event	= getRequestContext(), rc = getRequestCollection(), prc = getRequestCollection(private=true), abort = false ) {
+	private function onAuthenticationFailure(event=getRequestContext(), rc=getRequestCollection(), prc=getRequestCollection(private=true), abort=false) {
 		if(!structKeyExists(prc, "response")){
 			prc.response = getModel("Response");
 		}
@@ -461,7 +416,7 @@ component extends="coldbox.system.EventHandler" {
 	* Utility method to render a failure of authorization on any resource
 	*
 	*/
-	private function onAuthorizationFailure( event = getRequestContext(), rc = getRequestCollection(), prc = getRequestCollection(private=true), abort = false ){
+	private function onAuthorizationFailure(event=getRequestContext(), rc=getRequestCollection(), prc=getRequestCollection(private=true), abort=false){
 		if(!structKeyExists(prc, "response")){
 			prc.response = getModel("Response");
 		}
@@ -477,7 +432,6 @@ component extends="coldbox.system.EventHandler" {
 		* When you need a really hard stop to prevent further execution (use as last resort)
 		**/
 		if(abort){
-
 			event.setHTTPHeader(
 				name 	= "Content-Type",
 	        	value 	= "application/json"
@@ -496,63 +450,52 @@ component extends="coldbox.system.EventHandler" {
 		}
 	}
 
+	/**************************** PRIVATE METHODS ************************/
+
 	/**
 	 * Check Atuhentication Token
+	 *
+	 * @event 
+	 * @rc 
+	 * @prc 
 	 */
-	private any function checkAuthenticationToken(event, rc, prc, targetAction, eventArguments, args) {
-	
+	private any function checkAuthenticationToken(event, rc, prc) {
 		/* Only accept application/json for content body on posts */
-		if ((event.getHTTPMethod() == "POST" || event.getHTTPMethod() == "PUT") && !prc.response.getError()) {
-			if (findNoCase("application/json", event.getHTTPHeader("Content-Type")) == 0) {
-				prc.response.setError(true)
-							.addMessage("Content-Type application/json is required!")
-							.setStatusCode(STATUS.BAD_REQUEST)
-							.setStatusText(MESSAGES.BAD_REQUEST);
+		if (reFindNoCase("(#METHODS.POST#|#METHODS.PUT#)", arguments.event.getHTTPMethod()) > 0 AND NOT arguments.prc.response.getError()) {
+			if (findNoCase("application/json", arguments.event.getHTTPHeader("Content-Type")) == 0) {
+				throw(message="Content-Type application/json is required", errorcode=STATUS.BAD_REQUEST);
 			}
 		}
 
-		/* Do not check authentication for the authenticate handler */
-		if (findNoCase("Echo", event.getCurrentEvent()) == 0 && 
-			findNoCase("Authenticate", event.getCurrentEvent()) == 0 && 
-			findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0) {
-
-			event.paramValue("token", "");
-			event.paramValue("rc.token", "");
-
-			/* Extract the token from the authorization header */
-			if (!len(rc.token) && structKeyExists(getHTTPRequestData().headers, "authorization")) {
-				rc.token = listLast(getHTTPRequestData().headers.authorization," ");
-			}
-
-			if (authService.validateToken(rc.token)) {
-				/* Validate token and store token data in prc scope */
-				prc.token = authService.decodeToken(rc.token);
-			} else {
-				throw(message="Unfortunately your token is not valid", errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
-			}
+		/* Extract the token from the authorization header */
+		if (!len(arguments.rc.token) && structKeyExists(getHTTPRequestData().headers, "authorization")) {
+			arguments.rc.token = listLast(getHTTPRequestData().headers.authorization, " ");
 		}
 
+		if (authService.validateToken(arguments.rc.token)) {
+			/* Validate token and store token data in prc scope */
+			arguments.prc.token = authService.decodeToken(arguments.rc.token);
+		} else {
+			throw(message=getResource(resource="validation.invalidToken"), errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
+		}
 	}
 	
 	/**
 	 * Valida session del cliente, buscando por ID session.
+	 *
+	 * @event 
+	 * @rc 
+	 * @prc 
 	 */
 	private void function validateSession(event, rc, prc) {
-		if (findNoCase("Echo", event.getCurrentEvent()) == 0 && 
-			findNoCase("Authenticate", event.getCurrentEvent()) == 0 && 
-			findNoCase("apic-v1:home.doc", event.getCurrentEvent()) == 0 &&
-			findNoCase("apic-v1:home.index", event.getCurrentEvent()) == 0) {
-
-			if(NOT StructKeyExists(arguments.rc, 'id_evento') OR isEmpty(arguments.rc.id_evento)) {
-				if(structkeyexists(arguments.rc, 'token')) {
-					arguments.rc.id_evento = authService.obtainIdEventoByToke(arguments.rc.token);
-					
-					if (isEmpty(arguments.rc.id_evento)) {
-						throw(message=MESSAGES.NOT_AUTHENTICATED, errorCode=STATUS.NOT_AUTHENTICATED);
-					}         
-				}
+		if(NOT structKeyExists(arguments.rc, 'id_evento') OR isEmpty(arguments.rc.id_evento)) {
+			if(structkeyexists(arguments.rc, 'token')) { 
+				arguments.rc.id_evento = javacast("string", authService.obtainIdEventoByToken(arguments.rc.token));
 			}
-		}
+			if (isEmpty(arguments.rc.id_evento)) {
+				throw(message=MESSAGES.NOT_ALLOWED, errorCode=STATUS.NOT_ALLOWED);
+			}
+		} 
 	}
 
 	/**
@@ -563,57 +506,39 @@ component extends="coldbox.system.EventHandler" {
 	 * @prc 
 	 */
 	private void function validateActions(event, rc, prc) {
-		var error    = false;
-		
-		if(structKeyExists(session, 'usersession')) {
-			if (structKeyExists(session.usersession, 'auth')) {
-				try {
-					var usr  = {};
-					var temp = {};
-					
-					if(session.usersession.type EQ 'cliente'){
-						usr = wirebox.getInstance("ClientesToken");
-					} else {
-						usr = wirebox.getInstance("EventosToken");
-					}
+		var error = false;
 
-					var temp = DeserializeJSON(decrypt(session.usersession.auth, getSetting('authSecretKey'), "AES", "Base64"));
-					
-					var id       = temp.id_permisosToken;
-					var permisos = usr.permisosById(id);
-				
+		if (structKeyExists(arguments.rc, 'token')) {
+			try {
+				var data     = authService.decodeToken(arguments.rc.token);
+				var usr      = (data.type IS 'C') ? wirebox.getInstance("ClientesToken") : wirebox.getInstance("EventosToken");
+				var permisos = usr.permisosById(data.sub);
 
-					switch (event.getHTTPMethod()) {
-						case "GET":
-							if(permisos.getLectura() != 1) {
-								error = true;
-							}						
-							break;
-						case "POST":
-							if(permisos.getEscritura() != 1) {
-								error = true;
-							}						
-							break;
-						case "PUT":
-							break;
-						case "DELETE":
-							if(permisos.getBorrado() != 1) {
-								error = true;
-							}						
-							break;
-						case "OPTIONS":
-							break;
-						default:								
-					}
-				} catch (Any e) {
-					throw(message="Validation HTTTP action has failed", detail=e);
+				switch (event.getHTTPMethod()) {
+					case METHODS.GET:
+						error = (permisos.getLectura() != 1) ? true : false;
+						break;
+					case METHODS.POST:
+						error = (permisos.getEscritura() != 1) ? true : false;
+						break;
+					case METHODS.PUT:
+						break;
+					case METHODS.DELETE:
+						error = (permisos.getLegetBorradoctura() != 1) ? true : false;
+						break;
+					case METHODS.OPTIONS:
+						break;
+					default:								
 				}
+			} catch (Any e) {
+				throw(message="Validation HTTP action has failed", detail=e);
+			}
+		} else {
+			error = true;
+		}
 
-				if(error) {
-					throw(message="Action not allowed", errorcode=STATUS.NOT_AUTHORIZED, detail="#MESSAGES.NOT_AUTHORIZED#: Action not allowed [#event.getHTTPMethod()#]");
-				}
-			}	
-				
+		if(error) {
+			throw(message=MESSAGES.NOT_AUTHORIZED, errorcode=STATUS.NOT_AUTHORIZED, detail="#MESSAGES.NOT_AUTHORIZED#: Action not allowed [#event.getHTTPMethod()#]");
 		}
 	}
 
@@ -626,19 +551,54 @@ component extends="coldbox.system.EventHandler" {
 		var keys = [];
 
 		try {
-			if(!isempty(errorcode)) {
-				keys = StructFindValue(STATUS, arguments.errorcode, "one");
-			}
-			
+			if(!isempty(errorcode)) keys = StructFindValue(STATUS, arguments.errorcode, "one"); 			
 			for(msgs in keys) {
 				return MESSAGES[msgs.key];
 			}
 		} catch(Any e) {
 			log.error("Error: #e.message#", e);
-
 			sendError(e, rc, event);
 		}
 
 		return MESSAGES.INTERNAL_ERROR;
+	}
+
+	/**
+	 * Check if the page/event required special validations
+	 *
+	 * @event 
+	 */
+	private boolean	function isPrivatePages(event) {
+		var isPrivated = true;
+		
+		if(reFindNoCase("(#arrayToList(PUBLIC_PAGES, "|")#)", arguments.event.getCurrentEvent()) > 0) {
+			isPrivated = false;
+		}
+
+		return isPrivated;
+	}
+
+	/**
+	 * Check if a API Token type of client type is been using
+	 *
+	 * @event 
+	 * @rc 
+	 * @prc 
+	 */
+	private void function isClientToken(required event, required rc, prc) {
+		var tokenData = authService.decodeToken(arguments.rc.token);
+		
+		if(reFindNoCase("(#METHODS.GET#|#METHODS.OPTIONS#)", arguments.event.getHTTPMethod()) == 0) {
+			if(structKeyExists(tokenData, "type") && tokenData.type == "C" && listLen(arguments.rc.id_evento) > 1) {
+				throw(message=getResource(resource='validation.idEventoIndexNotFound'), errorcode=STATUS.PARAMETERS_ERROR);
+			} 
+			
+			var idsEvento = javacast("string", authService.obtainIdEventoByToken(arguments.rc.token));
+			arguments.rc.id_evento = javacast("string", arguments.rc.id_evento);
+			
+			if(listFind(idsEvento, arguments.rc.id_evento) == 0) {
+				throw(message=getResource(resource="validation.invalidIdEvento"), errorCode=STATUS.NOT_ALLOWED, detail=MESSAGES.NOT_ALLOWED);         
+			}
+		}
 	}
 }

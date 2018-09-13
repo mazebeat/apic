@@ -20,35 +20,36 @@
 	<cffunction name="all" hint="Todos los productos por grupo" output="false" returntype="struct">
 		<cfargument name="id_evento" required="true">
 
-		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
+		<cfset var s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
-		<cftry>
+		<!--- <cftry> --->
 			<cfset var records = dao.all(arguments.id_evento)>	
 		
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>
-		<cfcatch type = "any">
+		<!--- <cfcatch type = "any">
 			<cfthrow type="any" message="#cfcatch.Message#">
 		</cfcatch>
-		</cftry> 
+		</cftry>  --->
 		
 		<cfreturn s>
 	</cffunction>
 
 	<cffunction name="get" hint="Todos los productos por grupo" output="false" returntype="struct">
 		<cfargument name="id_evento" required="true">
+		<cfargument name="id_producto" type="numeric" required="true">
 
-		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
+		<cfset var s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
-		<cftry>
-			<cfset var records = dao.all(arguments.id_evento)>	
+		<!--- <cftry> --->
+			<cfset var records = dao.get(arguments.id_evento, arguments.id_producto)>	
 		
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>
-		<cfcatch type = "any">
+		<!--- <cfcatch type = "any">
 			<cfthrow type="any" message="#cfcatch.Message#">
 		</cfcatch>
-		</cftry> 
+		</cftry>  --->
 		
 		<cfreturn s>
 	</cffunction>
@@ -61,17 +62,17 @@
 		<cfargument name="event">
 		<cfargument name="rc">
 
-		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
+		<cfset var s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
-		<cftry>
+		<!--- <cftry> --->
 			<cfset var records = dao.allSelected(arguments.id_evento, arguments.event, arguments.rc)>	
 
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>
-		<cfcatch type = "any">
+		<!--- <cfcatch type = "any">
 			<cfthrow type="any" message="#cfcatch.Message#">
 		</cfcatch>
-		</cftry> 
+		</cftry>  --->
 		
 		<cfreturn s>
 	</cffunction>	
@@ -84,17 +85,17 @@
 		<cfargument name="event">
 		<cfargument name="rc">
 
-		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
+		<cfset var s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
-		<cftry>
+		<!--- <cftry> --->
 			<cfset var records = dao.selectedByParticipante(arguments.id_evento, arguments.event, arguments.rc)>
 			
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>
-		<cfcatch type = "any">
+		<!--- <cfcatch type = "any">
 			<cfthrow type="any" message="#cfcatch.Message#">
 		</cfcatch>
-		</cftry> 
+		</cftry>  --->
 		
 		<cfreturn s>
 	</cffunction>	

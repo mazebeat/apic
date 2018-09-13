@@ -31,27 +31,19 @@
 		<cfargument name="event">
 		<cfargument name="rc">
 		
-		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
+		<cfset var s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
 		<cfset var campos  = createObject("java", "java.util.LinkedHashMap").init()>
 
-		<!--- <cfset var cacheKey = 'q-form-all-#id_evento#'> --->
+		<cfset var allForms = dao.byEvento(id_evento, event, rc)>
+		<!--- <cfset queryAddColumn(allForms, 'id_agrupacion')>
+		<cfset queryAddColumn(allForms, 'fields')> --->
 		
-		<!--- <cfif cache.lookup(cacheKey)>
-			<cfset var allForms = cache.get(cacheKey)>
-		<cfelse> --->
-			<cfset var allForms = dao.byEvento(id_evento, event, rc)>
-			<!--- <cfset queryAddColumn(allForms, 'id_agrupacion')>
-			<cfset queryAddColumn(allForms, 'fields')> --->
-			
-			<cfloop query="allForms">
-				<cfset var groups = dao.groupsByForm(id_formulario)>
-				<!--- <cfset querySetCell(allForms, 'id_agrupacion', valueList(groups.id_agrupacion), allForms.CurrentRow)>
-				<cfset querySetCell(allForms, 'fields', dao.allFieldsByGroup(valueList(groups.id_agrupacion)), allForms.CurrentRow)> --->
-			</cfloop>
+		<cfloop query="allForms">
+			<cfset var groups = dao.groupsByForm(id_formulario)>
+			<!--- <cfset querySetCell(allForms, 'id_agrupacion', valueList(groups.id_agrupacion), allForms.CurrentRow)>
+			<cfset querySetCell(allForms, 'fields', dao.allFieldsByGroup(valueList(groups.id_agrupacion)), allForms.CurrentRow)> --->
+		</cfloop>
 
-			<!--- <cfset cache.set(cacheKey, allForms, 60, 30)>
-		</cfif> --->
-		
 		<cfset s.data.records = allForms>
 		<cfset s.data.total   = allForms.recordCount>
 		<cfreturn s>
@@ -67,22 +59,17 @@
 		<cfargument name="event">
 		<cfargument name="rc">
 		
-		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
+		<cfset var s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
 		<cfset var campos = createObject("java", "java.util.LinkedHashMap").init()>
 		<cfset var cacheKey = 'q-formS-get-#id_formulario#'>
 
-		<!--- <cfif cache.lookup(cacheKey)> --->
-			<!--- <cfset var allGroups = cache.get(cacheKey)> --->
-		<!--- <cfelse> --->
 		<cfset var frm = dao.get(id_formulario, event, rc)>
 
 		<cfloop query="frm">
 			<cfset var groups = dao.groupsByForm(id_formulario)>
 			<cfset querySetCell(frm, 'id_agrupacion', valueList(groups.id_agrupacion), frm.CurrentRow)>
-			<!--- <cfset querySetCell(frm, 'id_campo', valueList(dao.allFieldsByGroup(valueList(groups.id_agrupacion)).id_campo), frm.CurrentRow)> --->
 			<cfset querySetCell(frm, 'id_campo', dao.allFieldsByGroup(valueList(groups.id_agrupacion)), frm.CurrentRow)>
 		</cfloop>
-		<!--- </cfif> --->
 
 		<cfset s.data.records = frm>
 		<cfset s.data.total   = frm.recordCount>
@@ -95,49 +82,39 @@
 		* @id_idioma
 	--> 
 	<cffunction name="meta" returnType="struct" hint="Obtiene todos los formularios según ID de un evento e idioma">
-		<cfargument name="id_evento" type="any" required="true" hint="">
+		<cfargument name="id_evento" type="any" required="true" hint="Id correspondiente al evento">
 		<cfargument name="sortBy" type="string" required="false" default="field" hint="Could be by 'field', 'form', 'group'">
 		
-		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
+		<cfset var s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
 		<cfset var campos  = createObject("java", "java.util.LinkedHashMap").init()>
 
-		<!--- <cfset var cacheKey = 'q-form-meta-#id_evento#-#sortBy#'> --->
+		<cfset var allGroups = dao.groupsByEvent(arguments.id_evento)>
+		<cfset var fields 	 = dao.allFieldsByGroup(valueList(allGroups.id_agrupacion))>
 
-		<!--- <cfif cache.lookup(cacheKey)>
-			<cfset campos = cache.get(cacheKey)>
-		<cfelse> --->
-			<cfset var allGroups = dao.groupsByEvent(arguments.id_evento)>
-			<cfset var fields 	 = dao.allFieldsByGroup(valueList(allGroups.id_agrupacion))>
-
-			<cfif arguments.sortBy EQ 'field'>
-
-				<cfloop query="fields">				
-					<cfif NOT structKeyExists(campos, id_campo)>
-						<cfset campos[id_campo] = obtainMetaOfField(id_campo)>
-					</cfif>
-				</cfloop>
-			
-			<cfelseif arguments.sortBy EQ 'form'>
-				<cfloop query="fields">				
-					<cfif NOT structKeyExists(campos, id_campo)>
-						<cfset campos[id_campo] = obtainMetaOfField(id_campo)>
-					</cfif>
-				</cfloop>
-			<cfelseif arguments.sortBy EQ 'group'>
-				<cfloop query="fields">
-					<cfif !structKeyExists(campos, id_agrupacion)>
-						<cfquery name="local.title" dbtype="query" cachedWithin="#createTimeSpan( 0, 0, 1, 0 )#">
-							SELECT titulo FROM allGroups WHERE id_agrupacion = #id_agrupacion#
-						</cfquery>
-						<cfset campos['groups'][id_agrupacion]['title'] = local.title.titulo>
-					</cfif>
-					<cfset campos['groups'][id_agrupacion]['fields'][id_campo] = obtainMetaOfField(id_campo)>
-				</cfloop>
-			</cfif>
+		<cfif arguments.sortBy EQ 'field'>
+			<cfloop query="fields">				
+				<cfif NOT structKeyExists(campos, id_campo)>
+					<cfset campos[id_campo] = obtainMetaOfField(id_campo)>
+				</cfif>
+			</cfloop>
+		<cfelseif arguments.sortBy EQ 'form'>
+			<cfloop query="fields">				
+				<cfif NOT structKeyExists(campos, id_campo)>
+					<cfset campos[id_campo] = obtainMetaOfField(id_campo)>
+				</cfif>
+			</cfloop>
+		<cfelseif arguments.sortBy EQ 'group'>
+			<cfloop query="fields">
+				<cfif !structKeyExists(campos, id_agrupacion)>
+					<cfquery name="local.title" dbtype="query" cachedWithin="#createTimeSpan( 0, 0, 1, 0 )#">
+						SELECT titulo FROM allGroups WHERE id_agrupacion = #id_agrupacion#
+					</cfquery>
+					<cfset campos['groups'][id_agrupacion]['title'] = local.title.titulo>
+				</cfif>
+				<cfset campos['groups'][id_agrupacion]['fields'][id_campo] = obtainMetaOfField(id_campo)>
+			</cfloop>
+		</cfif>
 	
-			<!--- <cfset cache.set(cacheKey, campos, 60, 30)> --->
-		<!--- </cfif> --->
-		
 		<cfset s.data.records = campos>
 		<cfset s.data.total   = structCount(campos)>
 
@@ -158,23 +135,14 @@
 			<cfthrow message="Unknown event" errorcode=400>
 		</cfif>
 		
-		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
+		<cfset var s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
 		<cfset var campos  = createObject("java", "java.util.LinkedHashMap").init()>
 
-		<cfset var cacheKey = 'q-form-byEvento-#id_evento#'>
-
-		<cfif cache.lookup(cacheKey)>
-			<cfset allGroups = cache.get(cacheKey)>
-		<cfelse>
-			<cfset var allGroups = dao.groupsByEvent(arguments.id_evento)>
-			<!--- <cfset var fields 	 = dao.allFieldsByGroup(valueList(allGroups.id_agrupacion))>
-
-			<cfloop query="fields">
-				<cfset campos[id_agrupacion][id_campo] = obtainMetaOfField(id_campo)>
-			</cfloop> --->
-
-			<cfset cache.set(cacheKey, allGroups, 60, 30)>
-		</cfif>
+		<cfset var allGroups = dao.groupsByEvent(arguments.id_evento)>
+		<!--- <cfset var fields 	 = dao.allFieldsByGroup(valueList(allGroups.id_agrupacion))>
+		<cfloop query="fields">
+			<cfset campos[id_agrupacion][id_campo] = obtainMetaOfField(id_campo)>
+		</cfloop> --->
 		
 		<cfset s.data.records           = allGroups>
 		<cfset s.data.total             = allGroups.recordCount>
@@ -192,14 +160,14 @@
 		<cfargument name="event">
 		<cfargument name="rc">
 		
-		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
+		<cfset var s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
 		<cfset var campos  = createObject("java", "java.util.LinkedHashMap").init()>
 
-		<cfset var cacheKey = 'q-form-fieldsByEvento-#arguments.id_evento#'>
+		<!--- <cfset var cacheKey = 'q-form-fieldsByEvento-#arguments.id_evento#'>
 
 		<cfif cache.lookup(cacheKey)>
 			<cfset campos = cache.get(cacheKey)>
-		<cfelse>
+		<cfelse> --->
 			<cfset var allGroups = dao.groupsByEvent(arguments.id_evento)>
 			<cfset var fields 	 = dao.allFieldsByGroup(valueList(allGroups.id_agrupacion))>
 
@@ -207,8 +175,8 @@
 				<cfset campos[id_agrupacion][id_campo] = obtainMetaOfField(id_campo)>
 			</cfloop>
 
-			<cfset cache.set(cacheKey, campos, 60, 30)>
-		</cfif>
+			<!--- <cfset cache.set(cacheKey, campos, 60, 30)> --->
+		<!--- </cfif> --->
 		
 		<cfset s.data.records           = campos>
 		<cfset s.data.totalAgrupaciones = allGroups.recordCount>
@@ -228,20 +196,14 @@
 		<cfargument name="event">
 		<cfargument name="rc">
 		
-		<cfset s = { ok = true, mensaje: "", data : { "records":{},  "count": 0, "total": 0 } }>
+		<cfset var s = { ok = true, mensaje: "", data : { "records":{},  "count": 0, "total": 0 } }>
 		<cfset var campos  = createObject("java", "java.util.LinkedHashMap").init()>
 		
-		<!--- <cfset var cacheKey = 'q-formS-bytp-#id_tipo_participante#'> --->
-
-		<!--- <cfif cache.lookup(cacheKey)> --->
-			<!--- <cfset var allGroups = cache.get(cacheKey)> --->
-		<!--- <cfelse> --->
 		<cfset var frm = dao.getByIdTipoParticipante(id_tipo_participante, event, rc)>
 		
 		<cfloop query="frm">
 			<cfset var groups = dao.groupsByForm(id_formulario)>
 			<cfset querySetCell(frm, 'id_agrupacion', valueList(groups.id_agrupacion), frm.CurrentRow)>
-			<!--- <cfset querySetCell(frm, 'id_campo', valueList(dao.allFieldsByGroup(valueList(groups.id_agrupacion)).id_campo), frm.CurrentRow)> --->
 			<cfset querySetCell(frm, 'id_campo', dao.allFieldsByGroup(valueList(groups.id_agrupacion)), frm.CurrentRow)>
 		</cfloop>
 		
@@ -356,7 +318,7 @@
 
 				<cfset meta['inputType']                     = 'select'>
 				<cfset meta['name']                          = campo.titulo>
-				<cfset meta['type']                          = 'email'>
+				<cfset meta['type']                          = 'list'>
 				<cfset meta['configuration']['required']     = numericToBoolean(campo.obligatorio)>
 				<cfset meta['configuration']['readonly']     = numericToBoolean(campo.solo_lectura)>
 				<cfset meta['configuration']['comprobacion'] = numericToBoolean(campo.comprobacion)>
@@ -469,11 +431,7 @@
 		<cfset var out = false>
 
 		<cfif IsValid('numeric', arguments.value)>
-			<cfswitch expression="#arguments.value#">
-				<cfcase value="0"><cfset out = false></cfcase>
-				<cfcase value="1"><cfset out = true></cfcase>
-				<cfdefaultcase><cfset out = false></cfdefaultcase> 
-			</cfswitch>
+			<cfset out = (arguments.value IS 1) ? true : false>
 		</cfif>		
 
 		<cfreturn out>
@@ -482,7 +440,7 @@
 	<cffunction name="obtainValues" returnType="any">
 		<cfargument name="id_campo" type="any" required="true" default="0">
 		
-		<cfset values = {}>
+		<cfset var values = {}>
 		
 		<cfset var cacheKey = 'q-form-obtainValues-#id_campo#'>
 		
@@ -491,7 +449,6 @@
 		<cfelse>
 			<cfset var tmpVal = dao.cargarValoresCampoGrupoFormulario(arguments.id_campo)>
 			<cfloop query="tmpVal">
-				<!--- <cfset StructInsert(values, id_valor, { 'id' : id_valor, 'title': titulo })> --->
 				<cfset values[id_valor] = titulo>
 			</cfloop>
 			

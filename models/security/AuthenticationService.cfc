@@ -25,18 +25,13 @@
 	 */
 	any function validate(required string password) {
 
-		var data   = passwordToStruct(password);
+		var data   = this.passwordToStruct(arguments.password);
 		var result = {};
 
-		// if(isdefined("url.debug")) {
-		// 	writeDump(var="#data#", label="data");
-		// 	abort;
-		// }
-	
-		if(data.id != 0 && data.type EQ "c") {
-			result = clienteTokenService.validate(data.id, password);
-		} else if(data.id != 0 && data.type EQ "e"){
-			result = eventosTokenService.validate(data.id, password);
+		if(data.id != 0 && data.type IS 'C') {
+			result = clienteTokenService.validate(data.id, arguments.password);
+		} else if(data.id != 0 && data.type EQ 'E'){
+			result = eventosTokenService.validate(data.id, arguments.password);
 		} else {
 			throw(message="Password Error");
 		}
@@ -48,27 +43,27 @@
 	 * Generate APIc access token
 	 * @userId 
 	 */
-	string function grantToken(required string id, string type = 'c') {
-
+	string function grantToken(required string id, string type = "C", required string idsEventos) {
 		var token   = "";
 		var payload = {
 			"iss"       = application.urlbase,
-			"exp"       = dateAdd("n", tokenExpiration, now()),
-			"sub"       = id,
-			"id_evento" = id,
-			"type"      = type
+			"exp"       = dateAdd("n", variables.getTokenExpiration(), now()),
+			"sub"       = arguments.id,
+			"id_evento" = arguments.idsEventos,
+			"type"      = arguments.type
 		};
 
 		try {
 			/* Encode the data structure as a json web token */
 			token = jwt.encode(payload, "HS512");
-			
-			if(type EQ "c") {
-				clienteTokenService.updateToken(id, token);
-			} else if(type EQ "e"){
-				eventosTokenService.updateToken(id, token);
-			} 
+
 		} catch(any e) {}
+		
+		if(arguments.type EQ "C") {
+			clienteTokenService.updateToken(arguments.id, token);
+		} else if(type EQ "E"){
+			eventosTokenService.updateToken(arguments.id, token);
+		} 
 
 		return token;
 	}
@@ -82,7 +77,7 @@
 		var data       = {};
 	
 		try {
-			data   = jwt.decode(accessToken);		
+			data = jwt.decode(arguments.accessToken);		
 			validToken = true;
 		} catch(any e) {
 			if(isdefined('url.debug')) {
@@ -104,7 +99,7 @@
 	 * @accessToken user token
 	 */
 	struct function decodeToken(required string accessToken) {		
-		return jwt.decode(accessToken);
+		return jwt.decode(arguments.accessToken);
 	}
 
 	/** 
@@ -112,7 +107,7 @@
 	 * @password
 	 */	
 	string function decryptPassword(required string password) {
-		return decrypt(password, secretKey, 'AES', 'Base64');
+		return decrypt(arguments.password, variables.getSecretKey(), 'AES', 'Base64');
 	}
 
 	/** 
@@ -120,7 +115,7 @@
 	 * @password
 	 */		
 	string function encryptPassword(required string password) {
-		return encrypt(password, secretKey, 'AES', 'Base64'); 
+		return encrypt(arguments.password, variables.getSecretKey(), 'AES', 'Base64'); 
 	}	
 
 	/**
@@ -129,14 +124,10 @@
 	 * @isEvento 
 	 */
 	private string function createPassword(required number id, boolean isEvento = false) {
-		var password = "c_";
-		
-		if(isEvento) {
-			password = "e_";
-		}
+		var password = (arguments.isEvento) ? "E_" : "C_";
 
-		password &= id & "_" & secretWord & "_" & randRange(1, 256, "SHA1PRNG");
-		finalPassword = encryptPassword(password);
+		password &= arguments.id & "_" & variables.getSecretWord() & "_" & randRange(1, 256, "SHA1PRNG");
+		finalPassword =  this.encryptPassword(password);
 
 		return finalPassword;
 	}
@@ -148,13 +139,8 @@
 	 * @isEvento 
 	 */
 	string function generatePassword(required number id, boolean isEvento = false) {
-		password = createPassword(id, isEvento);
-		
-		if(!isEvento) {
-			clienteTokenService.updatePassword(id, password);
-		} else {
-			eventosTokenService.updatePassword(id, password);
-		}
+		var password = this.createPassword(arguments.id, arguments.isEvento);
+		(!arguments.isEvento) ? clienteTokenService.updatePassword(arguments.id, password) : eventosTokenService.updatePassword(arguments.id, password);
 		
 		return password;
 	}
@@ -165,14 +151,10 @@
 	 * @password 
 	 */
 	any function obtainPassword(required number id, boolean isEvento = false) {
-		password = {};
+		var password = {};
 
 		try {
-			if(isEvento) {
-				password = eventosTokenService.getPassword(id);
-			} else {
-				password = clienteTokenService.getPassword(id);
-			}
+			password = (arguments.isEvento) ? eventosTokenService.getPassword(arguments.id) : clienteTokenService.getPassword(arguments.id);
 		} catch(any e) {
 			if(isdefined('url.debug')) {
 				throw(e);	
@@ -185,14 +167,15 @@
 	private struct function passwordToStruct(required string password) {
 		var temp = [];
 		var result = {
-			type   = "c",
+			type   = "C",
 			id     = 0,
 			secret = ""
 		};
 
 		try {
-			temp = ListToArray(decryptPassword(password), "_");
+			temp = ListToArray(decryptPassword(arguments.password), "_");
 
+			//!! Add validation of number of elements that "temp" array contains
 			result.type   = temp[1];
 			result.id     = temp[2];
 			result.secret = temp[3];
@@ -202,7 +185,7 @@
 			}
 		}
 
-		if(NOT result.secret EQ secretWord) {
+		if(NOT result.secret EQ variables.getSecretWord()) {
 			throw(message="Password doesn't match");
 		}
 
@@ -212,12 +195,12 @@
 	private any function authByToken(required string token, required numeric id, required string type) {
 		var auth = new Query();
 
-		switch(type) {
-			case "c":
-				auth = clienteTokenService.byToken(id, token);
+		switch(arguments.type) {
+			case "C":
+				auth = clienteTokenService.byToken(arguments.id, arguments.token);
 				break; 
-			case "e":
-				auth= eventosTokenService.byToken(id, token);
+			case "E":
+				auth= eventosTokenService.byToken(arguments.id, arguments.token);
 				break; 
 		}
 		
@@ -228,10 +211,10 @@
 		var rsp = {};
 
 		try {
-			if(isevent) {
-				rsp = eventosTokenService.activateDesactivate(id);
+			if(arguments.isevent) {
+				rsp = eventosTokenService.activateDesactivate(arguments.id);
 			} else {
-				rsp = clienteTokenService.activateDesactivate(id);
+				rsp = clienteTokenService.activateDesactivate(arguments.id);
 			}
 		} catch(any e) {
 			if(isdefined('url.debug')) {
@@ -242,12 +225,12 @@
 		return rsp;
 	}
 
-	any function obtainIdEventoByToke(required string token) {
+	any function obtainIdEventoByToken(required string token) {
 		var validToken = false;
 		var data       = {};
 	
 		try {
-			data   = jwt.decode(token);		
+			data = jwt.decode(arguments.token);	
 		} catch(any e) {
 			if(isdefined('url.debug')) {
 				throw(e);	

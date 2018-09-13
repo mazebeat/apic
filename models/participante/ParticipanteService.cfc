@@ -1,11 +1,10 @@
 <!--
   Participante Service
  -->
-	<cfcomponent output="false" accessors="true" hint="ParticipanteService">
+<cfcomponent output="false" accessors="true" hint="ParticipanteService">
 	<cftimer label= "models/ParticipanteService"></cftimer>
 
 	<!--- Properties --->
-    <cfproperty name="log"		inject="logbox:logger:{this}">
 	<cfproperty name="cache" 	inject="cachebox:default">
 	<cfproperty name="tpDAO"	inject="model:tipoparticipante.TipoParticipanteDAO">
 	<cfproperty name="valS"		inject="model:FormValidationService">
@@ -27,13 +26,13 @@
 		@rc
 	 --->
 	<cffunction name="all" hint="Todos los participantes" output="false" returntype="struct">
-		<cfargument name="id_evento" required="true">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="prc">
 		
-		<cfset s = { ok = true, mensaje= "", data = { "records"={},  "count"= 0, "total"= 0, "pages"= "1 of 1" } }>
+		<cfset var s = { ok = true, mensaje= "", data = { "records"={},  "count"= 0, "total"= 0, "pages"= "1 of 1" } }>
 
-		<cfset var records = dao.all(arguments.id_evento, arguments.event, arguments.rc)>
+		<cfset var records = dao.all(arguments.event, arguments.rc, arguments.prc)>
 
 		<cfif queryColumnExists(records, 'id_tipo_participante')>
 			<cfset var tipoParticipantes = tpDAO.all(arguments.event, arguments.rc)>
@@ -43,8 +42,8 @@
 			<cfloop query = "records">
 				<cfif NOT isQuery(records.id_tipo_participante)>
 					<cfset var tp = QueryFilter(tipoParticipantes, function(tp) {
-								return tp.id_tipo_participante IS id_tipo_participante;
-						})>
+						return tp.id_tipo_participante IS id_tipo_participante;
+					})>
 					<cfset records['id_tipo_participante'] [records.currentRow] = tp> 
 				</cfif>
 			</cfloop>
@@ -71,28 +70,21 @@
 	<cffunction name="get" hint="Obtiene participante por ID" output="false" returntype="struct">
 		<cfargument name="event">
 		<cfargument name="rc">
-		<cfargument name="id_evento">
-		<cfargument name="id_participante" type="numeric" required="true">
 
-		<cfset s = { ok =true, mensaje="", data ={ "records"={},  "count"=0 } }>
+		<cfset var s = { ok =true, mensaje="", data ={ "records"={},  "count"=0 } }>
 
-		<!--- <cftry> --->
-			<cfset var cacheKey = 'q-participante-get-#id_participante#'>
+		<cfset var cacheKey = 'q-participante-get-#arguments.rc.id_participante#'>
 
-			<cfif cache.lookup(cacheKey)>
-				<cfset var records = cache.get(cacheKey)>
-			<cfelse>
-				<cfset var records = dao.get(arguments.event, arguments.rc, arguments.rc.id_evento, arguments.id_participante)>
+		<cfif cache.lookup(cacheKey)>
+			<cfset var records = cache.get(cacheKey)>
+		<cfelse>
+			<cfset var records = dao.get(arguments.event, arguments.rc, arguments.rc.id_evento, arguments.rc.id_participante)>
 
-				<cfset cache.set(cacheKey, records, 60, 30)>
-			</cfif>
+			<cfset cache.set(cacheKey, records, 60, 30)>
+		</cfif>
 
-			<cfset s.data.records = records>
-			<cfset s.data.count   = records.recordCount>
-		<!--- <cfcatch type = "any">
-			<cfthrow type="any" message="#cfcatch.Message#">
-		</cfcatch>
-		</cftry>  --->
+		<cfset s.data.records = records>
+		<cfset s.data.count   = records.recordCount>
 		
 		<cfreturn s>
 	</cffunction>
@@ -106,24 +98,51 @@
 	<cffunction name="byType" hint="Obtiene todos los participantes por tipo de participante" output="false" returntype="struct">
 		<cfargument name="event"> 
 		<cfargument name="rc">
-		<cfargument name="tipo_participante" type="string" required="true">
+		<cfargument name="prc">		
 
-		<cfset s = { ok= true, mensaje= "", data= { "records"={},  "count"= 0, "total"= 0, "pages"= "1 of 1"} }>
+		<cfset var s = { ok= true, mensaje= "", data= { "records"={},  "count"= 0, "total"= 0, "pages"= "1 of 1"} }>
+		
+		<cfset var records = dao.byType(arguments.event, arguments.rc)>
+		<cfset s.data.records = records>
+		<cfset s.data.count = records.recordCount>
+		<cfset s.data.total = arguments.rc.total>
 
-		<!--- <cftry> --->
-			<cfset var records = dao.byType(event, rc, tipo_participante)>			
-			<cfset s.data.records = records>
-			<cfset s.data.count = records.recordCount>
-			<cfset s.data.total = arguments.rc.total>
+		<cfif structKeyExists(arguments.rc, 'page') && structKeyExists(arguments.rc, 'rows') && arguments.rc.rows GT 0 && arguments.rc.page GT 0>
+			<cfset var pages =  arguments.rc.page & " of " & round(arguments.rc.total/arguments.rc.rows  + 0.45)>
+			<cfset s.data.pages = pages>
+		</cfif>
+		
+		<cfreturn s>
+	</cffunction>
 
-			<cfif structKeyExists(arguments.rc, 'page') && structKeyExists(arguments.rc, 'rows') && arguments.rc.rows GT 0 && arguments.rc.page GT 0>
-				<cfset var pages =  arguments.rc.page & " of " & round(arguments.rc.total/arguments.rc.rows  + 0.45)>
-				<cfset s.data.pages   = pages>
-			</cfif>
-		<!--- <cfcatch type = "any">
-			<cfthrow type="any" message="#cfcatch.Message#">
-		</cfcatch>
-		</cftry>  --->
+	<!--- 
+
+	 --->
+	<cffunction name="byEmail" hint="Obtiene participante(s) por email" output="false" returntype="struct">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
+
+		<cfset var s = { ok= true, mensaje= "", data= { "records"={},  "count"= 0, "total"= 0, "pages"= "1 of 1"} }>
+
+		<cfif !structKeyExists(arguments.rc, "email")>
+			<cfset s.ok = false>
+			<cfset s.message = "It haven't found a valid Email">
+			<cfreturn s>
+		</cfif>
+		
+		<cfset var cacheKey = 'q-participante-findByemail-#arguments.rc.email#'>
+		
+		<cfif cache.lookup(cacheKey)>
+			<cfset var records = cache.get(cacheKey)>
+		<cfelse>
+			<cfset var records = dao.findByEmail(arguments.event, arguments.rc)>
+
+			<cfset cache.set(cacheKey, records, 60, 30)>
+		</cfif>
+
+		<cfset s.data.records = records>
+		<cfset s.data.count   = records.recordCount>
 		
 		<cfreturn s>
 	</cffunction>
@@ -136,16 +155,16 @@
 	<cffunction name="create" hint="" output="false" returntype="struct">
 		<cfargument name="event">
 		<cfargument name="rc">
-		<cfargument name="id_evento">
+		<cfargument name="prc">
 
-		<cfset s = { mensaje= "", data= { "records"={}} }>
-		<cfset out = ''>
-		
-		<cfset dataFields = valS.validateCreateDataFields(arguments.rc, arguments.id_evento)>
+		<cfset var s = { mensaje= "", data= { "records"={}} }>
+		<cfset var out = ''>
+
+		<cfset dataFields = valS.validateCreateDataFields(arguments.rc)>
 		<cfset vList = { a = [], b = [], c = [] }>
 		
-		<cfloop collection="#dataFields.data.records#" item="key">
-			<cfset record = dataFields.data.records[key]>
+		<cfloop collection="#dataFields.records#" item="key">
+			<cfset record = dataFields.records[key]>
 			<cfset result = dao.genCreate(event, rc, record, key)>
 
 			<cfset arrayAppend(vList.a, result.a)>
@@ -157,7 +176,7 @@
 
 		<cftransaction> 
 			<cftry> 				
-				<cfset var out = dao.doCreate(event, rc, vList)>
+				<cfset out = dao.doCreate(event, rc, vList)>
 				
 				<cfset s.data.records = out>		
 				<cfset s.mensaje      = "Participantes have been created successfuly">
@@ -181,16 +200,16 @@
 	<cffunction name="modify" hint="" output="false" returntype="struct">
 		<cfargument name="event">
 		<cfargument name="rc">
-		<cfargument name="id_evento">
+		<cfargument name="prc">
 
 		<cfset s = { mensaje= "", data= { "records"={}} }>
 		<cfset out = ''>
 
-		<cfset dataFields = valS.validateCreateDataFields(arguments.rc, arguments.rc.id_evento)>
+		<cfset dataFields = valS.validateCreateDataFields(arguments.rc)>
 		<cfset vList = { a = [], b = [], c = [], d = [] }>
 		
-		<cfloop collection="#dataFields.data.records#" item="key">
-			<cfset record = dataFields.data.records[key]>
+		<cfloop collection="#dataFields.records#" item="key">
+			<cfset record = dataFields.records[key]>
 			<cfset result = dao.genCreate(event, rc, record, key)>
 
 			<cfset arrayAppend(vList.a, result.a)>
@@ -200,6 +219,11 @@
 			<cfset arrayAppend(vList.c, result.c)>
 			<cfset arrayAppend(vList.d, record.email)>
 		</cfloop>
+
+		<!--- <cfif cgi.REMOTE_ADDR is '47.63.119.142'>
+			<cfdump var="#vList#" label="vList">
+			<cfabort>
+		</cfif> --->
 
 		<cftransaction> 
 			<cftry> 

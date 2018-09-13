@@ -54,19 +54,18 @@
 		Retorna todos las reuniones modo detalle / no detalle (url.nodetail)
 	 --->
 	<cffunction name="all2" returntype="Query" outoput="false">
-		<cfargument name="id_evento" type="any" required="true">
 		<cfargument name="event">
 		<cfargument name="rc">
 
 		<cfquery name="local.allReunion" datasource="#application.datasource#">
 			SELECT participante1, participante2, salas_id_sala AS 'sala', horas_id_hora AS 'horario'
 			FROM reunionesGeneradas
-			WHERE eventos_id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
+			WHERE eventos_id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 			AND fecha_baja IS NULL
 		</cfquery>
 
 		<cfif NOT isdefined('url.nodetail')>
-			<cfset local.allReunion = addDetail(local.allReunion, arguments.id_evento, arguments.event, arguments.rc)>
+			<cfset local.allReunion = addDetail(arguments.event, arguments.rc, local.allReunion)>
 		</cfif>
 		
 		<cfreturn local.allReunion>
@@ -76,21 +75,19 @@
 		Obtiene todas las reuniones de una participante en cocreto
 	 --->
 	<cffunction name="get" returntype="Query" outoput="false">
-		<cfargument name="id_evento" type="any" required="true">
-		<cfargument name="id_participante" required="true">
 		<cfargument name="event">
 		<cfargument name="rc">
 
 		<cfquery name="local.getReunion" datasource="#application.datasource#">
 			SELECT participante1, participante2, salas_id_sala AS 'sala', horas_id_hora AS 'horario'
 			FROM reunionesGeneradas
-			WHERE eventos_id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
-			AND participante1 = #arguments.id_participante#
+			WHERE eventos_id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
+			AND participante1 = #arguments.rc.id_participante#
 			AND fecha_baja IS NULL
 		</cfquery>
 
 		<cfif NOT isdefined('url.nodetail')>
-			<cfset local.getReunion = addDetail(local.getReunion, arguments.id_evento, arguments.event, arguments.rc)>
+			<cfset local.getReunion = addDetail(arguments.event, arguments.rc, local.getReunion)>
 		</cfif>
 
 		<cfreturn local.getReunion>
@@ -100,12 +97,11 @@
 		Expande el detalle de cada reunión por id de participante1, participante2, id_horario (sala), id_hora (horario)
 	 --->
 	<cffunction name="addDetail"  output="false" returntype="query">
-		<cfargument name="queryReunion" type="query" required="true">
-		<cfargument name="id_evento" required="true">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="queryReunion" type="query" required="true">
 
-		<cfset local.allParticipantes = partServ.all(arguments.id_evento, arguments.event, arguments.rc, true)>
+		<cfset local.allParticipantes = partServ.all(arguments.event, arguments.rc)>
 
 		<cfif arguments.queryReunion.recordCount GT 0>
 

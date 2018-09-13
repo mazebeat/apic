@@ -28,3 +28,5 @@ component extends="Base"{
 		prc.response.addMessage(getResource(resource='welcome'));				
 	}
 }
+
+

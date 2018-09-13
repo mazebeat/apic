@@ -1,169 +1,306 @@
 <cfcomponent output="false" hint="My Module Configuration">
-<cfscript>
-/**
-Module Directives as public properties
-this.title 				= "Title of the module";
-this.author 			= "Author of the module";
-this.webURL 			= "Web URL for docs purposes";
-this.description 		= "Module description";
-this.version 			= "Module Version";
-this.viewParentLookup   = (true) [boolean] (Optional) // If true, checks for views in the parent first, then it the module.If false, then modules first, then parent.
-this.layoutParentLookup = (true) [boolean] (Optional) // If true, checks for layouts in the parent first, then it the module.If false, then modules first, then parent.
-this.entryPoint  		= "" (Optional) // If set, this is the default event (ex:forgebox:manager.index) or default route (/forgebox) the framework
-									       will use to create an entry link to the module. Similar to a default event.
-this.cfmapping			= "The CF mapping to create";
-this.modelNamespace		= "The namespace to use for registered models, if blank it uses the name of the module."
-this.dependencies 		= "The array of dependencies for this module"
+	<cfscript>
+		// Module Properties
+		this.title 				= "apic-v1";
+		this.author 			= "IBEVENTS";
+		this.webURL 			= "https://www.tufabricadeventos.com/";
+		this.description 		= "APIc para consumo de clientes";
+		this.version			= "1.0.2";
+		// If true, looks for views in the parent first, if not found, then in the module. Else vice-versa
+		this.viewParentLookup 	= false;
+		// If true, looks for layouts in the parent first, if not found, then in module. Else vice-versa
+		this.layoutParentLookup = false;
+		// Module Entry Point
+		this.entryPoint			= "apic/v1";
+		// Model Namespace
+		this.modelNamespace		= "apic-v1";
+		// CF Mapping
+		this.cfmapping			= "apic-v1";
+		// Auto-map models
+		this.autoMapModels		= false;
+		// Module Dependencies
+		this.dependencies 		= [];
 
-structures to create for configuration
-- parentSettings : struct (will append and override parent)
-- settings : struct
-- datasources : struct (will append and override parent)
-- interceptorSettings : struct of the following keys ATM
-	- customInterceptionPoints : string list of custom interception points
-- interceptors : array
-- layoutSettings : struct (will allow to define a defaultLayout for the module)
-- routes : array Allowed keys are same as the addRoute() method of the SES interceptor.
-- wirebox : The wirebox DSL to load and use
+		function configure(){
 
-Available objects in variable scope
-- controller
-- appMapping (application mapping)
-- moduleMapping (include,cf path)
-- modulePath (absolute path)
-- log (A pre-configured logBox logger object for this object)
-- binder (The wirebox configuration binder)
-- wirebox (The wirebox injector)
+			// parent settings
+			parentSettings = {};
 
-Required Methods
-- configure() : The method ColdBox calls to configure the module.
+			// module settings - stored in modules.name.settings
+			settings = {};
 
-Optional Methods
-- onLoad() 		: If found, it is fired once the module is fully loaded
-- onUnload() 	: If found, it is fired once the module is unloaded
+			// Layout Settings
+			layoutSettings = {
+				defaultLayout = ""
+			};
 
-*/
+			// datasources
+			datasources = {};
 
-	// Module Properties
-	this.title 				= "apic-v1";
-	this.author 			= "Tufabricadeventos.com";
-	this.webURL 			= "https://www.tufabricadeventos.com/";
-	this.description 		= "APIc para consumo de clientes";
-	this.version			= "1.0.0";
-	// If true, looks for views in the parent first, if not found, then in the module. Else vice-versa
-	this.viewParentLookup 	= false;
-	// If true, looks for layouts in the parent first, if not found, then in module. Else vice-versa
-	this.layoutParentLookup = false;
-	// Module Entry Point
-	this.entryPoint			= "apic/v1";
-	// Model Namespace
-	this.modelNamespace		= "apic-v1";
-	// CF Mapping
-	this.cfmapping			= "apic-v1";
-	// Auto-map models
-	this.autoMapModels		= true;
-	// Module Dependencies
-	this.dependencies 		= [];
+			// SES Routes
+			routes = [	
+				// Documentation
+				{ 
+					pattern="/:lang-alpha/doc", 
+					handler="home", 
+					action="doc", 
+					noLayout=true 
+				},
 
-	function configure(){
+				// Agenda
+				{ 
+					pattern="/:lang-alpha/:token/agenda/:id_participante-numeric", 
+					handler="Agenda", 
+					action={ GET="get" } 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/agenda", 
+					handler="Agenda", 
+					action={ GET="index" } 
+				},
 
-		// parent settings
-		parentSettings = {};
+				// Products
+				{ 
+					pattern="/:lang-alpha/:token/productos/seleccionados/:id_participante-numeric", 
+					handler="Productos", 
+					action={ GET="byParticipante" } 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/productos/seleccionados", 
+					handler="Productos", 
+					action={ GET="allSelected" } 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/productos/:id_producto-numeric", 
+					handler="Productos", 
+					action={ GET="get" } 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/productos", 
+					handler="Productos", 
+					action={ GET="index" } 
+				},
 
-		// module settings - stored in modules.name.settings
-		settings = {};
+				// Activities
+				{ 
+					pattern="/:lang-alpha/:token/actividades/:id_participante-numeric", 
+					handler="Actividades", 
+					action={ GET="byParticipante" } 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/actividades", 
+					handler="Actividades", 
+					action={ GET="index" } 
+				},
 
-		// Layout Settings
-		layoutSettings = {
-			defaultLayout = ""
-		};
+				// Meetings
+				{ 
+					pattern="/:lang-alpha/:token/reuniones/:id_participante-numeric", 
+					handler="Reuniones", 
+					action={ GET="get" } 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/reuniones", 
+					handler="Reuniones", 
+					action={ GET="all" } 
+				},
 
-		// datasources
-		datasources = {};
+				// Statics
+				{ 
+					pattern="/:lang-alpha/:token/estadisticas", 
+					handler="Estadisticas", 
+					action={ GET="index" } 
+				},
 
-		// SES Routes
-		routes = [	
-			// Documentation
-			{ pattern="/:lang-alpha/doc", handler="home", action="doc", noLayout=true },
+				// Participantes
+				{ 
+					pattern="/:lang-alpha/:token/participantes/page/:page-numeric/rows/:rows-numeric", 
+					handler="Participantes", 
+					action="index"
+				},
+				{ 
+					pattern="/:lang-alpha/:token/participantes/page/:page-numeric?", 
+					handler="Participantes", 
+					action="index" 
+				},
 
-			// Agenda
-			{ pattern="/:lang-alpha/:token/agenda/:id_participante-numeric", handler="Agenda", action={ GET="get" } },
-			{ pattern="/:lang-alpha/:token/agenda", handler="Agenda", action={ GET="index" } },
+				// -> By ID
+				{ 
+					pattern="/:lang-alpha/:token/participantes/:id_participante-numeric/page/:page-numeric/rows/:rows-numeric", 
+					handler="Participantes", 
+					action={ GET="get", HEAD="info" } 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/participantes/:id_participante-numeric/page/:page-numeric/", 
+					handler="Participantes", 
+					action={ GET="get", HEAD="info" } 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/participantes/:id_participante-numeric", 
+					handler="Participantes", 
+					action={ GET="get", HEAD="info" } 
+				},
 
-			// Products
-			{ pattern="/:lang-alpha/:token/productos/seleccionados/:id_participante-numeric", handler="Productos", action={ GET="byParticipante" } },
-			{ pattern="/:lang-alpha/:token/productos/seleccionados", handler="Productos", action={ GET="allSelected" } },
-			{ pattern="/:lang-alpha/:token/productos", handler="Productos", action={ GET="index" } },
 
-			// Activities
-			{ pattern="/:lang-alpha/:token/actividades/:id_participante-numeric", handler="Actividades", action={ GET="byParticipante" } },
-			{ pattern="/:lang-alpha/:token/actividades", handler="Actividades", action={ GET="index" } },
-			
-			// Meetings
-			{ pattern="/:lang-alpha/:token/reuniones/:id_participante-numeric", handler="Reuniones", action={ GET="get" } },
-			{ pattern="/:lang-alpha/:token/reuniones", handler="Reuniones", action={ GET="all" } },
-			
-			// Statics
-			{ pattern="/:lang-alpha/:token/estadisticas", handler="Estadisticas", action={ GET="index" } },
+				// -> By Tipo
+				{ 
+					pattern="/:lang-alpha/:token/participantes/:tipo_participante-regex:([-_a-zA-Z]+)/page/:page-numeric/rows/:rows-numeric", 
+					handler="Participantes", 
+					action="byType",
+					contraints= { 
+						tipo_participante= { 
+							required: true,
+							regex: "(^([a-zA-Z]+\-?)*$)"
+						} 
+					} 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/participantes/:tipo_participante-regex:([-_a-zA-Z]+)/page/:page-numeric/", 
+					handler="Participantes", 
+					action="byType", 
+					contraints= { 
+						tipo_participante= { 
+							required: true,
+							regex: "(^([a-zA-Z]+\-?)*$)"
+						} 
+					} 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/participantes/:tipo_participante-regex:([-_a-zA-Z]+)", 
+					handler="Participantes", 
+					action="byType", 
+					contraints= { 
+						tipo_participante= { 
+							required: true,
+							regex: "(^([a-zA-Z]+\-?)*$)"
+						} 
+					} 
+				},
 
-			// Participantes
-			{ pattern="/:lang-alpha/:token/participantes/page/:page-numeric/rows/:rows-numeric?", handler="Participantes", action="index" },
-			{ pattern="/:lang-alpha/:token/participantes/page/:page-numeric?", handler="Participantes", action="index" },
+				// -> By Email
+				{ 
+					pattern="/:lang-alpha/:token/participantes/:email-regex:([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3})/page/:page-numeric/rows/:rows-numeric", 
+					handler="Participantes", 
+					action="byEmail", 
+					contraints= { 
+						email= { 
+							required: true, 
+							type: "email", 
+							regex:"(^[\w!##$%&'*+/=?`{|}~^-]+(?:\.[\w!##$%&'*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$)"
+						} 
+					} 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/participantes/:email-regex:([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3})/page/:page-numeric/", 
+					handler="Participantes", 
+					action="byEmail", 
+					contraints= { 
+						email= { 
+							required: true, 
+							type: "email", 
+							regex:"(^[\w!##$%&'*+/=?`{|}~^-]+(?:\.[\w!##$%&'*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$)"
+						} 
+					} 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/participantes/:email-regex:([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3})", 
+					handler="Participantes", 
+					action="byEmail", 
+					contraints= { 
+						email= { 
+							required: true, 
+							type: "email", 
+							regex:"(^[\w!##$%&'*+/=?`{|}~^-]+(?:\.[\w!##$%&'*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$)"
+						} 
+					} 
+				},
 
-			// -> By ID
-			{ pattern="/:lang-alpha/:token/participantes/:id_participante-numeric/page/:page-numeric/rows/:rows-numeric?", handler="Participantes", action={ GET="get", HEAD="info" } },
-			{ pattern="/:lang-alpha/:token/participantes/:id_participante-numeric/page/:page-numeric/", handler="Participantes", action={ GET="get", HEAD="info" } },
-			{ pattern="/:lang-alpha/:token/participantes/:id_participante-numeric", handler="Participantes", action={ GET="get", HEAD="info" } },
+				// -> All		
+				{ 
+					pattern="/:lang-alpha/:token/participantes", 
+					handler="Participantes", 
+					action={ GET="index", POST="create", PUT="modify" } 
+				},
 
-			// -> By Tipo
-			{ pattern="/:lang-alpha/:token/participantes/:tipo_participante/page/:page-numeric/rows/:rows-numeric?", handler="Participantes", action="byType", contraints={ tipo_participante="(/([\w])\w+/+g)", token="(([(\w|\d)\.\-\\])\w+/g)" } },
-			{ pattern="/:lang-alpha/:token/participantes/:tipo_participante/page/:page-numeric/", handler="Participantes", action="byType", contraints={ tipo_participante="(/([\w])\w+/+g)", token="(([(\w|\d)\.\-\\])\w+/g)" } },
-			{ pattern="/:lang-alpha/:token/participantes/:tipo_participante", handler="Participantes", action="byType", contraints={ tipo_participante="(/([\w])\w+/+g)", token="(([(\w|\d)\.\-\\])\w+/g)" } },
+				// Tipo de Participantes
+				{ 
+					pattern="/:lang-alpha/:token/tiposparticipantes/:id_tipo_participante-numeric", 
+					handler="TiposParticipantes", 
+					action="get" 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/tiposparticipantes", 
+					handler="TiposParticipantes", 
+					action="index" 
+				},
+						
+				// Eventos
+				{ 
+					pattern="/:lang-alpha/:token/eventos", 
+					handler="Eventos", 
+					action="index" 
+				},
 
-			// -> All		
-			{ pattern="/:lang-alpha/:token/participantes", handler="Participantes", action={ GET="index", POST="create", PUT="modify" } },
+				// Formularios
+				{ 
+					pattern="/:lang-alpha/:token/formularios/meta/:by_evento-numeric?", 
+					handler="Formularios", 
+					action="meta",
+					constraints= {
+						by_evento= {
+							required: false,
+							type: 'numeric'
+						}
+					}
+				},
+				{ 
+					pattern="/:lang-alpha/:token/formularios/tipoparticipante/:id_tipo_participante-numeric", 
+					handler="Formularios", 
+					action="getByTipoParticipante" 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/formularios/:id_formulario-numeric", 
+					handler="Formularios", 
+					action="get" 
+				},
+				{ 
+					pattern="/:lang-alpha/:token/formularios", 
+					handler="Formularios", 
+					action="index" 
+				},
 
-			// Tipo de Participantes
-			{ pattern="/:lang-alpha/:token/tiposparticipantes/:id_tipo_participante-numeric", handler="TiposParticipantes", action="get" },
-			{ pattern="/:lang-alpha/:token/tiposparticipantes", handler="TiposParticipantes", action="index" },
-					
-			// Eventos
-			{ pattern="/:lang-alpha/:token/eventos", handler="Eventos", action="index" },
+				// Module Entry Point
+				{ 
+					pattern="/:lang-alpha/:token?", 
+					handler="home", 
+					action="index" 
+				},
 
-			// Formularios
-			{ pattern="/:lang-alpha/:token/formularios/meta", handler="Formularios", action="meta" },
-			{ pattern="/:lang-alpha/:token/formularios/tipoparticipante/:id_tipo_participante-numeric", handler="Formularios", action="getByTipoParticipante" },
-			{ pattern="/:lang-alpha/:token/formularios/:id_formulario-numeric", handler="Formularios", action="get" },
-			{ pattern="/:lang-alpha/:token/formularios", handler="Formularios", action="index" },
+				// Convention Route
+				{ pattern="/:lang-alpha/:token?/:handler/:action?" }
+			];
 
-			// Module Entry Point
-			{ pattern="/:lang-alpha/:token?", handler="home", action="index" },
-			
-			// Convention Route
-			{ pattern="/:lang-alpha/:token?/:handler/:action?" }
-		];
+			// Custom Declared Points
+			interceptorSettings = {
+				customInterceptionPoints = ""
+			};
 
-		// Custom Declared Points
-		interceptorSettings = {
-			customInterceptionPoints = ""
-		};
+			// Custom Declared Interceptors
+			interceptors = [];
 
-		// Custom Declared Interceptors
-		interceptors = [];
+			// Binder Mappings
+			// binder.map("Alias").to("#moduleMapping#.model.MyService");
+		}
 
-		// Binder Mappings
-		// binder.map("Alias").to("#moduleMapping#.model.MyService");
-	}
+		/**
+		* Fired when the module is registered and activated.
+		*/
+		function onLoad(){}
 
-	/**
-	* Fired when the module is registered and activated.
-	*/
-	function onLoad(){}
+		/**
+		* Fired when the module is unregistered and unloaded
+		*/
+		function onUnload(){}
 
-	/**
-	* Fired when the module is unregistered and unloaded
-	*/
-	function onUnload(){}
-
-</cfscript>
+	</cfscript>
 </cfcomponent>

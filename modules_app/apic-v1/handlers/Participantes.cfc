@@ -20,6 +20,11 @@
 		};
 	</cfscript>
 
+	<!------------------------------------------- PUBLIC EVENTS ------------------------------------------>
+
+
+	<!------------------------------------------- PRIVATE EVENTS ------------------------------------------>
+
 	<!--- 
 		Obtiene todos los participantes
 		@return JSON
@@ -29,7 +34,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">	
 
-		<cfset s = service.all(arguments.rc.id_evento, arguments.event, arguments.rc)>
+		<cfset s = service.all(arguments.event, arguments.rc, arguments.prc)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -82,7 +87,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset s = service.byType(arguments.event, arguments.rc, clearArgumentWhiteSpace(arguments.rc.tipo_participante))>
+		<cfset s = service.byType(arguments.event, sanatizeDump(arguments.rc))>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -94,6 +99,34 @@
 	</cffunction>
 
 	<!--- 
+		Obtiene el o los participantes que contengan el tipo de participante especificado
+		@return JSON
+	 --->
+	 <cffunction name="byEmail" output="false" hint="Obtener participante por tipo de participante">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
+
+		<cfif structKeyExists(arguments.rc, "email")>
+			<cfparam name="arguments.rc.contraints.email.regex" default="^[\w!##$%&'*+/=?`{|}~^-]+(?:\.[\w!##$%&'*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$">
+
+			<cfset arguments.rc.email = sanatize(arguments.rc.email)>
+
+			<cfif arrayLen(reMatch(arguments.rc.contraints.email.regex, arguments.rc.email)) GT 0>
+				<cfset s = service.byEmail(arguments.event, arguments.rc)>
+				
+				<cfif NOT structIsEmpty(s.data.records)>
+					<cfset s.data.records = QueryToStruct(s.data.records)>
+				</cfif>
+				
+				<cfset arguments.prc.response.setData(s.data).setError(!s.ok)> 
+				
+				<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>
+			</cfif>
+		</cfif>
+	</cffunction>
+
+	<!--- 
 		Crea uno o varios participantes
 		@return JSON
 	 --->
@@ -102,15 +135,10 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<!--- <cftry> --->
-			<cfset s = service.create(arguments.event, arguments.rc, arguments.rc.id_evento)>
-			<cfset arguments.prc.response.setData(s.data)> 
-		<!--- <cfcatch type = "any"> --->
-			<!--- <cfset sendError(cfcatch, rc, event)> --->
-			<!--- <cfset s.mensaje="#cfcatch.message#"> --->
-			<!--- <cfset arguments.prc.response.setError(true)>  --->
-		<!--- </cfcatch>  --->
-		<!--- </cftry> --->
+		<cfset s = service.create(arguments.event, arguments.rc, arguments.prc)>
+		<cfset arguments.prc.response.setData(s.data)
+			.setStatusCode(STATUS.CREATED)
+			.setStatusText(MESSAGES.CREATED)> 
 		
 		<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>
 	</cffunction>
@@ -123,19 +151,24 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<!--- <cftry> --->
-			<cfset s = service.modify(arguments.event, arguments.rc, arguments.rc.id_evento)>
-			<cfset arguments.prc.response.setData(s.data)> 
-		<!--- <cfcatch type = "any"> --->
-			<!--- <cfset sendError(cfcatch, rc, event)> --->
-			<!--- <cfset s.mensaje="#cfcatch.message#"> --->
-			<!--- <cfset arguments.prc.response.setError(true)>  --->
-		<!--- </cfcatch> --->
-		<!--- </cftry>		 --->
+		<cfset s = service.modify(arguments.event, arguments.rc, arguments.rc.id_evento)>
+		<cfset arguments.prc.response.setData(s.data)
+			.setStatusCode(STATUS.ACCEPTED)
+			.setStatusText(MESSAGES.ACCEPTED)>  
 		
 		<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>
 	</cffunction>
-<!------------------------------------------- PRIVATE EVENTS ------------------------------------------>
+
+	<cffunction name="filterBy" output="false" hint="Actualiza un participante">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
+
+		<cfset s = service.modify(arguments.event, arguments.rc, arguments.rc.id_evento)>
+		<cfset arguments.prc.response.setData(s.data)> 
+		
+		<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>
+	</cffunction>
+
 	
 </cfcomponent>
-
