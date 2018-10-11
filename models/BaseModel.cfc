@@ -15,7 +15,6 @@
 	</cffunction>
 	
 <!------------------------------------------- PUBLIC ------------------------------------------->
-
 	<cffunction name="getURLLink">
 		<cfargument name="token" 	type="string"	required="true">
 		<cfargument name="id" 		type="numeric"	required="false">
@@ -40,6 +39,24 @@
 				rowData[lcase(cols[i])] = query[cols[i]][rowNumber];
 			}
 			return rowData;
+		}
+
+		any function sanatizeQuery(any value) {
+			include ("/includes/helpers/ApplicationHelper.cfm");
+			
+			if(!isStruct(arguments.value)) {
+				return sanatize(arguments.value)
+				// return application.esapi.encoder().encodeForSQL(application.esapiMyslCodec, javacast("string", arguments.value));
+			}
+
+			return arguments.value;
+		}
+
+		any function sanatizeQueryColumn(any value) {
+			// if(!isStruct(arguments.value)) {
+			// 	return application.esapi.encoder().encodeForSQL(application.esapiMyslCodec, javacast("string", arguments.value));
+			// }
+			return sanatizeQuery(arguments.value)
 		}
 	</cfscript>
 </cfcomponent>

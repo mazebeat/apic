@@ -1,7 +1,7 @@
 <cfcomponent hint="ProductoDAO" output="false" accessors="true" extends="models.BaseModel">
 
 	<!--- Properties --->
-	<cfproperty name="partServ"			inject="model:participante.ParticipanteDAO">
+	<cfproperty name="partServ"	inject="model:participante.ParticipanteDAO">
 	
 
 <!------------------------------------------- CONSTRUCTOR ------------------------------------------->
@@ -14,9 +14,9 @@
 
 <!------------------------------------------- PUBLIC ------------------------------------------->
 	<cffunction name="all" access="public" returntype="any" output="false">
-		<cfargument name="id_evento" required="true">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="prc">
 	
 		<cfquery name="local.grupos" datasource="#application.datasource#">
 			SELECT
@@ -26,7 +26,7 @@
 			activo,
 			'' AS productos
 			FROM vGruposProductos
-			WHERE id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
+			WHERE id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 			AND id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_VARCHAR">;
 		</cfquery>
 
@@ -59,8 +59,9 @@
 	</cffunction>
 
 	<cffunction name="get" access="public" returntype="any" output="false">
-		<cfargument name="id_evento" required="true">
-		<cfargument name="id_producto" type="numeric" required="true">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
 
 		<cfquery name="local.grupos" datasource="#application.datasource#">
 			SELECT
@@ -70,7 +71,7 @@
 			activo,
 			'' AS productos
 			FROM vGruposProductos
-			WHERE id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
+			WHERE id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 			AND id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_VARCHAR">;
 		</cfquery>
 
@@ -83,7 +84,7 @@
 			FROM vProductos
 			WHERE id_idioma = <cfqueryparam value="#session.language#" cfsqltype="CF_SQL_VARCHAR">
 			AND id_grupo IN (<cfqueryparam value="#valueList(local.grupos.id_grupo)#" list="true" cfsqltype="CF_SQL_INTEGER">)
-			AND id_producto = <cfqueryparam value="#arguments.id_producto#" cfsqltype="CF_SQL_INTEGER">
+			AND id_producto = <cfqueryparam value="#arguments.rc.id_producto#" cfsqltype="CF_SQL_INTEGER">
 		</cfquery>
 
 		<cfset local.grupos2 = queryNew('id')>
@@ -104,11 +105,11 @@
 	</cffunction>
 
 	<cffunction name="allSelected" access="public" returntype="any" output="false">
-		<cfargument name="id_evento" required="true">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="prc">
 
-		<cfset local.allParticipantes = partServ.all(arguments.event, arguments.rc)>
+		<cfset local.allParticipantes = partServ.all(arguments.event, arguments.rc, arguments.prc)>
 
 		<cfquery name="local.seleccionados" datasource="#application.datasource#">
 			SELECT id_producto, id_participante AS 'data', comprar, vender, colaborar
@@ -142,11 +143,11 @@
 	</cffunction>
 
 	<cffunction name="selectedByParticipante" access="public" returntype="any" output="false">
-		<cfargument name="id_evento" required="true">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="prc">
 
-		<cfset allParticipantes = partServ.get(arguments.event, arguments.rc, arguments.rc.id_evento, arguments.rc.id_participante)>
+		<cfset allParticipantes = partServ.get(arguments.event, arguments.rc, arguments.prc)>
 
 		<cfquery name="local.seleccionados" datasource="#application.datasource#">
 			SELECT id_producto, comprar, vender, colaborar

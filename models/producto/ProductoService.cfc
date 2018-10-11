@@ -18,12 +18,14 @@
 <!------------------------------------------- PUBLIC ------------------------------------------->
 
 	<cffunction name="all" hint="Todos los productos por grupo" output="false" returntype="struct">
-		<cfargument name="id_evento" required="true">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
 
 		<cfset var s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
 		<!--- <cftry> --->
-			<cfset var records = dao.all(arguments.id_evento)>	
+			<cfset var records = dao.all(arguments.event, arguments.rc, arguments.prc)>	
 		
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>
@@ -36,13 +38,14 @@
 	</cffunction>
 
 	<cffunction name="get" hint="Todos los productos por grupo" output="false" returntype="struct">
-		<cfargument name="id_evento" required="true">
-		<cfargument name="id_producto" type="numeric" required="true">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
 
 		<cfset var s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
 		<!--- <cftry> --->
-			<cfset var records = dao.get(arguments.id_evento, arguments.id_producto)>	
+			<cfset var records = dao.get(arguments.event, arguments.rc, arguments.prc)>	
 		
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>
@@ -58,14 +61,14 @@
 		Obtiene todos los productos seleccionados
 	 --->
 	<cffunction name="allSelected" hint="Obtiene todos los productos seleccionados" output="false" returntype="struct">
-		<cfargument name="id_evento" required="true">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="prc">
 
 		<cfset var s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
 		<!--- <cftry> --->
-			<cfset var records = dao.allSelected(arguments.id_evento, arguments.event, arguments.rc)>	
+			<cfset var records = dao.allSelected(arguments.event, arguments.rc, arguments.prc)>	
 
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>
@@ -81,14 +84,14 @@
 		Obtiene todos los productos seleccionados por id_participante
 	 --->
 	<cffunction name="selectedByParticipante" hint="Todos los productos por grupo" output="false" returntype="struct">
-		<cfargument name="id_evento" required="true">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="prc">
 
 		<cfset var s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
 		<!--- <cftry> --->
-			<cfset var records = dao.selectedByParticipante(arguments.id_evento, arguments.event, arguments.rc)>
+			<cfset var records = dao.selectedByParticipante(arguments.event, arguments.rc, arguments.prc)>
 			
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>

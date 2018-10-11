@@ -17,12 +17,14 @@
 <!------------------------------------------- PUBLIC ------------------------------------------->
 
 	<cffunction name="index" hint="Todos los eventos" output="false" returntype="struct">
-		<cfargument name="id_evento">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
 		<cfargument name="language">
 
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
-		<cfset var records = dao.index(arguments.id_evento, arguments.language)>	
+		<cfset var records = dao.index(arguments.event, arguments.rc, arguments.prc, arguments.language)>	
 	
 		<cfset s.data.records = records>
 		<cfset s.data.count = records.recordCount>
@@ -31,13 +33,14 @@
 	</cffunction>
 
 	<cffunction name="get" hint="Todos los eventos" output="false" returntype="struct">
-		<cfargument name="id_participante">
-		<cfargument name="id_evento">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
 		<cfargument name="language">
 
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
-		<cfset var records = dao.get(arguments.id_participante, arguments.id_evento, arguments.language)>	
+		<cfset var records = dao.get(arguments.event, arguments.rc, arguments.prc, arguments.language)>	
 	
 		<cfset s.data.records = records>
 		<cfset s.data.count = records.recordCount>

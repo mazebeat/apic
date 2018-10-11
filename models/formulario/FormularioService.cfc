@@ -61,7 +61,7 @@
 		
 		<cfset var s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0, "total"= 0 } }>
 		<cfset var campos = createObject("java", "java.util.LinkedHashMap").init()>
-		<cfset var cacheKey = 'q-formS-get-#id_formulario#'>
+		<!--- <cfset var cacheKey = 'q-formS-get-#id_formulario#'> --->
 
 		<cfset var frm = dao.get(id_formulario, event, rc)>
 
@@ -106,7 +106,8 @@
 		<cfelseif arguments.sortBy EQ 'group'>
 			<cfloop query="fields">
 				<cfif !structKeyExists(campos, id_agrupacion)>
-					<cfquery name="local.title" dbtype="query" cachedWithin="#createTimeSpan( 0, 0, 1, 0 )#">
+					<!--- <cfquery name="local.title" dbtype="query" cachedWithin="#createTimeSpan( 0, 0, 1, 0 )#"> --->
+					<cfquery name="local.title" dbtype="query">
 						SELECT titulo FROM allGroups WHERE id_agrupacion = #id_agrupacion#
 					</cfquery>
 					<cfset campos['groups'][id_agrupacion]['title'] = local.title.titulo>
@@ -223,14 +224,14 @@
 		
 		<cfinclude template="/default/admin/helpers/camposGruposFormularios.cfm">
 		
+		<!--- 
 		<cfset var cacheKey = 'q-field-#id_campo#'>
-
 		<cfif cache.lookup(cacheKey)>
 			<cfset var campo = cache.get(cacheKey)>
-		<cfelse>
+		<cfelse> --->
 			<cfset var campo = campoDao.get(arguments.id_campo)>
-			<cfset cache.set(cacheKey, campo, 60, 30)>
-		</cfif>
+			<!--- <cfset cache.set(cacheKey, campo, 60, 30)> --->
+		<!--- </cfif> --->
 
 		<cfif NOT queryColumnExists(campo, 'min_chars')>
 			<cfset queryAddColumn(campo, 'min_chars')>
@@ -330,7 +331,7 @@
 				<cfset meta['inputType'] = 'input'>
 				<cfset meta['name']      = campo.titulo>
 				<cfset meta['type']      = 'checkbox'>
-				<cfset meta['values']   = obtainValues(campo.id_campo)>
+				<cfset meta['values']    = obtainValues(campo.id_campo)>
 			</cfcase>
 			
 			<!-- CAMPO RADIO -->
@@ -354,7 +355,6 @@
 			<!-- CAMPO MEMO -->
 			<cfcase value="5" delimiters=",">
 				<cfset objCampo = wirebox.getInstance('campoFormularioText')>
-				
 				<cfset var config = objCampo.getConfiguracion(local.campo)>	
 
 				<cfset meta['name']                       = isEmpty(config.titulo) ? campo.titulo: config.titulo>
@@ -368,10 +368,14 @@
 			
 			<!-- CAMPO IMAGEN -->
 			<cfcase value="9" delimiters=",">
+				<cfset objCampo = wirebox.getInstance('campoFormularioImagen')>
+				<cfset var config = objCampo.getConfiguracion(local.campo)>	
+
 				<cfset meta['name']                      = campo.titulo>
 				<cfset meta['type']                      = 'file'>
 				<cfset meta['inputType']                 = 'img'>
 				<cfset meta['configuration']['readonly'] = numericToBoolean(campo.solo_lectura)>
+				<cfset meta['configuration']['required'] = numericToBoolean(config.obligatorio)>
 			</cfcase>
 			
 			<!-- CAMPO WEB -->
@@ -442,18 +446,18 @@
 		
 		<cfset var values = {}>
 		
-		<cfset var cacheKey = 'q-form-obtainValues-#id_campo#'>
+		<!--- <cfset var cacheKey = 'q-form-obtainValues-#id_campo#'>
 		
 		<cfif cache.lookup(cacheKey)>
 			<cfset values = cache.get(cacheKey)>
-		<cfelse>
+		<cfelse> --->
 			<cfset var tmpVal = dao.cargarValoresCampoGrupoFormulario(arguments.id_campo)>
 			<cfloop query="tmpVal">
 				<cfset values[id_valor] = titulo>
 			</cfloop>
 			
-			<cfset cache.set(cacheKey, values, 60, 30)>
-		</cfif>
+			<!--- <cfset cache.set(cacheKey, values, 60, 30)>
+		</cfif> --->
 	
 		<cfreturn values>
 	</cffunction>
@@ -465,7 +469,7 @@
 		<cfset var allGroups = dao.groupsByEvent(arguments.id_evento)>
 		<cfset var fields 	 = dao.allFieldsByGroupDefault(valueList(allGroups.id_agrupacion))>
 		
-		<cfif filtered>
+		<cfif arguments.filtered>
 			<cfset fields = valueList(fields.id_campo)>
 		</cfif>
 

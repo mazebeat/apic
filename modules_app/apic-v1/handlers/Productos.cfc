@@ -18,7 +18,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var s = service.all(arguments.rc.id_evento)>
+		<cfset var s = service.all(arguments.event, arguments.rc, arguments.prc)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -33,7 +33,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var s = service.get(arguments.rc.id_evento, arguments.rc.id_producto)>
+		<cfset var s = service.get(arguments.event, arguments.rc, arguments.prc)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -48,20 +48,20 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var cacheKey = 'q-product-allSelected-#arguments.rc.id_evento#-#session.language#'>
+		<!--- <cfset var cacheKey = 'q-product-allSelected-#arguments.rc.id_evento#-#session.language#'> --->
 
-		<cfif cache.lookup(cacheKey)>
+		<!--- <cfif cache.lookup(cacheKey)>
 			<cfset var s = cache.get(cacheKey)>
 			<cfset prc.response.setCachedResponse(true)>
-		<cfelse>
-			<cfset var s = service.allSelected(arguments.rc.id_evento, arguments.event, arguments.rc)>
+		<cfelse> --->
+			<cfset var s = service.allSelected(arguments.event, arguments.rc, arguments.prc)>
 
 			<cfif NOT structIsEmpty(s.data.records)>
 				<cfset s.data.records = QueryToStruct(s.data.records)>
 			</cfif>
 
-			<cfset cache.set(cacheKey, s, 60, 30)>
-		</cfif>
+			<!--- <cfset cache.set(cacheKey, s, 60, 30)>
+		</cfif> --->
 
 		<cfset arguments.prc.response.setData(s.data).setError(!s.ok)> 
 		<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>
@@ -72,13 +72,13 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var cacheKey = 'q-product-selectedByParticipante-#arguments.rc.id_evento#-#session.language#'>
+		<!--- <cfset var cacheKey = 'q-product-selectedByParticipante-#arguments.rc.id_evento#-#session.language#'> --->
 
 		<!--- <cfif cache.lookup(cacheKey)>
 			<cfset var s = cache.get(cacheKey)>
 			<cfset prc.response.setCachedResponse(true)>
 		<cfelse> --->
-			<cfset var s = service.selectedByParticipante(arguments.rc.id_evento, arguments.event, arguments.rc)>
+			<cfset var s = service.selectedByParticipante(arguments.event, arguments.rc, arguments.prc)>
 
 			<cfif NOT structIsEmpty(s.data.records)>
 				<cfset s.data.records = QueryToStruct(s.data.records)>

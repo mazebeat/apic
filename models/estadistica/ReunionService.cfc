@@ -18,10 +18,13 @@
 <!------------------------------------------- PUBLIC ------------------------------------------->
 
 	<cffunction name="all" hint="Todos los eventos" output="false" returntype="struct">
-		<cfargument name="id_evento" required="true">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
+
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
-		<cfset var records = dao.all(arguments.id_evento)>	
+		<cfset var records = dao.all(arguments.event, arguments.rc, arguments.prc)>	
 	
 		<cfset s.data.records = records>
 		<cfset s.data.count = records.recordCount>
@@ -32,10 +35,11 @@
 	<cffunction name="all2" hint="Todos los eventos" output="false" returntype="struct">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="prc">
 
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
-		<cfset var records = dao.all2(arguments.event, arguments.rc)>
+		<cfset var records = dao.all2(arguments.event, arguments.rc, arguments.prc)>
 	
 		<cfset s.data.records = records>
 		<cfset s.data.count = records.recordCount>
@@ -46,10 +50,11 @@
 	<cffunction name="get" hint="Todos los eventos" output="false" returntype="struct">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="prc">
 		
 		<cfset s = { ok = true, mensaje= "", data = { "records":{},  "count"= 0}}>
 
-		<cfset var records = dao.get(arguments.event, arguments.rc)>
+		<cfset var records = dao.get(arguments.event, arguments.rc, arguments.prc)>
 
 		<cfset s.data.records = records>
 		<cfset s.data.count = records.recordCount>

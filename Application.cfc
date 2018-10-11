@@ -2,6 +2,8 @@ component{
 	// Application properties
 	this.name                        = hash(getCurrentTemplatePath());
 	
+	this.maintenanceMode             = false; // Enable maintenance mode
+	
 	this.locale                      = 'es_ES';	
 	this.timezone                    = 'Europe/Madrid';
 	
@@ -25,11 +27,12 @@ component{
 	this.sessioncookie.timeout       = "10"; <!--- session cookie age --->
 	this.sessioncookie.secure        = "true"; <!--- only https session cookie --->
 	this.sessioncookie.domain        = "tufabricadeventos.com"; <!--- domain for which session cookies are valid --->
-	this.authcookie.timeout          = createTimeSpan(0, 0, 0, 20); <!--- authentication cookie age --->
+	this.authcookie.timeout          = createTimeSpan(0,0,0,20); <!--- authentication cookie age --->
 	this.sessioncookie.disableupdate = true; <!--- if session cookie can be modified by coldfusion tags --->
 	this.authcookie.disableupdate    = true; <!---  if session cookie can be modified by coldfusion tags --->
 
 	this.scopeCascading              = "strict"; /* When the scopeCascading setting is set to strict it removes the possibility of a scope injection vulnerability, and may also improve performance. */
+	
 
 	// COLDBOX STATIC PROPERTY, DO NOT CHANGE UNLESS THIS IS NOT THE ROOT OF YOUR COLDBOX APP
 	COLDBOX_APP_ROOT_PATH = getDirectoryFromPath(getCurrentTemplatePath());
@@ -54,7 +57,7 @@ component{
 		watchInterval           = 10
 	};
 
-	if (structKeyExists(url, "killsession")) { this.sessionTimeout = createTimeSpan( 0, 0, 0, 1 ); }
+	if (structKeyExists(url, "killsession")) { this.sessionTimeout = createTimeSpan(0,0,0,0.1); }
 
 	// application start
 	public boolean function onApplicationStart(){
@@ -68,14 +71,15 @@ component{
 		application.api = { 
 			version = 1
 		};
+
+		application.maintenanceMode = this.maintenanceMode;
+
 		application.esapi = createObject('java', 'org.owasp.esapi.ESAPI');
+		application.esapiCodec = createObject('java', 'org.owasp.esapi.codecs.Codec');
+		var esapiMyslCodec = createObject('java', 'org.owasp.esapi.codecs.MySQLCodec');
+		application.esapiMyslCodec = esapiMyslCodec.init(esapiMyslCodec.MYSQL_MODE);
 
 		return true;
-	}
-
-	// application end
-	public boolean function onApplicationEnd( struct appScope ){
-		arguments.appScope.cbBootstrap.onApplicationEnd( arguments.appScope );
 	}
 
 	// request start
@@ -98,6 +102,11 @@ component{
 		pageCtx.setHeader('Access-Control-Allow-Credentials', "true");
 
 		return true;
+	}
+
+	// application end
+	public boolean function onApplicationEnd( struct appScope ){
+		arguments.appScope.cbBootstrap.onApplicationEnd( arguments.appScope );
 	}
 
 	public void function onSessionStart() {  

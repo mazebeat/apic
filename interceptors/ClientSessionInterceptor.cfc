@@ -7,15 +7,15 @@ component extend {
 
     void function configure() {}
 
-    void function preProcess( event, rc, prc, interceptData, buffer ) {
-        if (reFindNoCase("(authenticate|Echo|apic-v1:home)", event.getCurrentEvent()) > 0) {
+    void function preProcess(event, rc, prc, interceptData, buffer) {
+        if (reFindNoCase("(authenticate|Echo|apic-v1:home|Dashboard)", event.getCurrentEvent()) > 0) {
             continue;
         }
 
         if(!StructKeyExists(arguments.rc, 'token') OR !authservice.validateToken(arguments.rc.token)) {
             prc.response = getModel("Response");
             prc.response.setError(true)
-                        .addMessage("No authenticated client found")
+                        .addMessage(getResource(resource="validation.invalidToken"))                        
                         .setStatusCode(401)
                         .setStatusText("Invalid or Missing Credentials");
                 
@@ -31,5 +31,5 @@ component extend {
         }       
     }
 
-    function postProcess(event, rc, prc, interceptData, buffer ) {  }
+    function postProcess(event, rc, prc, interceptData, buffer) {  }
 }

@@ -5,7 +5,6 @@
 
 
 <!------------------------------------------- CONSTRUCTOR ------------------------------------------->
-
 	<cffunction name="init" access="public" returntype="AgendaDAO" output="false" hint="constructor">
 		<cfscript>
 			return this;
@@ -17,7 +16,9 @@
 		Obtiene todas las agendas
 	 --->
 	<cffunction name="index" hint="Todos las agendas" output="false" returntype="Query">	
-		<cfargument name="id_evento" type="any">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
 		<cfargument name="language">
 
 		<cfquery name="local.agenda" datasource="#application.datasource#">
@@ -68,8 +69,8 @@
 					ON s.id_sala = rg.id_sala
 					INNER JOIN vParticipantes p2 
 					ON p2.id_participante = rg.participante2
-					AND p.id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="cf_sql_integer" list="true">)
-					AND p2.id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="cf_sql_integer" list="true">)
+					AND p.id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="cf_sql_integer" list="true">)
+					AND p2.id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="cf_sql_integer" list="true">)
 			) agendas
 			ORDER BY dia, hora_inicio
 		</cfquery>
@@ -81,8 +82,9 @@
 		Se obtiene la agenda de un participante en concreto
 	 --->
 	<cffunction name="get" hint="Agenda de un participante" output="false" returntype="Query">	
-		<cfargument name="id_participante">
-		<cfargument name="id_evento" type="any">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
 		<cfargument name="language">
 		
 		<cfquery name="local.agenda" datasource="#application.datasource#">
@@ -112,7 +114,7 @@
 					ON h.dias_id_dia = d.id_dia
 					INNER JOIN vSalas s 
 					ON s.id_sala = sspa.id_sala
-				WHERE ag.id_participante = <cfqueryparam value="#arguments.id_participante#" cfsqltype="cf_sql_integer">
+				WHERE ag.id_participante = <cfqueryparam value="#arguments.rc.id_participante#" cfsqltype="cf_sql_integer">
 
 				UNION
 
@@ -136,9 +138,9 @@
 					ON s.id_sala = rg.id_sala
 					INNER JOIN vParticipantes p2 
 					ON p2.id_participante = rg.participante2
-					AND p.id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="cf_sql_integer" list="true">)
-					AND p2.id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="cf_sql_integer" list="true">)
-				WHERE rg.participante1 = <cfqueryparam value="#arguments.id_participante#" cfsqltype="cf_sql_integer">
+					AND p.id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="cf_sql_integer" list="true">)
+					AND p2.id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="cf_sql_integer" list="true">)
+				WHERE rg.participante1 = <cfqueryparam value="#arguments.rc.id_participante#" cfsqltype="cf_sql_integer">
 			) agendas
 			ORDER BY dia, hora_inicio
 		</cfquery>

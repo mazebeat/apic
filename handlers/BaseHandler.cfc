@@ -2,7 +2,7 @@ component extends="coldbox.system.EventHandler" {
 
 	// Inject AuthenticationService
 	property name="authService" type="any" 	inject="model:security.AuthenticationService";
-	// property name="i18n" 		type="any"	inject="i18n@cbi18n";
+	property name="i18n" 		type="any"	inject="i18n@cbi18n"; 
 	
 	// Pseudo "constants" used in API Response/Method parsing
 	property name="METHODS";
@@ -84,7 +84,8 @@ component extends="coldbox.system.EventHandler" {
 	PUBLIC_PAGES = [
 		"Echo", 
 		"Authenticate", 
-		"apic-v1:home"
+		"apic-v1:home",
+		"Dashboard",		
 	];
 
 	// OPTIONAL HANDLER PROPERTIES
@@ -111,71 +112,80 @@ component extends="coldbox.system.EventHandler" {
 	}
 
 	function preHandler(event, rc, prc, targetAction, eventArguments) {
-		param name="arguments.rc.id_evento" default="" type="string";
-		
+		param name="rc.id_evento" default="" type="string";
+
 		try {
 			// prepare our response object
-			arguments.prc.response = getModel("Response");
-			
+			prc.response = getModel("Response");
+			prc.i18n = variables.i18n;
+
 			// Check if body request is JSON type
 			try {
 				if (isJSON(request._body)) {
-					structAppend(arguments.rc, deserializeJSON(request._body), true);
-				} else if( isJSON(arguments.event.getHTTPContent())) {
-					structAppend(arguments.rc, arguments.event.getHTTPContent(json=true), true);
+					structAppend(rc, deserializeJSON(request._body), true);
+				} else if( isJSON(event.getHTTPContent())) {
+					structAppend(rc, event.getHTTPContent(json=true), true);
 				}
 			} catch(Any e) {
 				throw(message=getResource(resource='validation.invalidJSONFormat'), errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
 			}
 		} catch(Any e) {
 			log.error("[PREHANDLER] ERROR CALLING #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
-			sendError(e, arguments.rc, arguments.event);
+			sendError(e, rc, event);
+
+			if(isdefined('url.show')) {
+				writeDump(e);
+			}
 		}
 	}
-		
+	
 	/**
 	* Around handler for all actions it inherits
 	*/
 	function aroundHandler(event, rc, prc, targetAction, eventArguments) {
 		try{
+			if(application.maintenanceMode) {
+				throw(message=getResource(resource='api.maintenanceMode'), errorcode=STATUS.SERVICE_UNAVAILABLE);
+			}
+
 			var stime = getTickCount();
 
 			// prepare our response object
-			arguments.prc.response = getModel("Response");
-			// arguments.prc.i18n = variables.i18n;
+			prc.response = getModel("Response");
+			prc.i18n = variables.i18n;
+			
+			// Sanatize all variables
+			rc = sanatizeDump(rc);
 
 			// prepare argument execution
-			var args = { event = arguments.event, rc = arguments.rc, prc = arguments.prc };
+			var args = { event = event, rc = rc, prc = prc };
 
-			structAppend(args, arguments.eventArguments);
+			structAppend(args, eventArguments);
 
 			// Incoming Format Detection
-			if(structKeyExists(arguments.rc, "format")){
-				arguments.prc.response.setFormat(arguments.rc.format);
-			}
+			if(structKeyExists(rc, "format")) prc.response.setFormat(rc.format);
 
 			// While evento does not be one of these pages
-			if (isPrivatePages(arguments.event)) {
+			if (isPrivatePages(event)) {
 				// Check APIc Token
-				this.checkAuthenticationToken(arguments.event, arguments.rc, arguments.prc);			
+				this.checkAuthenticationToken(event, rc, prc);			
 				// Validat user actions
-				this.validateActions(arguments.event, arguments.rc, arguments.prc);
+				this.validateActions(event, rc, prc);
 				// Check if user has a valid session (token)
-				this.validateSession(arguments.event, arguments.rc, arguments.prc);
+				this.validateSession(event, rc, prc);
 				// Check an unique ID_EVENTO when type of API Token is client type
-				this.isClientToken(arguments.event, arguments.rc, arguments.prc);
+				this.isClientToken(event, rc, prc);
 				// Check request per seconds by user
-				limiterByTime(arguments.event, arguments.rc, arguments.prc, getSetting('maxUserRequest'), getSetting('waitTimeRequest'));
+				limiterByTime(event, rc, prc, getSetting('maxUserRequest'), getSetting('waitTimeRequest'));
 			}		
 
 			// Execute action
-			if (!arguments.prc.response.getError()) {
-				var actionResults = targetAction(argumentCollection=args);
-			}
+			if (!prc.response.getError()) var actionResults = targetAction(argumentCollection=args); 
 		} catch(Any e){	
 			// Log Locally
 			log.error("[AROUNDHANDLER] ERROR CALLING #event.getCurrentEvent()#: #e.message# #e.detail#", e);			
 
+			// Send email error
 			sendError(e, rc, event);			
 
 			// Setup General Error Response
@@ -189,8 +199,11 @@ component extends="coldbox.system.EventHandler" {
 				.setStatusText(msg);
 
 			if((getSetting("environment") eq "development") ) { 
-				prc.response.addMessage("Detail: #e.detail#")
-							.addMessage("StackTrace: #e.stacktrace#");
+				prc.response.addMessage("Detail: #e.detail#").addMessage("StackTrace: #e.stacktrace#");
+			}
+
+			if(isdefined('url.show')) {
+				writeDump(e);
 			}
 		}
 
@@ -202,7 +215,7 @@ component extends="coldbox.system.EventHandler" {
 				.addHeader("x-current-event", event.getCurrentEvent());
 		}
 
-		// end timer
+		// End timer
 		prc.response.setResponseTime(getTickCount() - stime);
 
 		// If results detected, just return them, controllers requesting to return results
@@ -227,7 +240,9 @@ component extends="coldbox.system.EventHandler" {
 		if(isdefined("url.debug")) {
 			writeDump(var="#event.getCurrentEvent()#", label="Event");
 			writeDump(var="#prc.response.getDataPacket()#", label="JSON Response");
+			if(structKeyExists(prc, 'token')) writeDump(var="#prc.token#", label="API Token");
 			writeDump(var="#session#", label="Session");
+
 
 			if(isdefined('url.show')) {
 				abort;
@@ -453,7 +468,7 @@ component extends="coldbox.system.EventHandler" {
 	/**************************** PRIVATE METHODS ************************/
 
 	/**
-	 * Check Atuhentication Token
+	 * 1.- Check Atuhentication Token
 	 *
 	 * @event 
 	 * @rc 
@@ -461,45 +476,27 @@ component extends="coldbox.system.EventHandler" {
 	 */
 	private any function checkAuthenticationToken(event, rc, prc) {
 		/* Only accept application/json for content body on posts */
-		if (reFindNoCase("(#METHODS.POST#|#METHODS.PUT#)", arguments.event.getHTTPMethod()) > 0 AND NOT arguments.prc.response.getError()) {
-			if (findNoCase("application/json", arguments.event.getHTTPHeader("Content-Type")) == 0) {
+		if (reFindNoCase("(#METHODS.POST#|#METHODS.PUT#)", event.getHTTPMethod()) > 0 AND NOT prc.response.getError()) {
+			if (findNoCase("application/json", event.getHTTPHeader("Content-Type")) == 0) {
 				throw(message="Content-Type application/json is required", errorcode=STATUS.BAD_REQUEST);
 			}
 		}
 
 		/* Extract the token from the authorization header */
-		if (!len(arguments.rc.token) && structKeyExists(getHTTPRequestData().headers, "authorization")) {
-			arguments.rc.token = listLast(getHTTPRequestData().headers.authorization, " ");
+		if (!len(rc.token) && structKeyExists(getHTTPRequestData().headers, "authorization")) {
+			rc.token = listLast(getHTTPRequestData().headers.authorization, " ");
 		}
 
-		if (authService.validateToken(arguments.rc.token)) {
+		if (authService.validateToken(rc.token)) {
 			/* Validate token and store token data in prc scope */
-			arguments.prc.token = authService.decodeToken(arguments.rc.token);
+			prc.token = authService.decodeToken(rc.token);
 		} else {
 			throw(message=getResource(resource="validation.invalidToken"), errorcode=STATUS.BAD_REQUEST, detail=MESSAGES.BAD_REQUEST);
 		}
 	}
-	
-	/**
-	 * Valida session del cliente, buscando por ID session.
-	 *
-	 * @event 
-	 * @rc 
-	 * @prc 
-	 */
-	private void function validateSession(event, rc, prc) {
-		if(NOT structKeyExists(arguments.rc, 'id_evento') OR isEmpty(arguments.rc.id_evento)) {
-			if(structkeyexists(arguments.rc, 'token')) { 
-				arguments.rc.id_evento = javacast("string", authService.obtainIdEventoByToken(arguments.rc.token));
-			}
-			if (isEmpty(arguments.rc.id_evento)) {
-				throw(message=MESSAGES.NOT_ALLOWED, errorCode=STATUS.NOT_ALLOWED);
-			}
-		} 
-	}
 
 	/**
-	 * Validate user http actions by HTTP methods
+	 * 2.- Validate user http actions by HTTP methods
 	 *
 	 * @event 
 	 * @rc 
@@ -508,9 +505,9 @@ component extends="coldbox.system.EventHandler" {
 	private void function validateActions(event, rc, prc) {
 		var error = false;
 
-		if (structKeyExists(arguments.rc, 'token')) {
+		if (structKeyExists(rc, 'token')) {
 			try {
-				var data     = authService.decodeToken(arguments.rc.token);
+				var data     = authService.decodeToken(rc.token);
 				var usr      = (data.type IS 'C') ? wirebox.getInstance("ClientesToken") : wirebox.getInstance("EventosToken");
 				var permisos = usr.permisosById(data.sub);
 
@@ -543,6 +540,56 @@ component extends="coldbox.system.EventHandler" {
 	}
 
 	/**
+	 * 3.- Valida session del cliente, buscando por ID session.
+	 *
+	 * @event 
+	 * @rc 
+	 * @prc 
+	 */
+	private void function validateSession(event, rc, prc) {
+		/**
+		 * Valida si existe ID_EVENTO en los parametros recibidos
+		 * - Si no existe, obtiene los IDs desde el API Token enviado
+		 */ 
+		if(NOT structKeyExists(rc, 'id_evento') OR isEmpty(rc.id_evento)) {
+			// Valida si existe token
+			// if(structkeyexists(rc, 'token')) { 
+			// 	rc.id_evento = javacast("string", authService.obtainIdEventoByToken(rc.token));
+			// }
+			rc.id_evento = prc.token.id_evento;
+
+			// Mensaje erro si id_evento es vacio
+			if (isEmpty(rc.id_evento)) {
+				throw(message=MESSAGES.NOT_ALLOWED, errorCode=STATUS.NOT_ALLOWED);
+			}
+		} 
+	}
+
+	/**
+	 * 4.- Check if a API Token type of client type is been using
+	 *
+	 * @event 
+	 * @rc 
+	 * @prc 
+	 */
+	private void function isClientToken(required event, required rc, required prc) {
+		// var tokenData = authService.decodeToken(rc.token);
+		if(reFindNoCase("(#METHODS.GET#|#METHODS.OPTIONS#)", event.getHTTPMethod()) == 0) {
+			if(structKeyExists(prc.token, "type") && prc.token.type == "C" && listLen(rc.id_evento) > 1) {
+				throw(message=getResource(resource='validation.idEventoIndexNotFound'), errorcode=STATUS.PARAMETERS_ERROR);
+			} 
+			
+			// Obtiene todos los IDS evento del token clie
+			var idsEvento = javacast("string", authService.obtainIdEventoByToken(rc.token));
+			rc.id_evento = javacast("string", rc.id_evento);
+			
+			if(listFind(idsEvento, rc.id_evento) == 0) {
+				throw(message=getResource(resource="validation.invalidIdEvento"), errorCode=STATUS.NOT_ALLOWED, detail=MESSAGES.NOT_ALLOWED);         
+			}
+		}
+	}
+
+	/**
 	 * Retorna mensaje según código de error
 	 *
 	 * @errorcode 
@@ -551,7 +598,7 @@ component extends="coldbox.system.EventHandler" {
 		var keys = [];
 
 		try {
-			if(!isempty(errorcode)) keys = StructFindValue(STATUS, arguments.errorcode, "one"); 			
+			if(!isempty(errorcode)) keys = StructFindValue(STATUS, errorcode, "one"); 			
 			for(msgs in keys) {
 				return MESSAGES[msgs.key];
 			}
@@ -571,34 +618,10 @@ component extends="coldbox.system.EventHandler" {
 	private boolean	function isPrivatePages(event) {
 		var isPrivated = true;
 		
-		if(reFindNoCase("(#arrayToList(PUBLIC_PAGES, "|")#)", arguments.event.getCurrentEvent()) > 0) {
+		if(reFindNoCase("(#arrayToList(PUBLIC_PAGES, "|")#)", event.getCurrentEvent()) > 0) {
 			isPrivated = false;
 		}
 
 		return isPrivated;
-	}
-
-	/**
-	 * Check if a API Token type of client type is been using
-	 *
-	 * @event 
-	 * @rc 
-	 * @prc 
-	 */
-	private void function isClientToken(required event, required rc, prc) {
-		var tokenData = authService.decodeToken(arguments.rc.token);
-		
-		if(reFindNoCase("(#METHODS.GET#|#METHODS.OPTIONS#)", arguments.event.getHTTPMethod()) == 0) {
-			if(structKeyExists(tokenData, "type") && tokenData.type == "C" && listLen(arguments.rc.id_evento) > 1) {
-				throw(message=getResource(resource='validation.idEventoIndexNotFound'), errorcode=STATUS.PARAMETERS_ERROR);
-			} 
-			
-			var idsEvento = javacast("string", authService.obtainIdEventoByToken(arguments.rc.token));
-			arguments.rc.id_evento = javacast("string", arguments.rc.id_evento);
-			
-			if(listFind(idsEvento, arguments.rc.id_evento) == 0) {
-				throw(message=getResource(resource="validation.invalidIdEvento"), errorCode=STATUS.NOT_ALLOWED, detail=MESSAGES.NOT_ALLOWED);         
-			}
-		}
 	}
 }

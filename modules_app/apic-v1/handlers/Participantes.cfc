@@ -1,4 +1,4 @@
-<cfcomponent output="false" hint="Handler Participantes" extends="handlers.Base" rest="true">
+<cfcomponent output="false" hint="Handler Participantes" extends="handlers.Base">
 	<cftimer label= "apic/v1/handlers/Participantes"></cftimer>
 
 	<cfproperty name="service" inject="model:participante.ParticipanteService">
@@ -54,7 +54,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset s = service.get(arguments.event, arguments.rc, arguments.rc.id_evento, arguments.rc.id_participante)>
+		<cfset s = service.get(arguments.event, arguments.rc, arguments.prc)>
 		
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -71,10 +71,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfquery name="local.metaParticipantes" datasource="#application.datasource#">
-			SELECT COUNT(*) FROM vParticipantes 
-		</cfquery>
-
+		
 		<cfdump var="GETINFO"><cfabort>		
 	</cffunction>
 
@@ -87,7 +84,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset s = service.byType(arguments.event, sanatizeDump(arguments.rc))>
+		<cfset s = service.byType(arguments.event, arguments.rc, arguments.prc)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -108,21 +105,28 @@
 		<cfargument name="prc">
 
 		<cfif structKeyExists(arguments.rc, "email")>
-			<cfparam name="arguments.rc.contraints.email.regex" default="^[\w!##$%&'*+/=?`{|}~^-]+(?:\.[\w!##$%&'*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$">
+			<cfset var s = { "mensaje"= "" }>
+			<!--- <cfset var regex ="^[\w\!\##$%&'*+/=?`{|}~^-]+(?:\.[\w!##$%&'*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$"> --->
+			<cfset var regex = "(^([\w\!\##$\%\&\'\*\+\-\/\=\?\^\`{\|\}\~\^\-]+\.)*[\w\!\##$\%\&\'\*\+\-\/\=\?\^\`{\|\}\~\^\-]+@((((([a-z0-9]{1}[a-z0-9\-]{0,62}[a-z0-9]{1})|[a-z])\.)+[a-z]{2,6})|(\d{1,3}\.){3}\d{1,3}(\:\d{1,5})?)$)">
 
 			<cfset arguments.rc.email = sanatize(arguments.rc.email)>
 
-			<cfif arrayLen(reMatch(arguments.rc.contraints.email.regex, arguments.rc.email)) GT 0>
-				<cfset s = service.byEmail(arguments.event, arguments.rc)>
+			<cfif arrayLen(reMatch(regex, arguments.rc.email)) GT 0>
+				<cfset s = service.byEmail(arguments.event, arguments.rc, arguments.prc)>
 				
 				<cfif NOT structIsEmpty(s.data.records)>
 					<cfset s.data.records = QueryToStruct(s.data.records)>
 				</cfif>
-				
+
 				<cfset arguments.prc.response.setData(s.data).setError(!s.ok)> 
-				
-				<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>
+			<cfelse>
+				<cfset s.mensaje = getResource(resource = "validation.regexInvalid", arguments.rc.email)>
+				<cfset s.ok      = false>	
+
+				<cfset arguments.prc.response.setError(!s.ok)> 
 			</cfif>
+
+			<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>
 		</cfif>
 	</cffunction>
 
@@ -136,10 +140,16 @@
 		<cfargument name="prc">
 
 		<cfset s = service.create(arguments.event, arguments.rc, arguments.prc)>
+
+		<cfif isArray(s.data.records) AND NOT arrayIsEmpty(s.data.records)>
+			<cfloop array="#s.data.records#" index="i" item="r">
+				<cfset s.data.records[i] = QueryToStruct(s.data.records[i])>
+			</cfloop>
+		</cfif>
 		<cfset arguments.prc.response.setData(s.data)
 			.setStatusCode(STATUS.CREATED)
-			.setStatusText(MESSAGES.CREATED)> 
-		
+			.setStatusText(MESSAGES.CREATED)>		
+
 		<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>
 	</cffunction>
 
@@ -151,7 +161,13 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset s = service.modify(arguments.event, arguments.rc, arguments.rc.id_evento)>
+		<cfset s = service.modify(arguments.event, arguments.rc, arguments.prc)>
+
+		<cfif isArray(s.data.records) AND NOT arrayIsEmpty(s.data.records)>
+			<cfloop array="#s.data.records#" index="i" item="r">
+				<cfset s.data.records[i] = QueryToStruct(s.data.records[i])>
+			</cfloop>
+		</cfif>
 		<cfset arguments.prc.response.setData(s.data)
 			.setStatusCode(STATUS.ACCEPTED)
 			.setStatusText(MESSAGES.ACCEPTED)>  
@@ -164,11 +180,9 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset s = service.modify(arguments.event, arguments.rc, arguments.rc.id_evento)>
+		<cfset s = service.modify(arguments.event, arguments.rc, arguments.prc)>
 		<cfset arguments.prc.response.setData(s.data)> 
 		
 		<cfif NOT isEmpty(s.mensaje)><cfset arguments.prc.response.addMessage(s.mensaje)></cfif>
 	</cffunction>
-
-	
 </cfcomponent>

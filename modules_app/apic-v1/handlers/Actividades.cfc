@@ -21,7 +21,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var s = service.all(arguments.rc.id_evento)>
+		<cfset var s = service.all(arguments.event, arguments.rc, arguments.prc)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -43,7 +43,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 		
-		<cfset var s = service.byParticipante(arguments.rc.id_evento, arguments.rc.id_participante)>
+		<cfset var s = service.byParticipante(arguments.event, arguments.rc, arguments.prc)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -59,9 +59,6 @@
 		<cfargument name="prc">
 		<cfset event.setView( "Actividades/bySala" )>
 	</cffunction>
-
-
-
 <!------------------------------------------- PRIVATE EVENTS ------------------------------------------>
 
 </cfcomponent>

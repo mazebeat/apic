@@ -79,14 +79,14 @@ component accessors="true" {
 		} catch (any e) {}
 		
 		var packet = {
+			"data"           = variables.data,
 			"error"          = variables.error ? true : false,
 			"messages"       = variables.messages,
-			"data"           = variables.data,
 			"statusCode"     = variables.statusCode,
 			"statusText"     = variables.statusText			
 		};
 
-		if(isdefined("url.debug") && (cgi.REMOTE_ADDR is '47.63.119.142') || cgi.REMOTE_ADDR IS '192.168.1.199') {
+		if(isdefined("url.debug") && (cgi.REMOTE_ADDR is '89.7.89.193') || cgi.REMOTE_ADDR IS '192.168.1.199') {
 			structAppend(packet, {
 				"headers"        = variables.headers,
 				"cachedResponse" = variables.cachedResponse,
@@ -98,7 +98,6 @@ component accessors="true" {
 		if(arguments.reset){
 			packet.data = {};
 		}
-
 		return packet;
 	}
 }

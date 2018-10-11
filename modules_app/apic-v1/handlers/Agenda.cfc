@@ -9,8 +9,7 @@
 		this.posthandler_except 	= "";
 		this.aroundHandler_only 	= "";
 		this.aroundHandler_except 	= "";		
-		// REST HTTP Methods Allowed for actions.
-		// Ex: this.allowedMethods = {delete='POST,DELETE',index='GET'} */
+
 		this.allowedMethods 	= {};
 	</cfscript>
 
@@ -20,7 +19,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var s = service.index(arguments.rc.id_evento, session.language)>
+		<cfset var s = service.index(arguments.event, arguments.rc, arguments.prc, session.language)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -35,7 +34,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var s = service.get(arguments.rc.id_participante, arguments.rc.id_evento, session.language)>
+		<cfset var s = service.get(arguments.event, arguments.rc, arguments.prc, session.language)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>

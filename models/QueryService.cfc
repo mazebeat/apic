@@ -583,7 +583,7 @@
 				<!--- fecha_alta --->
 				<cfcase value="8">
 					<cfsavecontent variable="s">
-						<cfquery name="local.qGetZonaHorariaEvento" datasource="#application.datasource#" cachedwithin="#createTimeSpan(0,0,1,0)#">
+						<cfquery name="local.qGetZonaHorariaEvento" datasource="#application.datasource#" cachedwithin="#createTimeSpan(0,0,queryExpiration,0)#">
 							select zonaHorariaEvento(#arguments.id_evento#) AS zonaHoraria
 						</cfquery>
 						<cfif local.qGetZonaHorariaEvento.zonaHoraria is 'Europe/Madrid'>
@@ -669,7 +669,7 @@
 				<cfcase value="131">
 					<cfsavecontent variable="s">
 						<!--- DATE_FORMAT(CONVERT_TZ(str_to_date(p.fecha_modif, '%d/%m/%Y %T'), 'Europe/Madrid',zonaHorariaEvento(p.id_evento)), '%d/%m/%Y %T')  --->
-						<cfquery name="local.qGetZonaHorariaEvento" datasource="#application.datasource#" cachedwithin="#createTimeSpan(0,0,1,0)#">
+						<cfquery name="local.qGetZonaHorariaEvento" datasource="#application.datasource#" cachedwithin="#createTimeSpan(0,0,queryExpiration,0)#">
 							select zonaHorariaEvento(#arguments.id_evento#) AS zonaHoraria
 						</cfquery>
 						<cfif local.qGetZonaHorariaEvento.zonaHoraria is 'Europe/Madrid'>
@@ -1723,6 +1723,12 @@
 
 		<!--- CUALQUIER CAMPO TIPO TEXTO DE PARTICIPANTESDATOS --->
 		<cfset var posCampos = reMultiMatch("(CAMPO_[_\d+]+)", arguments.consulta)>
+
+		<!--- <cfif isdefined("url.debug")>
+			<cfdump var="#arguments.consulta#" label="var">
+			<cfdump var="#posCampos#" label="var">
+			<cfabort>
+		</cfif> --->
 		
 		<cfif posCampos.len() gt 0>
 			<cfset var listaIds = valueList(q.id_participante)>

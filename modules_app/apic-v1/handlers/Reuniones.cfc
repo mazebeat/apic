@@ -18,7 +18,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var s = service.all(arguments.rc.id_evento)>
+		<cfset var s = service.all(arguments.event, arguments.rc, arguments.prc)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -33,7 +33,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 
-		<cfset var s = service.all2(arguments.event, arguments.rc)>
+		<cfset var s = service.all2(arguments.event, arguments.rc, arguments.prc)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -48,7 +48,7 @@
 		<cfargument name="rc">
 		<cfargument name="prc">
 		
-		<cfset var s = service.get(arguments.event, arguments.rc)>
+		<cfset var s = service.get(arguments.event, arguments.rc, arguments.prc)>
 
 		<cfif NOT structIsEmpty(s.data.records)>
 			<cfset s.data.records = QueryToStruct(s.data.records)>
@@ -59,6 +59,5 @@
 	</cffunction>
 
 <!------------------------------------------- PRIVATE EVENTS ------------------------------------------>
-
 </cfcomponent>
 

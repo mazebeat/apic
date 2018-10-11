@@ -55,16 +55,10 @@ component extends="Base" {
 					if(isNull(token) OR isEmpty(token)) {
 						throw(message="API Key or API Token does not exists", errorcode=STATUS.NOT_AUTHENTICATED);					
 					}
-					
-					arguments.prc.response.setData({ "token" = token });
-
-					// var aut = encrypt(serializeJSON(authuser), getSetting('authSecretKey'), "AES", "Base64");
-					// session["usersession"] = { 
-					// 	"type"     = type, 
-					// 	"auth"     = aut,
-					// 	"defaults" = { "form" = { "fields" = "" } }
-					// };
-					// arguments.rc.token = token;
+					arguments.prc.response.setData({ 
+						"token"   = token,
+						"expired" = getIsoTimeString(authservice.decodeToken(token).exp, false)						
+					});
 				} else {
 					throw(message="Client validation has failed");
 				}
@@ -194,9 +188,7 @@ component extends="Base" {
 	any function permissionsUser(event, rc, prc) {
 		var usr =  (!arguments.rc.isevent) ? cliService.get(arguments.rc.id) : eService.get(arguments.rc.id);
 
-		if(isnull(usr.getId_permisosToken())) {
-			throw(message="Empty object, please generate password first.", errorcode=STATUS.INTERNAL_ERROR);
-		}
+		if(isnull(usr.getId_permisosToken())) throw(message="Empty object, please generate password first.", errorcode=STATUS.INTERNAL_ERROR);
 
 		var permisos = usr.permisos();
 		
@@ -215,19 +207,10 @@ component extends="Base" {
 	 * @prc 
 	 */
 	any function savePermissionsUser(event, rc, prc) {
-		if(!arguments.rc.isevent){
-			var usr = cliService.get(arguments.rc.id);
-		} else {
-			var usr = eService.get(arguments.rc.id);
-		}
+		var usr = (!arguments.rc.isevent) ? cliService.get(arguments.rc.id) : eService.get(arguments.rc.id);
 
-		if(arrayLen(arguments.rc.permissions) < 3) {
-			throw(message = "Permissions count incorrect.", errorcode = 500);
-		}
-
-		if(isnull(usr.getId_permisosToken())) {
-			throw(message = "Empty object, please generate password first.", errorcode = 500);
-		}
+		if(arrayLen(arguments.rc.permissions) < 3) throw(message = "Permissions count incorrect.", errorcode = 500);
+		if(isnull(usr.getId_permisosToken())) throw(message = "Empty object, please generate password first.", errorcode = 500);
 			
 		var permisos = usr.permisos();
 

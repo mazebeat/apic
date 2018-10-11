@@ -113,16 +113,7 @@
 				},
 
 				// Participantes
-				{ 
-					pattern="/:lang-alpha/:token/participantes/page/:page-numeric/rows/:rows-numeric", 
-					handler="Participantes", 
-					action="index"
-				},
-				{ 
-					pattern="/:lang-alpha/:token/participantes/page/:page-numeric?", 
-					handler="Participantes", 
-					action="index" 
-				},
+			
 
 				// -> By ID
 				{ 
@@ -217,6 +208,17 @@
 
 				// -> All		
 				{ 
+					pattern="/:lang-alpha/:token/participantes/page/:page-numeric/rows/:rows-numeric", 
+					handler="Participantes", 
+					action="index"
+				},
+				{ 
+					pattern="/:lang-alpha/:token/participantes/page/:page-numeric?", 
+					handler="Participantes", 
+					action="index" 
+				},
+				{ 
+					
 					pattern="/:lang-alpha/:token/participantes", 
 					handler="Participantes", 
 					action={ GET="index", POST="create", PUT="modify" } 

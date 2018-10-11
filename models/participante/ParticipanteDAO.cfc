@@ -42,25 +42,26 @@
 			</cfquery>
 			<cfset arguments.rc.total = local.qTotal.cantidad>
 		</cfif>
-		
+
 		<cfset var pagination    = qs.generarPaginacion(arguments.rc.total, arguments.rc.page, arguments.rc.rows)>
 		<cfset var datosConsulta = qs.generarConsultaInforme(arguments.rc.ids, arguments.rc.id_evento)>
 		<cfset var link          = getURLLink(arguments.rc.token)>
-		
+
 		<cfoutput>
 			<cfsavecontent variable = "consulta">
 				SELECT 
 				DISTINCT p.id_participante, 
-				#!isEmpty(datosConsulta) ? datosConsulta & ',' : ''#
-				CONCAT("#link#/participantes/",id_participante,"?ids=#arguments.rc.ids#") AS _link
+				#(arguments.prc.token.type EQ 'C') ? 'id_evento,' : ''# 
+				#!isEmpty(datosConsulta) ? this.sanatizeQuery(datosConsulta) & ',' : ''#
+				CONCAT('#link#/participantes/',id_participante,'?ids=#this.sanatizeQueryColumn(arguments.rc.ids)#') AS _link
 				FROM vParticipantes p 
-				WHERE p.id_evento IN (#arguments.rc.id_evento#)
-				LIMIT #arguments.rc.rows# OFFSET #pagination.inicio#
+				WHERE p.id_evento IN (#this.sanatizeQuery(arguments.rc.id_evento)#)
+				LIMIT #this.sanatizeQuery(arguments.rc.rows)# OFFSET #pagination.inicio#	
 			</cfsavecontent>
 		</cfoutput>
 
 		<cfquery name="local.qParticipantes" datasource="#application.datasource#">
-			#consulta#
+			#consulta#		
 		</cfquery>
 
 		<cfset local.qParticipantes = qs.rellenarDatosInforme(consulta, local.qParticipantes, arguments.rc.id_evento)>
@@ -78,18 +79,19 @@
 		<cfargument name="event">
 		<cfargument name="rc">
 		<cfargument name="prc">
-
+		
 		<cfparam name="arguments.rc.total" default="0" type="numeric">
 		<cfparam name="arguments.rc.page" default="1" type="numeric">
 		<cfparam name="arguments.rc.rows" default="#queryLimit#">
 		<cfparam name="arguments.rc.ids" default="#valueList(this.defaultValues(arguments.rc.id_evento).id_campo)#">
-
+		
 		<cfset var datosConsulta = qs.generarConsultaInforme(arguments.rc.ids, arguments.rc.id_evento)>
 
 		<cfoutput>
 			<cfsavecontent variable = "consulta">
 				SELECT 
 					p.id_participante, 
+					#(arguments.prc.token.type EQ 'C') ? 'id_evento,' : ''# 
 					p.id_tipo_participante AS 'id_tipo_participante',
 					#datosConsulta#
 				FROM vParticipantes p
@@ -110,6 +112,7 @@
 	<cffunction name="findByEmail">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="prc">
 		
 		<cfset local.participantesByEmail = queryNew("id")>
 		
@@ -141,6 +144,7 @@
 				SELECT 
 				p.id_participante, 
 				p.id_tipo_participante AS 'id_tipo_participante',
+				#(arguments.prc.token.type EQ 'C') ? 'id_evento,' : ''# 
 				#!isEmpty(datosConsulta) ? datosConsulta & ',' : ''#
 				CONCAT("#link#/participantes/",id_participante,"?ids=#arguments.rc.ids#") AS _link
 				FROM vParticipantes p
@@ -182,11 +186,6 @@
 			AND LOWER(nombre)=LOWER(<cfqueryparam value="#reReplace(arguments.rc.tipo_participante, "[-_]", " ")#" CFSQLType="CF_SQL_VARCHAR">)
 		</cfquery>
 
-		<cfif isdefined("url.debug")>
-			<cfdump var="#local.tipoParticipante#" label="local.tipoParticipante">
-			<cfabort>
-		</cfif>
-		
 		<cfif arguments.rc.total IS 0>
 			<cfquery name="local.qTotal" datasource="#application.datasource#">
 				SELECT COUNT(*) AS cantidad
@@ -205,6 +204,7 @@
 			<cfsavecontent variable = "consulta">
 				SELECT 
 				DISTINCT p.id_participante, 
+				#(arguments.prc.token.type EQ 'C') ? 'id_evento,' : ''# 
 				#!isEmpty(datosConsulta) ? datosConsulta & ',' : ''#
 				CONCAT("#link#/participantes/",id_participante,"?ids=#arguments.rc.ids#") AS _link
 				FROM vParticipantes p 
@@ -239,43 +239,63 @@
 		<cfargument name="record">
 		<cfargument name="k">
 
-		<cfset fs = formS.getByTipoParticipante(arguments.record.id_tipo_participante, arguments.event, arguments.rc)>
+		<cfinclude template = "/default/admin/helpers/string.cfm">
+		<!--- Default values of login and password --->
+		<cfscript>
+			// Se obtiene el tipo de formulario que se require usar
+			var fs = formS.getByTipoParticipante(arguments.record.id_tipo_participante, arguments.event, arguments.rc)
 
-		<cfif fs.data.records.recordCount LTE 0>
-			<cfthrow message="'Tipo de Participante' or 'Formulario' or incorrect" detail="Invalid id_tipo_participante">
-		</cfif>
+			if (fs.data.records.recordCount LTE 0) throw(message="'Tipo de Participante' or 'Formulario' are incorrect", detail="Invalid id_tipo_participante");
 
-		<cfset record["id_formulario"] = fs.data.records.id_formulario>
+			// Se agrega id_formulario a record
+			arguments.record["id_formulario"] = javacast('int', fs.data.records.id_formulario);
 
-		<cfset var e = generateEmailAndPassword(record.email)>
-		<cfset ep.email = e.email>
-		<cfset hasLogin = "'#ep.email#',">
-		<cfset ep.password = e.password>
-
-		<cfif structKeyExists(record, 'login')>
-			<cfset ep.email    = record.login>
-			<cfset hasLogin = "'#record.login#',">
-		<!--- <cfelse>
-			<cfset hasLogin = "'#ep.email#',"> --->
-		</cfif>
-
-		<cfset hasPassword = ''>
-		<cfif structKeyExists(record, 'password')>
-			<cfset ep.password = record.password>
-			<cfset hasPassword = "'#encriptar(record.password)#',">
-		<cfelse>
-			<cfset hasPassword = "'#encriptar(ep.password)#',">
-		</cfif>
-
-		<cfif getHTTPRequestData().method EQ 'POST'>
-			<!--- <cfset record["login"] = ep.email> --->
-			<cfset record["password"] = ep.password>
-		</cfif>
-
-		<cfif NOT structKeyExists(record, 'inscrito')>
-			<cfset record.inscrito = 0>
-		</cfif>
+			var e = generateEmailAndPassword(arguments.record.email);
+			var ep = {			
+				'login'                                     = e.email,
+				'password'                                  = e.password,
+				'fecha_alta'                                = NOW(),
+				'activo'                                    = 1,
+				'formulariosEventos_id_formulariosEventos'  = this.sanatizeQueryColumn(arguments.record.id_formulario),
+				'tiposDeParticipantes_id_tipo_participante' = this.sanatizeQueryColumn(arguments.record.id_tipo_participante),
+				'importado'                                 = 1,
+				'inscrito'                                  = 0,
+				'id_evento'                                 = this.sanatizeQueryColumn(arguments.rc.id_evento),
+				'idiomas_id_idioma'                         = this.sanatizeQueryColumn(session.language),
+				'insitu'                                    = 0,
+				'ip_alta'                                   = cgi.REMOTE_ADDR,
+				'user_agent_alta'                           = cgi.HTTP_USER_AGENT,
+				'email'                                     = this.sanatizeQueryColumn(e.email)
+			};
+			// Validamos campo login en record
+			if(structKeyExists(arguments.record, 'login')) { structInsert(ep, 'login', arguments.record.login, true); }
 			
+			// Validamos campo password en record
+			if(structKeyExists(arguments.record, 'password')) { structInsert(ep, 'password', arguments.record.password, true); } 
+			
+			// Asignamos a record el campo password
+			if(getHTTPRequestData().method EQ 'POST') {
+				if(!structKeyExists(arguments.record, 'login')) { 
+					structInsert(arguments.record, 'login', e.email, true); 
+				}
+				if(!structKeyExists(arguments.record, 'password')) { 
+					structInsert(arguments.record, 'password', e.password, true); 
+				}
+			} 
+			
+			if(getHTTPRequestData().method EQ 'PUT') {
+				if(structKeyExists(arguments.record, 'login') AND !structKeyExists(ep, 'login'))  { 
+					structInsert(ep, 'login', arguments.record.login, true); 
+				}
+				if(structKeyExists(arguments.record, 'password') AND !structKeyExists(ep, 'password'))  { 
+					structInsert(ep, 'password', arguments.record.password, true); 
+				}
+			}
+
+			// Validamos campo inscrito en record
+			if(structKeyExists(record, 'inscrito')) ep.inscrito = arguments.record.inscrito;
+		</cfscript>
+
 		<!--- login,
 				password,
 				fecha_alta,
@@ -289,141 +309,100 @@
 				insitu,
 				ip_alta,
 				user_agent_alta --->
-		
-		<cfset a = "(
-			#hasLogin#
-			#hasPassword#
-			NOW(),  
-			1,  
-			#record.id_formulario#, 
-			#record.id_tipo_participante#, 
-			1, 
-			#record.inscrito#, 
-			#arguments.rc.id_evento#, 
-			'#session.language#', 
-			0, 
-			'#cgi.REMOTE_ADDR#', 
-			'#cgi.HTTP_USER_AGENT#'
-		)"> 
 
-		<cfset b = genCreateDatos(structCopy(record), k, arguments.rc)>
-		<cfset c = genUpdateParticipante(record, k, arguments.rc)>
+		<cfset b = genCreateDatos(arguments.record, arguments.rc.id_evento, k)>
+		<cfset c = genUpdateParticipante(arguments.record, k, arguments.rc)>
 
-		<cfreturn { 'a' = a, 'b' = b, 'c' = c }>
+		<cfreturn { 'a' = ep, 'b' = b, 'c' = c }>
 	</cffunction>
 
 	<cffunction name="genCreateDatos" output="false" returntype="array">
 		<cfargument name="record">
+		<cfargument name="id_evento">
 		<cfargument name="k">
-		<cfargument name="rc">
 
 		<cfset var out = []>
 
-		<cfset structDelete(arguments.record, 'id_formulario')>
-		<cfset structDelete(arguments.record, 'id_tipo_participante')>
-		<cfset structDelete(arguments.record, 'email')>
-		<cfset structDelete(arguments.record, 'login')>
-		<cfset structDelete(arguments.record, 'password')>
-		<cfset structDelete(arguments.record, 'inscrito')>
+		<cfset rec = structFilter(arguments.record, function(_r, _k){
+			return arrayLen(reMatch('(\d)',_r)) GT 0; 
+		})>
 
 		<cfinclude template="/includes/helpers/ApplicationHelper.cfm">
 
-		<cfloop collection="#arguments.record#" item="key">
-			<cfif isDate(arguments.record[key])>
-				<cfset arguments.record[key] = ISOToDateTime(arguments.record[key])>
+		<cfloop collection="#rec#" item="key">
+			<cfif arrayLen(reMatch('(^\d{4}(-\d\d(-\d\d(T\d\d:\d\d(:\d\d)?(\.\d+)?(([+-]\d\d:\d\d)|Z)?)?)?)?$)', rec[key])) GT 0>
+				<cfset rec[key] = ISOToDateTime(rec[key])>
 			</cfif>
-			<!--- <cfset arrayAppend(out, "(#key#, [IDFIELD_#k#], '#arguments.record[key]#', #arguments.rc.id_evento#, NOW())")> --->
-			<cfset arrayAppend(out, "(#key#| [IDFIELD_#k#]| '#arguments.record[key]#'| #arguments.rc.id_evento#| NOW())")>
+			<cfset arrayAppend(out, "#key#|[IDFIELD_#k#]|#this.sanatizeQueryColumn(rec[key])#|#arguments.id_evento#")>
 		</cfloop>
 
 		<cfreturn out>
 	</cffunction>
 
-	<cffunction name="genUpdateParticipante" output="false" returntype="string">
+	<cffunction name="genUpdateParticipante" output="false" returntype="any">
 		<cfargument name="record">
 		<cfargument name="k">
 		<cfargument name="rc">
 
-		<cfset updateConsulta = ''>
+		<cfscript>
+			include ("/default/admin/helpers/string.cfm");
 
-		<cfset QCamposFijos = listadoCamposFijosFormulario(arguments.record.id_formulario)>
-
-		<cfif QCamposFijos.RecordCount gt 0>
+			var datos = {
+				'fecha_modif'      = 'NOW()',
+				'user_agent_modif' =  this.sanatizeQueryColumn(cgi.HTTP_USER_AGENT),
+				'ip_modif'         =  this.sanatizeQueryColumn(cgi.REMOTE_ADDR),
+				'id_participante'  = '[IDFIELD_#k#]',
+				'id_evento'        =  this.sanatizeQueryColumn(arguments.rc.id_evento)
+			};
+			var updateConsulta = '';
+			var QCamposFijos   = listadoCamposFijosFormulario(arguments.record.id_formulario);
 			
-			<cfinclude template = "/default/admin/helpers/string.cfm">
-			<!--- <cfinclude template = "/default/admin/helpers/participantes/cs.cfm"> --->
-			
-			<cfset hasLogin = ''>
-			<cfif structKeyExists(record, 'login')>
-				<cfset hasLogin = "login = '#encodeString(record.login)#',">
-			</cfif>
+			if(QCamposFijos.recordCount GT 0) {			
+				if(structKeyExists(arguments.record, 'login')) {
+					structInsert(datos, 'login', this.sanatizeQueryColumn(arguments.record.login));
+				}
 
-			<cfset hasPassword = ''>
-			<cfif structKeyExists(record, 'password')>
-				<cfset hasPassword = "password = '#encriptar(record.password)#',">
-			</cfif>
+				if(structKeyExists(arguments.record, 'password')) {
+					structInsert(datos, 'password', this.sanatizeQueryColumn(arguments.record.password));
+				}
 
-			<cfset hasTipoParticipante = ''>
-			<cfif structKeyExists(record, 'id_tipo_participante')>
-				<cfset hasTipoParticipante = "tiposDeParticipantes_id_tipo_participante = #record.id_tipo_participante#,">
-			</cfif>
-			<!--- <cfset var email = NOT structKeyExists(record, 'login') AND structKeyExists(record, 'email') ? record.email : record.login> --->
-			
-			<cfset hasinscrito = ''>
-			<cfif structKeyExists(record, 'inscrito')>
-				<cfset hasinscrito = "inscrito = #record.inscrito#">
-			</cfif>
-			<cfoutput>
-				<cfsavecontent variable = "updateConsulta">
-					UPDATE participantes
-					SET 
-						fecha_modif      = NOW(),
-						#hasLogin#
-						#hasPassword#
-						#hasTipoParticipante#
-						user_agent_modif = '#encodeString(cgi.HTTP_USER_AGENT)#',					
-						ip_modif         = '#cgi.REMOTE_ADDR#',			
-						#hasinscrito#			
-					<cfloop query="QCamposFijos">
-						<cfif structKeyExists(arguments.record, id_campos)>
-							<cfset var VAL_CF = valorCampo(arguments.record, id_campos)>
+				if(structKeyExists(arguments.record, 'id_tipo_participante')) {
+					structInsert(datos, 'id_tipo_participante', this.sanatizeQueryColumn(arguments.record.id_tipo_participante));
+					structInsert(datos, 'id_formulario', this.sanatizeQueryColumn(arguments.record.id_formulario));
+				}
 
-							<cfswitch expression="#descripcion#">
-								<cfcase value="email_participante,email_empresa" delimiters=",">
-									<cfset val_cf = lcase(val_cf)>
-								</cfcase>
-								<cfcase value="nombre_participante,apellidos_participante,nombre_empresa" delimiters=",">
-									<cfset val_cf = initCap(val_cf)>
-								</cfcase>
-								<cfcase value="baja_newsletter">
-									<cfif (val_cf is '')>
-										<cfset val_cf = 1>
-									</cfif>
-								</cfcase>
-								<cfcase value="email_valido">
-									<cfif (val_cf is '')>
-										<cfset val_cf = 1>
-									</cfif>
-								</cfcase>
-								<cfdefaultcase>
-									<cfset val_cf = lcase(val_cf)>
-								</cfdefaultcase>
-							</cfswitch>
-							, cf_#descripcion# = '#encodeStringWithStrip(VAL_CF)#'
-						</cfif>
-					</cfloop>
-					
-					WHERE id_participante = [IDFIELD_#k#]
-					AND id_evento IN (#arguments.rc.id_evento#);
-				</cfsavecontent>
-			</cfoutput>
+				if(structKeyExists(arguments.record, 'inscrito')) {
+					structInsert(datos, 'inscrito', this.sanatizeQueryColumn(arguments.record.inscrito));
+				}
 
-		</cfif>
+				for (row in QCamposFijos) {
+					if(structKeyExists(arguments.record, row.id_campos)) {
+						var val_cf = valorCampo(arguments.record, row.id_campos);
+						
+						switch (row.descripcion) {
+							case 'email_participante': case 'email_empresa':
+								val_cf = lcase(val_cf);
+								break;
+							case 'nombre_participante': case 'apellidos_participante': case 'nombre_empresa':
+								val_cf = initCap(val_cf);
+								break;
+							case 'baja_newsletter':
+								if(val_cf is '') val_cf = 1;
+								break;
+							default:
+								val_cf = lcase(val_cf);
+								break;
+						}
+						structInsert(datos, 'cf_#row.descripcion#',  this.sanatizeQueryColumn(val_cf));
+					}
+				}
+			}
+		</cfscript>
 
-		<cfreturn updateConsulta>
+		<cfreturn datos>
 	</cffunction>
 
-	<cffunction name="doCreate" hint="Inserta un nuevo participante" output="false" returntype="struct">
+	<cffunction name="doCreate" hint="Inserta un nuevo participante" output="false" returntype="string">
 		<cfargument name="event">
 		<cfargument name="rc">
 		<cfargument name="vList">
@@ -444,10 +423,31 @@
 				ip_alta,
 				user_agent_alta
 			) VALUES
-			#arrayToList(vList.a, ",")#
+			<cfloop from="1" to="#arraylen(vList.a)#" index="u"> 
+				<cfif u NEQ 1>,</cfif>
+				(
+					<cfqueryparam value="#vList.a[u].login#" cfsqltype="CF_SQL_VARCHAR">,
+					<cfqueryparam value="#vList.a[u].password#" cfsqltype="CF_SQL_VARCHAR">,
+					<cfqueryparam value="#vList.a[u].fecha_alta#" cfsqltype="CF_SQL_TIMESTAMP">,
+					<cfqueryparam value="#vList.a[u].activo#" cfsqltype="CF_SQL_INTEGER">,
+					<cfqueryparam value="#vList.a[u].formulariosEventos_id_formulariosEventos#" cfsqltype="CF_SQL_INTEGER">,
+					<cfqueryparam value="#vList.a[u].tiposDeParticipantes_id_tipo_participante#" cfsqltype="CF_SQL_INTEGER">,
+					<cfqueryparam value="#vList.a[u].importado#" cfsqltype="CF_SQL_INTEGER">,
+					<cfqueryparam value="#vList.a[u].inscrito#" cfsqltype="CF_SQL_INTEGER">,
+					<cfqueryparam value="#vList.a[u].id_evento#" cfsqltype="CF_SQL_INTEGER">,
+					<cfqueryparam value="#vList.a[u].idiomas_id_idioma#" cfsqltype="CF_SQL_VARCHAR">,
+					<cfqueryparam value="#vList.a[u].insitu#" cfsqltype="CF_SQL_INTEGER">,
+					<cfqueryparam value="#vList.a[u].ip_alta#" cfsqltype="CF_SQL_VARCHAR">,
+					<cfqueryparam value="#vList.a[u].user_agent_alta#" cfsqltype="CF_SQL_VARCHAR">
+				)
+			</cfloop>
 		</cfquery>
 
 		<cfset var ids = rnewp.generatedkey>
+
+		<cfif listLen(ids) NEQ arraylen(vList.a)>
+			<cfthrow message="ERROR AL INSERTAR PARTICIPANTE">
+		</cfif>
 
 		<cfloop list="#ids#" item="id" index="i">
 			<cfloop array="#vList.b#" item="va" index="f">
@@ -455,37 +455,40 @@
 					<cfset vList.b[f] = replace(vList.b[f], "[IDFIELD_#i#]", id)>		
 				</cfif>
 			</cfloop>
-			
+
 			<cfloop array="#vList.c#" item="va" index="f">
-				<cfif findNoCase("[IDFIELD_#i#]", va) != 0>
-					<cfset vList.c[f] = replace(vList.c[f], "[IDFIELD_#i#]", id)>			
+				<cfif findNoCase("[IDFIELD_#i#]", va.id_participante) != 0>
+					<cfset vList.c[f].id_participante = replace(vList.c[f].id_participante, "[IDFIELD_#i#]", id)>			
 				</cfif>
 			</cfloop>
 		</cfloop>
-
-		<!--- <cfif cgi.REMOTE_ADDR is '47.63.119.142'>
-			<cfdump var="#vList#" label="vlist">
-			<cfabort>
-		</cfif> --->
 
 		<cfset var idsD  = doCreateDatos(vList.b)>
 		<cfset var idsDE = doCreateExtension(ids, arguments.rc)>
 		<cfset doUpdateParticipante(vList.c)>
 
-		<cfreturn { 
-			"new_id_participante" : ids, 
-			<!--- "new_id_participantesDatos" : idsD  --->
-		}>
+		<cfreturn ids>
 	</cffunction>
 	
 	<cffunction name="doCreateDatos" returntype="any">
 		<cfargument name="vList"> 
 
+		<!--- -- #replace(arrayToList(vList, ","), '|', ',', 'ALL')# --->
 		<cfquery name="local.createDatos" result="rnewpd" datasource="#application.datasource#">
 			INSERT INTO participantesDatos 
 				(campos_id_campos, participantes_id_participante, valor, eventos_id_evento, fecha_alta)
 			VALUES
-				#replace(arrayToList(vList, ","), '|', ',', 'ALL')#
+			<cfloop from="1" to="#arraylen(vList)#" index="u"> 
+				<cfif u NEQ 1>,</cfif>
+				<cfset var data = listToArray(vList[u], '|')>
+				(
+					<cfqueryparam value="#data[1]#" cfsqltype="CF_SQL_INTEGER">,
+					<cfqueryparam value="#data[2]#" cfsqltype="CF_SQL_INTEGER">,
+					<cfqueryparam value="#data[3]#" cfsqltype="CF_SQL_VARCHAR">,
+					<cfqueryparam value="#data[4]#" cfsqltype="CF_SQL_INTEGER">,
+					<cfqueryparam value="#NOW()#" cfsqltype="CF_SQL_TIMESTAMP">
+				)
+			</cfloop>
 		</cfquery>
 
 		<cfreturn rnewpd.generatedkey>
@@ -496,30 +499,24 @@
 		<cfargument name="rc"> 		
 
 		<cfset var idss = listToArray(arguments.ids)>
-
-		<cfloop item="id" array="#idss#">			
-			<cfsavecontent variable="insert">
-				<cfoutput>
-					INSERT INTO participantesDatosExtension 
-					(
-						id_participante, 
-						id_evento, 
-						fecha_alta_api
-					)
-					VALUES 
-					(
-						#replace(id, '),(', ',',  'ALL')#, 
-						#arguments.rc.id_evento#,
-						NOW()
-					)
-					ON DUPLICATE KEY UPDATE fecha_modif_api = NOW()
-				</cfoutput>
-			</cfsavecontent>
-		
-			<cfquery name="local.extension" result="rnewpde" datasource="#application.datasource#">
-				#insert#
-			</cfquery>
-		</cfloop>
+		<cfquery name="local.extension" result="rnewpde" datasource="#application.datasource#">
+			INSERT INTO participantesDatosExtension 
+			(
+				id_participante, 
+				id_evento, 
+				fecha_alta_api
+			)
+			VALUES 
+			<cfloop from="1" to="#arraylen(idss)#" index="u"> 
+				<cfif u NEQ 1>,</cfif>		
+				(
+					<cfqueryparam value="#idss[u]#" cfsqltype="CF_SQL_INTEGER">,
+					<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="CF_SQL_INTEGER">,
+					<cfqueryparam value="#NOW()#" cfsqltype="CF_SQL_TIMESTAMP">
+				)
+			</cfloop>
+			ON DUPLICATE KEY UPDATE fecha_modif_api = NOW()
+		</cfquery>
 
 		<cfreturn rnewpde.generatedkey>
 	</cffunction>
@@ -548,21 +545,60 @@
 
 		<cfset updated = 0>
 
+		<cfinclude template="/default/admin/helpers/string.cfm">
+		<cfinclude template = "/default/admin/helpers/participantes/cs.cfm">
 		<!--- https://stackoverflow.com/questions/6299326/coldfusion-multiple-sql-statements-in-a-query --->
-
-		<!--- <cfif cgi.REMOTE_ADDR is '47.63.119.142'>
-			<cfdump var="#arguments#" label="arguments">
-			<cfabort>
-		</cfif> --->
-		<!--- <cfif cgi.REMOTE_ADDR is '47.63.119.142'>
-			<cfdump var="#vList#" label="doUpdateParticipante">
-			<cfabort>
-		</cfif> --->
 		<cfloop array="#arguments.vList#" item="upd" index="i">
 			<cfquery name="local.update" result="rupdp" datasource="#application.datasource#">
-				#upd#
+				UPDATE participantes
+				SET 
+				user_agent_modif = <cfqueryparam value="#cgi.HTTP_USER_AGENT#" cfsqltype="CF_SQL_VARCHAR">,					
+				ip_modif         = <cfqueryparam value="#cgi.REMOTE_ADDR#" cfsqltype="CF_SQL_VARCHAR">,
+				<cfif structKeyExists(upd, 'login')>
+					login = <cfqueryparam value="#upd.login#" cfsqltype="CF_SQL_VARCHAR">,
+				</cfif>
+				<cfif structKeyExists(upd, 'password')>
+					password = <cfqueryparam value="#encriptar(upd.password)#" cfsqltype="CF_SQL_VARCHAR">,
+				</cfif>
+				<cfif structKeyExists(upd, 'id_tipo_participante')>
+					tiposDeParticipantes_id_tipo_participante = <cfqueryparam value="#upd.id_tipo_participante#" cfsqltype="CF_SQL_INTEGER">,
+					formulariosEventos_id_formulariosEventos = <cfqueryparam value="#upd.id_formulario#" cfsqltype="CF_SQL_INTEGER">,
+				</cfif>
+				<cfif structKeyExists(upd, 'inscrito')>
+					inscrito = <cfqueryparam value="#javacast('int', upd.inscrito)#" cfsqltype="CF_SQL_INTEGER">,
+				</cfif>
+				<cfset d = structFilter(upd, function(key, value){
+					return reFindNoCase('(^(cf_\w+)$)', key);
+				})>					
+				<cfloop collection="#d#" index="key" item="val">
+					#key# = 
+					<cfswitch expression="#val#">
+						<cfcase value="cf_email_participante,cf_email_empresa" delimiters=",">
+							<cfqueryparam value="#lcase(val)#" cfsqltype="CF_SQL_VARCHAR">
+						</cfcase>
+						<cfcase value="cf_nombre_participante,cf_apellidos_participante,cf_nombre_empresa" delimiters=",">
+							<cfqueryparam value="#initCap(val)#" cfsqltype="CF_SQL_VARCHAR">
+						</cfcase>
+						<cfcase value="cf_baja_newsletter">
+							<cfif (val is '')>
+								<cfqueryparam value="1" cfsqltype="CF_SQL_INTEGER">
+							</cfif>
+						</cfcase>
+						<cfcase value="cf_email_valido">
+							<cfif (val is '')>
+								<cfqueryparam value="1" cfsqltype="CF_SQL_INTEGER">
+							</cfif>
+						</cfcase>
+						<cfdefaultcase>
+							<cfqueryparam value="#val#" cfsqltype="CF_SQL_VARCHAR">
+						</cfdefaultcase>
+					</cfswitch>
+					, 
+				</cfloop>
+				fecha_modif = NOW()
+				WHERE id_participante = <cfqueryparam value="#upd.id_participante#" cfsqltype="CF_SQL_INTEGER">
+				AND id_evento         = <cfqueryparam value="#upd.id_evento#" cfsqltype="CF_SQL_INTEGER">;
 			</cfquery>
-		
 			<cfset updated = updated + rupdp.recordCount>
 		</cfloop>
 
@@ -598,16 +634,15 @@
 	<cffunction name="generateEmailAndPassword">
 		<cfargument name="email">
 		
-		<cfset part_email = arguments.email>
+		<cfscript>
+		var part_email = (isEmpty(arguments.email)) ? 'part@#right(gettickCount(), 7)#': arguments.email;
+		var password   = listFirst(part_email, '@') & '_' & right(gettickcount(), 5);
 
-		<cfif part_email is ''> <cfset part_email = 'part@#right(gettickCount(), 7)#'> </cfif>
-
-		<cfset var password = listFirst(part_email, '@') & '_' & right(gettickcount(), 5)>
-
-		<cfreturn {
+		return {
 			'email'= part_email,
 			'password'= password
-		}>
+		}
+		</cfscript>
 	</cffunction>
 
 	<cffunction name="listadoCamposFijosFormulario" access="public" returntype="query" output="false">
@@ -615,9 +650,9 @@
 
 		<cfquery name="local.QCamposFijos" datasource="#application.datasource#">
 			SELECT
-				c.id_campos,
-				c.tiposCamposFijos_id_tipo_campo_fijo AS campoFijo,
-				tcf.descripcion
+			c.id_campos,
+			c.tiposCamposFijos_id_tipo_campo_fijo AS campoFijo,
+			tcf.descripcion
 			FROM campos c
 			INNER JOIN tiposCamposFijos tcf 
 			ON tcf.id_tipo_campo_fijo = c.tiposCamposFijos_id_tipo_campo_fijo
@@ -685,78 +720,14 @@
 		<cfreturn local.bylogin>
 	</cffunction>
 
-	<cffunction name="genUpdateDatos" output="false" returntype="array">
-		<cfargument name="record">
-		<cfargument name="k">
-
-		<cfset var out = []>
-		<cfset var out2 = {}>
-		<cfset var tmp = []>
-		<cfset var tempid = 0>
-
-		<cfinclude template="/includes/helpers/ApplicationHelper.cfm">
-
-		<cfset var now  = now()>
-
-		<!--- <cfif cgi.REMOTE_ADDR is '47.63.119.142'>
-			<cfdump var="#arguments.record#" label="arguments.record">
-			<cfabort>
-		</cfif> --->
-
-		<cfloop collection="#arguments.record#" item="key">
-			<cfset list = listToArray(arguments.record[key], '|')>
-
-			<!--- <cfif cgi.REMOTE_ADDR is '47.63.119.142'>
-				<cfdump var="#key#" label="key">
-				<cfdump var="#list#" label="list">
-				<cfdump var="#arguments.record[key]#" label="arguments.record[key]">
-				<cfabort>
-			</cfif> --->
-
-			<cfset id = rEReplaceNoCase(list[2],"[^\d]","")>
-
-			<cfif id != tempid>
-				<cfset tmp = []>
-			</cfif>
-
-			<cfset campo = REReplaceNoCase(list[1],"[^\d]","")>
-
-			<!--- <cfif cgi.REMOTE_ADDR is '47.63.119.142' and campo is 73073>
-				<cfdump var="#arguments.record#" label="arguments.record">
-				<cfdump var="#key#" label="">
-				<cfdump var="#list#" label="">
-				<cfabort>
-			</cfif> --->
-
-			<cfset value = list[3]>
-			<cfif isDate(value)>
-				<cfset value = "'" & ISOToDateTime(value) & "'">
-			</cfif>
-
-			<cfset idevento = rEReplaceNoCase(list[4],"[^\d]","")>
-
-			<!--- <cfset arrayAppend(out, "UPDATE participantesDatos 
-									SET valor=#value# 
-									WHERE campos_id_campos=#campo#
-									AND eventos_id_evento=#idevento# 
-									AND participantes_id_participante=#id#")> --->
-			<cfset arrayAppend(out, "INSERT INTO participantesDatos (campos_id_campos, valor, participantes_id_participante, eventos_id_evento)
-									VALUES (#campo#, #value#, #id#, #idevento#)
-									ON DUPLICATE KEY UPDATE
-									valor = #value#, fecha_modif = now()")>
-		</cfloop>
-
-		<!--- <cfif cgi.REMOTE_ADDR is '47.63.119.142'>
-			<cfdump var="#out#" label="out">
-			<cfabort>
-		</cfif> --->
-		<cfreturn out>
+	<cffunction name="genUpdateDatos" output="false" returntype="void">
+		
 	</cffunction>
 
 	<!--- 
 		Realiza la modificacion de uno o más participantes, validandolo por el correo
 	 --->
-	<cffunction name="doUpdate"  output="false" returntype="struct">
+	<cffunction name="doUpdate"  output="false" returntype="string">
 		<cfargument name="event">
 		<cfargument name="rc">
 		<cfargument name="vList">
@@ -765,7 +736,8 @@
 		<cfset var lgs = []> 
 		<cfset var ids = []>
 
-		<cfloop array="#vList.d#" index="i" item="item">			
+		<!--- <cfloop array="#vList.d#" index="i" item="item"> --->
+		<cfloop array="#arguments.vList.c#" index="i" item="item">
 			<!--- 
 			SELECT id_participante AS 'id' FROM participantes
 			WHERE (
@@ -774,52 +746,79 @@
 			)
 			AND id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 			AND fecha_baja IS NULL
+			---
+			SELECT id_participante AS 'id' 
+				FROM participantes
+				WHERE cf_email_participante = <cfqueryparam value="#trim(replace(item, "'", "", 'all'))#" cfsqltype="CF_SQL_VARCHAR">
+				AND id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
+				AND fecha_baja IS NULL
 			--->
 			<cfquery name="local.logins" datasource="#application.datasource#">
-				SELECT id_participante AS 'id' FROM participantes
-				WHERE cf_email_participante = <cfqueryparam value="#trim(replace(item, "'", "", 'all'))#" cfsqltype="CF_SQL_VARCHAR">
+				SELECT id_participante AS 'id' 
+				FROM participantes
+				WHERE cf_email_participante = <cfqueryparam value="#item.cf_email_participante#" cfsqltype="CF_SQL_VARCHAR">
+				AND cf_nombre_participante = <cfqueryparam value="#item.cf_nombre_participante#" cfsqltype="CF_SQL_VARCHAR">
+				AND cf_apellidos_participante = <cfqueryparam value="#item.cf_apellidos_participante#" cfsqltype="CF_SQL_VARCHAR">
 				AND id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 				AND fecha_baja IS NULL
 			</cfquery>
 
-			<cfif local.logins.recordcount EQ 0>
-				<cfthrow message="Email ['#item#'] does not exists or could be duplicated">
+			<cfif local.logins.recordcount EQ 0 AND NOT isdefined('url.allow_duplicate')>
+				<cfthrow message="El participante [#item.cf_email_participante#|#item.cf_nombre_participante#|#item.cf_apellidos_participante#] does not exists or could be duplicated">
 			</cfif>
 			
 			<cfset arrayAppend(ids, local.logins.id)>
 
-			<cfloop array="#vList.b#" item="va" index="f">
-				<cfif findNoCase("[IDFIELD_#i#]", va) != 0>
-					<cfset vList.b[f] = replace(vList.b[f], "[IDFIELD_#i#]", local.logins.id)>			
-				</cfif>
-			</cfloop>
-			
-			<cfloop array="#vList.c#" item="va" index="f">
-				<cfif findNoCase("[IDFIELD_#i#]", va) != 0>
-					<cfset vList.c[f] = replace(vList.c[f], "[IDFIELD_#i#]", local.logins.id)>			
-				</cfif>
+			<cfloop array="#ids#" item="id" index="i">
+				<cfloop array="#arguments.vList.b#" item="va" index="f">
+					<cfif findNoCase("[IDFIELD_#i#]", va) != 0>
+						<cfset vList.b[f] = replace(arguments.vList.b[f], "[IDFIELD_#i#]", id)>		
+					</cfif>
+				</cfloop>
+	
+				<cfloop array="#arguments.vList.c#" item="va" index="f">
+					<cfif findNoCase("[IDFIELD_#i#]", va.id_participante) != 0>
+						<cfset vList.c[f].id_participante = replace(vList.c[f].id_participante, "[IDFIELD_#i#]", id)>			
+					</cfif>
+				</cfloop>
 			</cfloop>
 		</cfloop>
 
-		<!--- <cfif cgi.REMOTE_ADDR is '47.63.119.142'>
-			<cfdump var="#vList#" label="doUpdateParticipante">
-			<cfabort>
-		</cfif> --->
-
-		<cfset doUpdateDatos(vList.b)>
+		<cfset doUpdateDatos(arguments.vList.b)>
 		<cfset doUpdateExtension(ids, arguments.rc)>
-		<cfset doUpdateParticipante(vList.c)>
+		<cfset doUpdateParticipante(arguments.vList.c)>
 
-		<cfreturn { "modif_id_participante" : arrayToList(ids) }>
+		<cfreturn arrayToList(ids)>
 	</cffunction>
 
 	<!--- TODO: Terminar método de actualizar datos --->
 	<cffunction name="doUpdateDatos" returntype="any">
-		<cfargument name="vList"> 
+		<cfargument name="vList">
 
-		<cfset queries = genUpdateDatos(vList)>
+		<cfset var out = []>
+		<cfset var out2 = {}>
+		<cfset var tmp = []>
+		<cfset var tempid = 0>
 
-		<cfset doUpdateParticipante(queries)>
+		<cfinclude template="/includes/helpers/ApplicationHelper.cfm">
+
+		<cfloop collection="#arguments.vList#" item="key">
+			<cfset var list = listToArray(arguments.vList[key], '|')>
+
+			<cfquery>
+				INSERT INTO participantesDatos 
+				(campos_id_campos, valor, participantes_id_participante, eventos_id_evento)
+				VALUES ( 
+					<cfqueryparam value="#list[1]#" cfsqltype="CF_SQL_INTEGER">, 
+					<cfqueryparam value="#list[3]#" cfsqltype="CF_SQL_VARCHAR">, 
+					<cfqueryparam value="#list[2]#" cfsqltype="CF_SQL_INTEGER">, 
+					<cfqueryparam value="#list[4]#" cfsqltype="CF_SQL_INTEGER"> 
+				)
+				ON DUPLICATE KEY UPDATE
+				valor = <cfqueryparam value="#list[3]#" cfsqltype="CF_SQL_VARCHAR">, 
+				fecha_modif = NOW()
+			</cfquery>
+		</cfloop>
 	</cffunction>
 
 	<cffunction name="getTipoParticipante" access="public" returntype="Query" output="false">
@@ -846,17 +845,17 @@
 		<cfargument name="fields" type="struct" required="true">
 
 		<cfset var exists = false>
-		
+
 		<cfquery name="local.allFields" datasource="#application.datasource#">
 			SELECT COUNT(id_participante) AS 'exists'
 			FROM participantes
 			WHERE cf_nombre_participante = <cfqueryparam value="#arguments.fields['nombre_participante']#" cfsqltype="CF_SQL_VARCHAR">
-				AND cf_apellidos_participante = <cfqueryparam value="#arguments.fields['apellidos_participante']#" cfsqltype="CF_SQL_VARCHAR">
-				AND cf_email_participante = <cfqueryparam value="#arguments.fields['email_participante']#" cfsqltype="CF_SQL_VARCHAR">
-				AND fecha_baja IS NULL
-				<cfif structKeyExists(arguments.fields, 'id_evento') and isNumeric(arguments.fields.id_evento)>
-					AND id_evento = <cfqueryparam value="#arguments.fields.id_evento#" cfsqltype="cf_sql_integer">
-				</cfif>
+			AND cf_apellidos_participante = <cfqueryparam value="#arguments.fields['apellidos_participante']#" cfsqltype="CF_SQL_VARCHAR">
+			AND cf_email_participante = <cfqueryparam value="#arguments.fields['email_participante']#" cfsqltype="CF_SQL_VARCHAR">
+			AND fecha_baja IS NULL
+			<cfif structKeyExists(arguments.fields, 'id_evento') and isNumeric(arguments.fields.id_evento)>
+				AND id_evento = <cfqueryparam value="#arguments.fields.id_evento#" cfsqltype="cf_sql_integer">
+			</cfif>
 		</cfquery>
 
 		<cfif local.allFields.recordcount GT 0>

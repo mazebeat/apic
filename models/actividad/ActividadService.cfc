@@ -17,12 +17,14 @@
 <!------------------------------------------- PUBLIC ------------------------------------------->
 
 	<cffunction name="all" hint="Todos los eventos" output="false" returntype="struct">
-		<cfargument name="id_evento">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
 
 		<cfset var s = { ok = true, mensaje= "", data = { 'records':{},  'count'= 0}}>
 
 		<cftry>
-			<cfset var records = dao.all(arguments.id_evento)>	
+			<cfset var records = dao.all(arguments.event, arguments.rc, arguments.prc)>	
 		
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>
@@ -35,18 +37,19 @@
 	</cffunction>
 
 	<cffunction name="byParticipante" hint="Todos los eventos" output="false" returntype="struct">
-		<cfargument name="id_evento">
-		<cfargument name="id_participante">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
 
 		<cfset var s = { ok = true, mensaje= "", data = { 'records':{},  'count'= 0}}>
 
 		<cftry>
-			<cfset var records = dao.getByParticipante(arguments.id_evento, arguments.id_participante)>	
+			<cfset var records = dao.getByParticipante(arguments.event, arguments.rc, arguments.prc)>	
 		
 			<cfset s.data.records = records>
 			<cfset s.data.count = records.recordCount>
 		<cfcatch type = "any">
-			<cfthrow type="any" message="Loading Activities of #arguments.id_participante# failed" detail="#cfcatch.Message#">
+			<cfthrow type="any" message="Loading Activities of #arguments.rc.id_participante# failed" detail="#cfcatch.Message#">
 		</cfcatch>
 		</cftry> 
 		

@@ -18,7 +18,9 @@
 		Obtiene todos las reuniones por tipo de participante
 	--->
 	<cffunction name="all" returntype="Query" outoput="false">
-		<cfargument name="id_evento" type="any" required="true">
+		<cfargument name="event">
+		<cfargument name="rc">
+		<cfargument name="prc">
 		
 		<cfquery name="all" datasource="#application.datasource#">
 			SELECT 
@@ -30,7 +32,7 @@
 				SELECT COUNT(participante1) AS cantidad, p.id_tipo_participante
 				FROM vParticipantes p
 				INNER JOIN vReunionesGeneradas rg ON rg.participante1 = p.id_participante
-				AND p.id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
+				AND p.id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 				GROUP BY p.id_tipo_participante
 			) AS a
 			RIGHT JOIN vTiposDeParticipantes tp ON tp.id_tipo_participante = a.id_tipo_participante
@@ -39,10 +41,10 @@
 				FROM vAcredRegistrosEntrada re
 				INNER JOIN vParticipantes p ON p.id_participante = re.id_participante
 				AND re.id_evento = p.id_evento
-				AND p.id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
+				AND p.id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 			) acc ON acc.id_tipo_participante = tp.id_tipo_participante
 			AND tp.eventos_id_evento = acc.id_evento
-			WHERE tp.eventos_id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
+			WHERE tp.eventos_id_evento IN (<cfqueryparam value="#arguments.rc.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 			GROUP BY tp.id_tipo_participante
 			ORDER BY tp.nombre
 		</cfquery>
@@ -56,6 +58,7 @@
 	<cffunction name="all2" returntype="Query" outoput="false">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="prc">
 
 		<cfquery name="local.allReunion" datasource="#application.datasource#">
 			SELECT participante1, participante2, salas_id_sala AS 'sala', horas_id_hora AS 'horario'
@@ -64,8 +67,8 @@
 			AND fecha_baja IS NULL
 		</cfquery>
 
-		<cfif NOT isdefined('url.nodetail')>
-			<cfset local.allReunion = addDetail(arguments.event, arguments.rc, local.allReunion)>
+		<cfif isdefined('url.view_detail')>
+			<cfset local.allReunion = this.addDetail(arguments.event, arguments.rc, arguments.prc, local.allReunion)>
 		</cfif>
 		
 		<cfreturn local.allReunion>
@@ -77,6 +80,7 @@
 	<cffunction name="get" returntype="Query" outoput="false">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="prc">
 
 		<cfquery name="local.getReunion" datasource="#application.datasource#">
 			SELECT participante1, participante2, salas_id_sala AS 'sala', horas_id_hora AS 'horario'
@@ -86,8 +90,8 @@
 			AND fecha_baja IS NULL
 		</cfquery>
 
-		<cfif NOT isdefined('url.nodetail')>
-			<cfset local.getReunion = addDetail(arguments.event, arguments.rc, local.getReunion)>
+		<cfif isdefined('url.view_detail')>
+			<cfset local.getReunion = this.addDetail(arguments.event, arguments.rc, arguments.prc, local.getReunion)>
 		</cfif>
 
 		<cfreturn local.getReunion>
@@ -96,12 +100,13 @@
 	<!--- 
 		Expande el detalle de cada reunión por id de participante1, participante2, id_horario (sala), id_hora (horario)
 	 --->
-	<cffunction name="addDetail"  output="false" returntype="query">
+	<cffunction name="addDetail" output="false" returntype="query">
 		<cfargument name="event">
 		<cfargument name="rc">
+		<cfargument name="prc">
 		<cfargument name="queryReunion" type="query" required="true">
 
-		<cfset local.allParticipantes = partServ.all(arguments.event, arguments.rc)>
+		<cfset local.allParticipantes = partServ.all(arguments.event, arguments.rc, arguments.prc)>
 
 		<cfif arguments.queryReunion.recordCount GT 0>
 

@@ -13,15 +13,98 @@
 <cffunction name="cleanIPUser" access="public">
     <cfif (RandRange(1, 10) EQ 5)>
         <!--- 
-        -- DELETE FROM apic_currentUser
-        -- WHERE last_attempt < (<cfqueryparam value="#DateAdd( 'n', -2, NOW() )#" cfsqltype="CF_SQL_TIMESTAMP" />) 
+			-- DELETE FROM apic_currentUser
+			-- WHERE last_attempt < (<cfqueryparam value="#DateAdd( 'n', -2, NOW() )#" cfsqltype="CF_SQL_TIMESTAMP">) 
         --->
-        <cfquery name="local.qIPCheck" datasource="#application.datasource#">
-            UPDATE apic_currentUser
-            SET active = 0
-            WHERE last_attempt < (<cfqueryparam value="#DateAdd('n', -1, NOW())#" cfsqltype="CF_SQL_TIMESTAMP">)
-        </cfquery>
-    </cfif>
+        <cfquery name="local.qcleanIPUser" result="local.qResult" datasource="#application.datasource#">
+            UPDATE apic_currentUser 
+            SET active = 0,
+			fecha_baja = NOW()
+            WHERE last_attempt < (<cfqueryparam value="#DateAdd('n', -2, NOW())#" cfsqltype="CF_SQL_TIMESTAMP">)
+			AND ip_address = <cfqueryparam value="#cgi.remote_addr#" cfsqltype="CF_SQL_VARCHAR">
+			AND active = 1
+		</cfquery>
+	</cfif>
+</cffunction>
+
+<cffunction name="addIPUser" access="public">
+	<cfargument name="event">
+	<cfargument name="rc">
+	<cfargument name="prc">
+	
+	<cfparam name="arguments.rc.token" default="">
+	
+	<cfparam name="session.cftoken" default="">
+	<cfparam name="session.cfid" default="">
+	<cftry>
+		<cfquery name="local.qSearch" datasource="#application.datasource#">
+			SELECT SQL_NO_CACHE id, user_request_count 
+			FROM apic_currentUser
+			WHERE ip_address = <cfqueryparam value="#cgi.remote_addr#" cfsqltype="CF_SQL_VARCHAR">
+			AND user_token = <cfqueryparam value="#session.cfid#-#session.cftoken#" cfsqltype="CF_SQL_VARCHAR">
+			AND last_event = <cfqueryparam value="#arguments.event.getCurrentEvent()#" cfsqltype="CF_SQL_VARCHAR">
+			AND http_user_agent = <cfqueryparam value="#cgi.HTTP_USER_AGENT#" cfsqltype="CF_SQL_VARCHAR">
+			AND id_evento = <cfqueryparam value="#arguments.prc.token.id_evento#" cfsqltype="CF_SQL_VARCHAR">
+			AND active = 1
+			AND token = <cfqueryparam value="#arguments.rc.token#" cfsqltype="CF_SQL_VARCHAR">
+			ORDER BY fecha_alta DESC
+			LIMIT 1
+		</cfquery>
+
+		<cfif local.qSearch.recordCount EQ 1>
+			<cfquery name="local.qIPCheck" result="local.qResult" datasource="#application.datasource#">
+				UPDATE apic_currentUser
+				SET 
+				user_request_count = <cfqueryparam value="#(local.qSearch.user_request_count + 1)#" cfsqltype="CF_SQL_INTEGER">,
+				last_attempt = <cfqueryparam value="#application.rate_limiter[cgi.remote_addr].last_attempt#" cfsqltype="CF_SQL_TIMESTAMP">,					
+				fecha_modif = NOW()
+				WHERE id = <cfqueryparam value="#local.qSearch.id#" cfsqltype="CF_SQL_INTEGER">
+			</cfquery>    
+		<cfelse>
+			<cfif structKeyExists(session, 'cfid')>
+				<cfquery name="local.qIPCheck" result="local.qResult" datasource="#application.datasource#">
+					INSERT INTO apic_currentUser
+					(
+						ip_address,
+						user_request_count,
+						user_token,
+						last_attempt,
+						last_event,
+						http_user_agent,
+						http_method,
+						token,
+						id_evento,
+						active,
+						fecha_alta
+					)
+					VALUES  
+					(
+						<cfqueryparam value="#cgi.remote_addr#" cfsqltype="CF_SQL_VARCHAR">,
+						<cfqueryparam value="#application.rate_limiter[cgi.remote_addr].attempts#" cfsqltype="CF_SQL_INTEGER">,
+						<cfqueryparam value="#session.cfid#-#session.cftoken#" cfsqltype="CF_SQL_VARCHAR">,
+						<cfqueryparam value="#application.rate_limiter[cgi.remote_addr].last_attempt#" cfsqltype="CF_SQL_TIMESTAMP">,
+						<cfqueryparam value="#arguments.event.getCurrentEvent()#" cfsqltype="CF_SQL_VARCHAR">,
+						<cfqueryparam value="#cgi.HTTP_USER_AGENT#" cfsqltype="CF_SQL_VARCHAR">,
+						<cfqueryparam value="#arguments.event.getHTTPMethod()#" cfsqltype="CF_SQL_VARCHAR">,						
+						<cfqueryparam value="#arguments.rc.token#" cfsqltype="CF_SQL_VARCHAR">,
+						<cfqueryparam value="#arguments.prc.token.id_evento#" cfsqltype="CF_SQL_VARCHAR">,
+						<cfqueryparam value="1" cfsqltype="CF_SQL_INTEGER">,
+						NOW()
+					)
+				</cfquery>    
+				<!--- ON DUPLICATE KEY 
+				UPDATE 
+				user_request_count = <cfqueryparam value="#application.rate_limiter[cgi.remote_addr].attempts#" cfsqltype="CF_SQL_INTEGER">,
+				last_attempt = <cfqueryparam value="#application.rate_limiter[cgi.remote_addr].last_attempt#" cfsqltype="CF_SQL_TIMESTAMP">,
+					fecha_modif = NOW() --->
+			</cfif>
+		</cfif>
+	<cfcatch type="any">
+		<cfdump var="#cfcatch#" label="cfcatch">
+		<cfabort>
+		<cfset sendError(cfcatch, rc, event)>
+	</cfcatch>
+	</cftry>
 </cffunction>
 
 <cffunction name="checkIPUser" access="public">
@@ -29,78 +112,36 @@
         SELECT
             COUNT(*) AS user_request_count
         FROM apic_currentUser
-        WHERE last_attempt >= <cfqueryparam value="#DateAdd( 'n', -5, NOW())#" cfsqltype="CF_SQL_TIMESTAMP" />
-        AND ip_address = <cfqueryparam value="#cgi.remote_addr#" cfsqltype="CF_SQL_VARCHAR" />
-        AND user_token = <cfqueryparam value="#session.cfid#-#session.cftoken#" cfsqltype="CF_SQL_VARCHAR" />
+        WHERE last_attempt >= <cfqueryparam value="#DateAdd( 'n', -5, NOW())#" cfsqltype="CF_SQL_TIMESTAMP">
+        AND ip_address = <cfqueryparam value="#cgi.remote_addr#" cfsqltype="CF_SQL_VARCHAR">
+        AND user_token = <cfqueryparam value="#session.cfid#-#session.cftoken#" cfsqltype="CF_SQL_VARCHAR">
         GROUP BY user_token
         ORDER BY last_attempt DESC
         LIMIT 1;
     </cfquery> --->
 
     <cfif structKeyExists(session, 'cfid')>
-        <cfquery name="local.qIPCheck" datasource="#application.datasource#">
-            SELECT user_request_count
+        <cfquery name="local.qcheckIPUser" datasource="#application.datasource#">
+            SELECT user_request_count SQL_NO_CACHE
             FROM apic_currentUser
-            WHERE last_attempt >= <cfqueryparam value="#DateAdd( 'n', -5, NOW())#" cfsqltype="CF_SQL_TIMESTAMP" />
-            AND ip_address = <cfqueryparam value="#cgi.remote_addr#" cfsqltype="CF_SQL_VARCHAR" />
-            AND user_token = <cfqueryparam value="#session.cfid#-#session.cftoken#" cfsqltype="CF_SQL_VARCHAR" />
+            WHERE last_attempt >= <cfqueryparam value="#DateAdd( 'n', -5, NOW())#" cfsqltype="CF_SQL_TIMESTAMP">
+            AND ip_address = <cfqueryparam value="#cgi.remote_addr#" cfsqltype="CF_SQL_VARCHAR">
+            AND user_token = <cfqueryparam value="#session.cfid#-#session.cftoken#" cfsqltype="CF_SQL_VARCHAR">
             ORDER BY user_request_count DESC
             LIMIT 1;
         </cfquery>
 
-        <cfreturn local.qIPCheck>
-    </cfif>
-
-</cffunction>
-
-<cffunction name="addIPUser" access="public">
-    <cfargument name="event">
-    <cfargument name="rc">
-    <cfargument name="prc">
-
-    <cfparam name="arguments.rc.token" default="">
-
-    <cfif structKeyExists(session, 'cfid')>
-        <cfquery name="local.qIPCheck" datasource="#application.datasource#">
-            INSERT INTO apic_currentUser
-            (
-                ip_address,
-                user_request_count,
-                user_token,
-                last_attempt,
-                last_event,
-                http_user_agent,
-                token,
-                created_at
-            )
-            VALUES  
-            (
-                <cfqueryparam value="#cgi.remote_addr#" cfsqltype="CF_SQL_VARCHAR" />,
-                <cfqueryparam value="#application.rate_limiter[cgi.remote_addr].attempts#" cfsqltype="CF_SQL_INTEGER" />,
-                <cfqueryparam value="#session.cfid#-#session.cftoken#" cfsqltype="CF_SQL_VARCHAR" />,
-                <cfqueryparam value="#application.rate_limiter[cgi.remote_addr].last_attempt#" cfsqltype="CF_SQL_TIMESTAMP" />,
-                <cfqueryparam value="#arguments.event.getCurrentEvent()#" cfsqltype="CF_SQL_VARCHAR" />,
-                <cfqueryparam value="#cgi.HTTP_USER_AGENT#" cfsqltype="CF_SQL_VARCHAR" />,
-                <cfqueryparam value="#arguments.rc.token#" cfsqltype="CF_SQL_VARCHAR" />,
-                <cfqueryparam value="#NOW()#" cfsqltype="CF_SQL_TIMESTAMP" />
-            )
-            ON DUPLICATE KEY 
-            UPDATE 
-            user_request_count = <cfqueryparam value="#application.rate_limiter[cgi.remote_addr].attempts#" cfsqltype="CF_SQL_INTEGER" />,
-            last_attempt = <cfqueryparam value="#application.rate_limiter[cgi.remote_addr].last_attempt#" cfsqltype="CF_SQL_TIMESTAMP" />
-        </cfquery>    
+        <cfreturn local.qcheckIPUser>
     </cfif>
 </cffunction>
-
-
 
 <!--- 
     Convert any date/time in ISO 8601 format to Coldfusion date/time
  --->
 <cffunction name="ISOToDateTime" access="public" returntype="string" output="false" hint="Converts an ISO 8601 date/time stamp with optional dashes to a ColdFusion date/time stamp.">
-    <cfargument name="Date" type="string" required="true" hint="ISO 8601 date/time stamp."/>
+    <cfargument name="Date" type="string" required="true" hint="ISO 8601 date/timestamp."/>
     
-    <cfreturn arguments.Date.ReplaceFirst("^.*?(\d{4})-?(\d{2})-?(\d{2})T([\d:]+).*$", "$1-$2-$3 $4") />
+    <cfreturn arguments.Date.ReplaceFirst("^.*?(\d{4})-?(\d{2})-?(\d{2})T([\d:]+).*$", "$1-$2-$3 $4") >
 </cffunction>
 
 <!--- 
@@ -157,11 +198,9 @@
 
 <cfscript>
     void function limiterByTime(required event, required rc, required prc, required numeric maxRequest, required numeric waitTimeRequest) {
-        param name="arguments.rc.token" default="";
-    
         <!--- var userRequest = checkIPUser(); --->
-        cleanIPUser();
-    
+		cleanIPUser();
+		
         if (structKeyExists(url, "killsession")) {
             application.rate_limiter = {};
             StructDelete(application, 'rate_limiter');
@@ -187,7 +226,7 @@
                                                 .setStatusText("Service Unavailable")
                                                 .setStatusCode(503);
                         }
-                    
+					
                         application.rate_limiter[cgi.remote_addr].attempts     = application.rate_limiter[cgi.remote_addr].attempts + 1;
                         application.rate_limiter[cgi.remote_addr].last_attempt = NOW();
                     } else {
@@ -197,17 +236,15 @@
                     }
                 }
             }
-        }
-    
-        addIPUser(arguments.event, arguments.rc, arguments.prc);
+		}
+		addIPUser(arguments.event, arguments.rc, arguments.prc)
     }
     
     /**
      * Convert any Coldfusion date/time to ISO 8601 format
      */
-    string function getIsoTimeString(required date datetime, boolean convertToUTC=true){
-  
-        if (convertToUTC) datetime = dateConvert("local2utc", datetime );
+    string function getIsoTimeString(required date datetime, boolean convertToUTC=true) {
+		if (convertToUTC) datetime = dateConvert("local2utc", datetime );
         return(dateFormat( datetime, "yyyy-mm-dd" ) & "T" & timeFormat( datetime, "HH:mm:ss" ) & "Z");
     }
     
@@ -335,23 +372,41 @@
         return valueResult;
     }
 
-    variables.reTags 					= '<[^>]*(>|$)';
-	variables.reWhitelist 				= '(?x) <\/?(b(lockquote)?|code|d(d|t|l|el)|em|h(1|2|3)|i|kbd|ul|li|ol|p(re)?|s(ub|up|trong|trike|tyle)?|(t(able|r|d|body|footer|head) ?)\s?\/?)?\s?\/?>|<(b|h)r\s?\/?>';
-	variables.reWhitelistLinks 			= '(?x) ^<a\s href="(\##\d+|(https?|ftp)://[-a-z0-9+&@##/%?=~_|!:,.;\(\)]+)" (\stitle="[^"<>]+")?\s?>$ | ^</a';
-	variables.reWhitelistImages 		= '(?x) <\/?img.*(\ssrc="https?:\/\/[-a-z0-9+&@##/%?=~_|!:,.;\(\)]+\").*(\stitle=\"[^"<>]*\")?.*(\salt="[^"<>]*")?.*(\swidth="\d{1,4}")?.*(\sheight="\d{1,4}")?\/?>';	
+    // variables.reTags 					= '<[^>]*(>|$)';
+	// variables.reWhitelist 				= '(?x) <\/?(b(lockquote)?|code|d(d|t|l|el)|em|h(1|2|3)|i|kbd|ul|li|ol|p(re)?|s(ub|up|trong|trike|tyle)?|(t(able|r|d|body|footer|head) ?)\s?\/?)?\s?\/?>|<(b|h)r\s?\/?>';
+	// variables.reWhitelistLinks 			= '(?x) ^<a\s href="(\##\d+|(https?|ftp)://[-a-z0-9+&@##/%?=~_|!:,.;\(\)]+)" (\stitle="[^"<>]+")?\s?>$ | ^</a';
+	// variables.reWhitelistImages 		= '(?x) <\/?img.*(\ssrc="https?:\/\/[-a-z0-9+&@##/%?=~_|!:,.;\(\)]+\").*(\stitle=\"[^"<>]*\")?.*(\salt="[^"<>]*")?.*(\swidth="\d{1,4}")?.*(\sheight="\d{1,4}")?\/?>';	
+	// variables.reBlackJavascriptArray 	= [
+	// 	'(\/\*.*\*\/)',
+	// 	'(\t)',
+	// 	'(.*(script\b).*>.*<.*(script\b).*)',
+	// 	'(javascript\s*:)',
+	// 	'(\b)(on\S+)(\s*)=|javascript|vbscript|(<\s*)(\/*)script',
+	// 	'(@import)',
+	// 	'(style=[^<]*((expression\s*?\([^<]*?\))|(behavior\s*:)|(eval\s*:))[^<]*(?=\>))',
+	// 	'(ondblclick|onclick|onkeydown|onkeypress|onkeyup|onmousedown|onmousemove|onmouseout|onmouseover|onmouseup|onload|onunload|onerror)=[^<]*(?=\>)',
+	// 	'<\/?(script|meta|link|frame|iframe)>',
+	// 	'src=[^<]*base64[^<]*(?=\>)',
+	// ];
+	
+	variables.reTags 					= '<[^>]*(>|$)';
+	variables.reWhitelist 				= '(?x)(<\/?(a|b(lockquote)?|code|d(d|t|l|el)|em|h(1|2|3)|i(mage)?|kbd|(u|o)l|li|p(re)?|s(ub|up|trong|trike|tyle)?|(t(able|r|d|body|footer|head) ?)\s?\/?)?\s?\/?>|<(b|h)r\s?\/?>)';
+	variables.reWhitelistLinks 			= '(?x)(^<a\s href="(\##\d+|(https?|ftp):\/\/[-a-z0-9+&@##/%?=~_|!:,.;\(\)]+)" (\stitle="[^"<>]+")?\s?>$ | ^<\/a)';
+	variables.reWhitelistImages 		= '(?x)(<\/?img.*(\ssrc="https?:\/\/[-a-z0-9+&@##/%?=~_|!:,.;\(\)]+\").*(\stitle=\"[^"<>]*\")?.*(\salt="[^"<>]*")?.*(\swidth="\d{1,4}")?.*(\sheight="\d{1,4}")?\/?>)';	
 	variables.reBlackJavascriptArray 	= [
-		'(\/\*.*\*\/)',
+		'<\/?(script|meta|link|frame|iframe)>',
 		'(\t)',
-		'(.*(script\b).*>.*<.*(script\b).*)',
-		'(javascript\s*:)',
-		'(\b)(on\S+)(\s*)=|javascript|vbscript|(<\s*)(\/*)script',
 		'(@import)',
 		'(style=[^<]*((expression\s*?\([^<]*?\))|(behavior\s*:)|(eval\s*:))[^<]*(?=\>))',
-		'(ondblclick|onclick|onkeydown|onkeypress|onkeyup|onmousedown|onmousemove|onmouseout|onmouseover|onmouseup|onload|onunload|onerror)=[^<]*(?=\>)',
-		'<\/?(script|meta|link|frame|iframe)>',
 		'src=[^<]*base64[^<]*(?=\>)',
+		'(ondblclick|onclick|onkeydown|onkeypress|onkeyup|onmousedown|onmousemove|onmouseout|onmouseover|onmouseup|onload|onunload|onerror)=[^<]*(?=\>)',
+		'(\b)(on\S+)(\s*)=|javascript|vbscript|(<\s*)(\/*)script',
+		// '(\/\*.*\*\/)',
+		// '(.*(script\b).*>.*<.*(script\b).*)',
+		// '(javascript\s*:)',
 	];
 	
+	// ========================== PRIVATE FUNCTIONS ========================== 
 	/**
 	 * Find all the cases by regex expression
 	 * @regex (required|string)
@@ -395,10 +450,12 @@
 	 * Sanatize a text from XSS an others injections attack
 	 * Importante: No utilizar para sanitizar elementos que vayan en la WEB, ya que valida si se utilizan IFRAMES como SCRIPT
 	 * @text (required|string)
-	 * @return
+	 * @return (string)
 	 */ 
 	private string function sanatizeHtml(required string html) {
 		var L = structNew();
+
+		L.result = "";
 
 		try {
 			L.result = arguments.html;
@@ -408,19 +465,33 @@
 			
 			// WhiteLists
 			if(len(arguments.html) GT 0) {
-				L.tags = findAll(variables.reTags, L.result);				
+				L.tags = findAll(variables.reTags, L.result);
 				variables.reWhitelist = '';
-				cfloop(from='#ArrayLen(L.tags)#' to='1', index='L.i', step='-1') {
-					L.tagname  = lcase(L.tags[L.i].text);
-					L.allowTag = reFind(variables.reWhitelist, L.tagname) GT 0 OR reFind(variables.reWhitelistLinks, L.tagname) GT 0 OR reFind(variables.reWhitelistImages, L.tagname) GT 0;
+
+				for (i = 1; i < arrayLen(L.tags); i++) {
+					L.tagname = lcase(L.tags[i].text);
+
+					L.allowTag = reFind(variables.reWhitelist, L.tagname) GT 0 OR 
+								reFind(variables.reWhitelistLinks, L.tagname) GT 0 OR 
+								reFind(variables.reWhitelistImages, L.tagname) GT 0;
+
 					if(!L.allowTag) {
-						L.result = removeChars(L.result, L.tags[L.i].index, L.tags[L.i].length); 
+						L.result = removeChars(L.result, L.tags[i].index, L.tags[i].length); 
 					}
 				}
+				// <cfloop from='#ArrayLen(L.tags)#' to='1', index='L.i', step='-1'>
+				// <cfscript>
+				// 	<cfset L.tagname  = lcase(L.tags[L.i].text)>
+				// 	<cfset L.allowTag = reFind(variables.reWhitelist, L.tagname) GT 0 OR reFind(variables.reWhitelistLinks, L.tagname) GT 0 OR reFind(variables.reWhitelistImages, L.tagname) GT 0>
+				// 	<cfif !L.allowTag>
+				// 		<L.result = removeChars(L.result, L.tags[L.i].index, L.tags[L.i].length)>
+				// 	</cfif>
+				// </cfscript>
+				// </cfloop>
 			} 
 
 			// XSS Javavascript
-			L.result = filterArrayRegex(L.result, variables.reBlackJavascriptArray, "<invalidTag>");
+			L.result = filterArrayRegex(L.result, variables.reBlackJavascriptArray, "&lt;invalidTag&gt;");	
 		} catch (any ex) {
 			if(isDebugMode()) {
 				writeDump(var="#L#", label="Object");
@@ -435,13 +506,13 @@
 	/**
 	 * Sanatize Scope
 	 * @scope (required|struct)
-	 * @return void
+	 * @return (void)
 	 */
 	private void function sanitizeScope(required struct scope ) {
 		try {
-			for( var key in scope ) {			
-				if(isStruct(scope[key])) sanitizeScope(scope[key]);			
-				if(isSimpleValue(scope[key])) scope[key] = sanatize(scope[key]);
+			for( var key in arguments.scope ) {			
+				if(isStruct(arguments.scope[key])) sanitizeScope(arguments.scope[key]);			
+				if(isSimpleValue(arguments.scope[key])) arguments.scope[key] = sanatize(arguments.scope[key]);
 			}
 		} catch (any ex) { 
 			if(isDebugMode()) {
@@ -452,14 +523,133 @@
 	}
 
 	/**
+	 * Is HTML File
+	 * Check if the file is or contains HTML code
+	 * @file (required|any)
+	 * @return (boolean)
+	 */
+	private boolean function validateFile(required string filePath) {	
+		var encode = [ "ISO-8859-1", "UTF-8" ];
+		var valid = true;
+		var myFile = nullValue();
+		var fileContent = "";
+
+		try {
+			var tags 		= [ "html", "script", "body", "head", "link", "iframe", "div", "vbscript" ];
+			var finalRegex  = "<\/?(?!(?!" & arrayToList(tags, "|") & ")\b)[a-z](?:[^>""']|""[^""]*""|'[^']*')*>";
+			
+			myFile = createObject("java", "java.io.File").init(arguments.filePath);
+
+			if (myFile.isFile()) {
+				if(arrayLen(reMatchNoCase("^.*\.+(htm(l)?|js|css|ai|psd|exe|dll|bin|sh|bat|cfc|cfm|class|rb|h|txt)$", myFile.getName())) > 0) {
+					valid = false;
+					
+				} else {
+					if(arrayLen(reMatchNoCase("^.*\.+(bmp|jpg(e)?|png|gif|bin)$", myFile.getName())) > 0) {
+						if(arrayLen(reMatchNoCase("^.*\.+(jpg(e)?|png|gif|bin)$", myFile.getName())) > 0) {
+							fileContent = fileRead(myFile);
+							fileContent = canonicalize(fileContent, false, false);
+						}
+					} else {
+						fileContent = fileRead(myFile);
+						fileContent = canonicalize(fileContent, false, false);
+					}
+
+					if(arrayLen(reMatch(finalRegex, fileContent)) > 0) valid = false;
+				}
+			}
+		} catch (any ex) {				
+			valid = false;
+		}
+
+		return valid;
+	}
+
+	/**
+	 * Get HTML content from file
+	 * Obtiene el data content del fichero.
+	 * @filePath (required|string)
+	 * @return (string)
+	 */
+	private string function getHTMLContent(required string filePath) {
+		var htmlFile = "";
+		var output   = "";
+		var encode   = ["ISO-8859-1", "UTF-8"];
+
+		// include "/common/cfm/jsoup.cfm";
+
+		try {
+			myFile = createObject("java", "java.io.File").init(arguments.filePath);
+			output = fileRead(myFile);
+		} catch (any ex) {
+			if(isDebugMode()) {
+				writeDump(var="#ex#", label="Exception");
+				abort;
+			}
+		}
+
+		return output;
+	}
+
+	/**
+	 * Get Malicious Content
+	 * Obtiene desde la lectura de un fichero el contenido no permitido, ya sea por su extensión, 
+	 * o por que contiene HTML en el.
+	 * @filePath (required|string)
+	 * @return (string)
+	 */ 
+	private string function getMaliciousContent(required string filePath) {
+		var encode = [ "ISO-8859-1", "UTF-8" ];
+		var myFile = nullValue();
+		var fileContent = "";
+		var match = "";
+
+		try {
+			var tags 		= [ "html", "script", "body", "head", "link", "iframe", "div", "vbscript" ];
+			var finalRegex  = "<\/?(?!(?!" & arrayToList(tags, "|") & ")\b)[a-z](?:[^>""']|""[^""]*""|'[^']*')*>";
+			
+			myFile = createObject("java", "java.io.File").init(arguments.filePath);
+
+			if (myFile.isFile()) {
+				if(arrayLen(reMatchNoCase("^.*\.+(htm(l)?|js|css|ai|psd|exe|dll|bin|sh|bat|cfc|cfm|class|rb|h|txt)$", myFile.getName())) > 0) {
+					valid = false;
+					match = "Extensión no permitida";
+				} else {
+					if(arrayLen(reMatchNoCase("^.*\.+(bmp|jpg(e)?|png|gif|bin)$", myFile.getName())) > 0) {
+						if(arrayLen(reMatchNoCase("^.*\.+(jpg(e)?|png|gif|bin)$", myFile.getName())) > 0) {
+							fileContent = fileRead(myFile);
+							fileContent = canonicalize(fileContent, false, false);
+						}
+					} else {
+						fileContent = fileRead(myFile);
+						fileContent = canonicalize(fileContent, false, false);
+					}
+
+					if(arrayLen(reMatch(finalRegex, fileContent)) > 0) match = arrayToList(reMatch(finalRegex, fileContent));
+				}
+			}
+		} catch (any ex) {				
+			if(isDebugMode()) {
+				writeDump(var="#ex#", label="Exception");
+				abort;
+			}
+			match = "";
+		}
+
+		return match;
+	}
+
+	// ========================== PUBLIC FUNCTIONS ========================== 
+
+	/**
 	 * Sanatize
 	 * Sanatize a text from XSS an others injections attack
 	 * Importante: No utilizar para sanitizar elementos que vayan en la WEB, ya que valida si se utilizan IFRAMES como SCRIPT
 	 * @text (required|string)
-	 * @return
+	 * @return (string)
 	 */ 
 	public string function sanatize(required string html) {
-		try{
+		try {
 			return sanatizeHtml(arguments.html);
 		} catch (any ex) { 
 			if(isDebugMode()) {
@@ -473,10 +663,10 @@
 	 * Sanatize Dump
 	 * Performs a sanitized dump, where JavaScript has been removed to minimize XSS risks
 	 * @data (required|any)
-	 * @return any 
+	 * @return (struct) 
 	 */
 	public struct function sanatizeDump(required struct data) {
-		try{
+		try {
 			sanitizeScope(arguments.data);
 		} catch (any ex) { 
 			if(isDebugMode()) {
@@ -488,5 +678,106 @@
 		return arguments.data;	
 	}	
 
+	/**
+	 * Is HTML File
+	 * Check if the file is or contains HTML code
+	 * @file (required|any)
+	 * @return (boolean)
+	 */
+	public boolean function isValidFile(required string filePath) {
+		try {
+			return validateFile(arguments.filePath);
+		} catch (any ex) { 
+			if(isDebugMode()) {
+				writeDump(var="#ex#", label="Exception");
+				abort;
+			}
+		}	
+	}
 
+	/**
+	 * HTML to String
+	 * Obtiene el data content del fichero.
+	 * @filePath (required|string)
+	 * @return (string)
+	 */
+	public string function htmlToString(required string filePath) {
+		try {		
+			return getHTMLContent(arguments.filePath);
+		} catch (any ex) { 
+			if(isDebugMode()) {
+				writeDump(var="#ex#", label="Exception");
+				abort;
+			}
+		}	
+	}
+
+	/**
+	 * Malicious Content
+	 * Obtiene desde la lectura de un fichero el contenido no permitido, ya sea por su extensión, 
+	 * o por que contiene HTML en el.
+	 * @filePath (required|string)
+	 * @return (string)
+	 */  
+	public string function maliciousContent(require any filePath) {
+		try {		
+			return getMaliciousContent(arguments.filePath);
+		} catch (any ex) { 
+			if(isDebugMode()) {
+				writeDump(var="#ex#", label="Exception");
+				abort;
+			}
+		}
+	}
+
+	<!--- private boolean function validateFile(required string filePath) {	
+		var encode = [ "ISO-8859-1", "UTF-8" ];
+		var valid = true;
+		var myFile = nullValue();
+		var fileContent = "";
+
+		try {
+			// var tagStart = "\<\w+((\s+\w+(\s*\=\s*(?:\""\.*?\""|'.*?'|[^'\""\\>\s]+))?)+\s*|\s*)\>";
+			// var tagEnd 	= "\</\w+\>";
+			// var tagSelfClosing = "\<\w+((\s+\w+(\s*\=\s*(?:\"".*?\""|'.*?'|[^'\""\>\s]+))?)+\s*|\s*)/\>";
+			// var htmlEntity = "&[a-zA-Z][a-zA-Z0-9]+;";
+			// var finalRegex = "(" & tagStart & ".*" & tagEnd & ")|(" & tagSelfClosing & ")|(" & htmlEntity & ")";
+
+			var tags 		= [ "html", "script", "body", "head", "link", "iframe", "div" ];
+			var finalRegex  = "<\/?(?!(?!" & arrayToList(tags, "|") & ")\b)[a-z](?:[^>""']|""[^""]*""|'[^']*')*>";
+
+			// var Pattern = createObject("java", "java.util.regex.Pattern");
+			// var htmlPattern = Pattern.compile(javaCast("string", finalRegex), Pattern.DOTALL);
+			
+			myFile = createObject("java", "java.io.File").init(arguments.filePath);
+
+			if (myFile.isFile()) {
+				if(arrayLen(reMatchNoCase("^.*\.+(html|js|css|ai|psd|exe|dll|bin|sh|bat|cfc|cfm|class|rb|h)$", myFile.getName())) > 0) {
+					valid = false;
+					
+				} else {
+					if(arrayLen(reMatchNoCase("^.*\.+(bmp|jpg(e)?|png|gif|bin)$", myFile.getName())) > 0) {
+						if(arrayLen(reMatchNoCase("^.*\.+(jpg(e)?|png|gif|bin)$", myFile.getName())) > 0) {
+							fileContent = fileRead(myFile);
+							fileContent = canonicalize(fileContent, false, false);
+						}
+					} else {
+						fileContent = fileRead(myFile);
+						fileContent = canonicalize(fileContent, false, false);
+					}
+
+					// var matcher = htmlPattern.matcher(fileContent);
+
+					// if(matcher.find()) {
+					// 	valid =  false;
+					// }
+					if(arrayLen(reMatch(finalRegex, fileContent)) > 0) valid = false;
+				}
+			}
+		} catch (any ex) {				
+			valid = false;
+		}
+
+		return valid;
+	} --->
 </cfscript>

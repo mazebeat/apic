@@ -117,7 +117,7 @@
 		<cfif isValid('URL', arguments.file)>
 			<cftry>
 				<cfquery name="local.web" datasource="#application.datasource#" cachedWithin="#createTimeSpan( 0, 0, queryExpiration, 0 )#">
-					SELECT id_web FROM sige.webs
+					SELECT id_web FROM webs
 					WHERE eventos_id_evento IN (<cfqueryparam value="#arguments.id_evento#" cfsqltype="CF_SQL_INTEGER" list="true">)
 					AND tiposWebs_id_tipo_web = 1
 					AND activa = 1
@@ -126,13 +126,12 @@
 
 				<cfif local.web.recordCount IS 1>
 					<cfset var rutaDescargaDocumentos = "/web/sitios/default/admin/uploads/#local.web.id_web#/docs/descargas">
-					
+
 					<cfinclude template="/default/admin/helpers/dirs.cfm">
-				
+
 					<cfset testAndCreateDir(rutaDescargaDocumentos)>
 
 					<cfset var nuevoNombreFichero = "#01#_#local.web.id_web#_api_#getTickCount()#_#(getTickCount()*4/2)#">
-
 					<cfset nombreFichero = imgDAO.uploadImage(arguments.file, nuevoNombreFichero, rutaDescargaDocumentos)>
 				</cfif>
 			<cfcatch type="any">
